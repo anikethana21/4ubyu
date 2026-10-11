@@ -37,9 +37,7 @@ def initialize_handbook_index(html_file_path: Optional[str] = None) -> int:
     global _CACHED_DOCS, _CACHED_QUESTIONS
 
     if not html_file_path:
-        default_p = Path(r"C:\Users\anike\Desktop\4_u_by_u\static\agentic_ai_interactive_handbook.html")
-        if not default_p.exists():
-            default_p = Path(r"C:\Users\anike\Desktop\Agentic-AI\Agentic_AI_and_LangGraph_Engineering_Handbook.html")
+        default_p = BASE_DIR / "static" / "agentic_ai_interactive_handbook.html"
         html_file_path = str(default_p)
 
     docs, questions = chunk_workspace_html(html_file_path)
@@ -47,7 +45,7 @@ def initialize_handbook_index(html_file_path: Optional[str] = None) -> int:
     _CACHED_QUESTIONS = questions
 
     # Also index GenAI handbook if present to form a multi-book repository
-    genai_p = Path(r"C:\Users\anike\Desktop\4_u_by_u\static\GenAI_and_RAG_Engineering_Handbook.html")
+    genai_p = BASE_DIR / "static" / "GenAI_and_RAG_Engineering_Handbook.html" 
     if genai_p.exists():
         extra_docs, extra_q = chunk_workspace_html(str(genai_p))
         _CACHED_DOCS.extend(extra_docs)

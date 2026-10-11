@@ -34,3 +34,4 @@ scratch_*
 # Vector DB & logs
 notes_vectordb/
 *.log
+.vercel

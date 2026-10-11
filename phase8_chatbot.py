@@ -53,9 +53,20 @@ def build_rag_index_node(state: MasterNotesState) -> Dict[str, Any]:
 
     # 1. Tag-Aware Chunking of the Full HTML Page using BeautifulSoup
     source_to_chunk = compiled_html
-    if not source_to_chunk and html_file_path and Path(html_file_path).exists():
-        with open(html_file_path, "r", encoding="utf-8", errors="replace") as f:
-            source_to_chunk = f.read()
+    is_valid_path = (
+        bool(html_file_path)
+        and len(html_file_path) < 1024
+        and not html_file_path.strip().startswith("<")
+        and "\n" not in html_file_path
+    )
+    if not source_to_chunk and is_valid_path:
+        try:
+            p = Path(html_file_path)
+            if p.exists() and p.is_file():
+                with open(p, "r", encoding="utf-8", errors="replace") as f:
+                    source_to_chunk = f.read()
+        except (OSError, ValueError):
+            pass
 
     if source_to_chunk:
         html_docs, extracted_q = chunk_workspace_html(source_to_chunk, video_id=video_id)

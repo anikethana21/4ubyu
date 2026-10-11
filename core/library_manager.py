@@ -59,8 +59,11 @@ def add_library_entry(entry: Dict[str, Any]):
         entry["created_at"] = datetime.utcnow().isoformat()
     
     entries.insert(0, entry)
-    with open(LIBRARY_FILE, "w", encoding="utf-8") as f:
-        json.dump(entries, f, indent=2)
+    try:
+        with open(LIBRARY_FILE, "w", encoding="utf-8") as f:
+            json.dump(entries, f, indent=2)
+    except (OSError, PermissionError):
+        pass
 
 def remove_library_entry(video_id: str) -> bool:
     """Deletes handbook and unregisters from library.json."""

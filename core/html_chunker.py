@@ -208,10 +208,22 @@ def chunk_workspace_html(
     Extracts preloaded suggestive questions guaranteed to be answered by the HTML.
     """
     html_text = ""
-    p = Path(html_content_or_path)
-    if p.exists() and p.is_file():
-        with open(p, "r", encoding="utf-8", errors="replace") as f:
-            html_text = f.read()
+    is_path = (
+        bool(html_content_or_path)
+        and len(html_content_or_path) < 1024
+        and not html_content_or_path.strip().startswith("<")
+        and "\n" not in html_content_or_path
+    )
+    if is_path:
+        try:
+            p = Path(html_content_or_path)
+            if p.exists() and p.is_file():
+                with open(p, "r", encoding="utf-8", errors="replace") as f:
+                    html_text = f.read()
+            else:
+                html_text = html_content_or_path
+        except (OSError, ValueError):
+            html_text = html_content_or_path
     else:
         html_text = html_content_or_path
 

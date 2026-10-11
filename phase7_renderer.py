@@ -39,8 +39,19 @@ def html_tri_pane_workspace_renderer(state: MasterNotesState) -> Dict[str, Any]:
     file_name = f"notes_{video_id}.html"
     out_file = OUTPUT_DIR / file_name
     
-    with open(out_file, "w", encoding="utf-8") as f:
-        f.write(rendered_html)
+    try:
+        with open(out_file, "w", encoding="utf-8") as f:
+            f.write(rendered_html)
+    except (OSError, PermissionError):
+        import tempfile
+        tmp_dir = Path(tempfile.gettempdir()) / "4ubyu" / "output"
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        out_file = tmp_dir / file_name
+        try:
+            with open(out_file, "w", encoding="utf-8") as f:
+                f.write(rendered_html)
+        except Exception:
+            pass
         
     # Register in Local Library
     library_entry = {
