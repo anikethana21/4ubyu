@@ -1,0 +1,4744 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Definitive Agentic AI &amp; RAG Engineering Handbook</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Outfit:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Highlight.js & Themes -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="hljs-theme" rel="stylesheet"/>
+<!-- FontAwesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<!-- Marked.js for GFM Parsing -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.1/marked.min.js"></script>
+<!-- Highlight.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<!-- Mermaid.js for Dynamic Diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --bg-card: #151d2d;
+      --bg-card-hover: #1c263b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366f1;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-indigo: #6366f1;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --code-bg: #090d16;
+      --sidebar-width: 320px;
+      --header-height: 64px;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
+      --shadow-lg: 0 10px 30px -10px rgba(0,0,0,0.5);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8fafc;
+      --border-color: #e2e8f0;
+      --border-focus: #4f46e5;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --code-bg: #1e293b;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 30px -10px rgba(0,0,0,0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-indigo);
+    }
+
+    /* Top Progress Bar */
+    #progress-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: transparent;
+      z-index: 1000;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-indigo), var(--accent-cyan));
+      transition: width 0.1s ease;
+    }
+
+    /* Top Navigation Bar */
+    header.top-header {
+      position: fixed;
+      top: 4px;
+      left: 0;
+      right: 0;
+      height: var(--header-height);
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 900;
+      transition: background 0.3s;
+    }
+    [data-theme="light"] header.top-header {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent-indigo);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .action-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--accent-indigo);
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      position: fixed;
+      top: calc(var(--header-height) + 4px);
+      left: 0;
+      bottom: 0;
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 800;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-search-box {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .search-input-wrapper {
+      position: relative;
+    }
+    .search-input-wrapper i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .search-input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px;
+    }
+
+    .toc-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 8px 12px 4px 12px;
+    }
+
+    .toc-list {
+      list-style: none;
+      margin-bottom: 16px;
+    }
+    .toc-item {
+      margin: 2px 0;
+    }
+    .toc-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.86rem;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+      line-height: 1.4;
+    }
+    .toc-link:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      transform: translateX(3px);
+    }
+    .toc-link.active {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent-indigo);
+      font-weight: 600;
+      border-left: 3px solid var(--accent-indigo);
+    }
+    .toc-link i {
+      font-size: 0.85rem;
+      width: 16px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .toc-link.active i {
+      color: var(--accent-indigo);
+    }
+
+    /* Main Content Area */
+    main.content-wrapper {
+      margin-left: var(--sidebar-width);
+      margin-top: calc(var(--header-height) + 4px);
+      flex: 1;
+      padding: 40px 60px 100px 60px;
+      max-width: 1300px;
+      min-width: 0;
+    }
+
+    /* Hero Banner */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9)), url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1.5" fill="%236366f1" fill-opacity="0.12"/></svg>');
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 40px 48px;
+      margin-bottom: 48px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .hero-banner::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .hero-pill.cyan {
+      background: rgba(6, 182, 212, 0.15);
+      color: #67e8f9;
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+    .hero-pill.emerald {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      background: linear-gradient(120deg, #ffffff 0%, #cbd5e1 50%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 900px;
+      margin-bottom: 24px;
+    }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 24px;
+    }
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Content Typography & Markdown Elements */
+    .markdown-body {
+      font-size: 1.05rem;
+      color: var(--text-primary);
+    }
+
+    .markdown-body h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-top: 56px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-color);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .markdown-body h1:first-of-type {
+      margin-top: 0;
+    }
+
+    .markdown-body h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 44px;
+      margin-bottom: 18px;
+      color: var(--text-primary);
+      position: relative;
+    }
+
+    .markdown-body h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 14px;
+      color: #818cf8;
+    }
+
+    .markdown-body h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .markdown-body p {
+      margin-bottom: 18px;
+      color: var(--text-secondary);
+    }
+
+    .markdown-body strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .markdown-body em {
+      color: #94a3b8;
+    }
+
+    .markdown-body hr {
+      border: 0;
+      height: 1px;
+      background: var(--border-color);
+      margin: 40px 0;
+    }
+
+    .markdown-body ul, .markdown-body ol {
+      margin-bottom: 22px;
+      padding-left: 28px;
+      color: var(--text-secondary);
+    }
+    .markdown-body li {
+      margin-bottom: 8px;
+    }
+
+    .markdown-body blockquote {
+      border-left: 4px solid var(--accent-indigo);
+      background: rgba(99, 102, 241, 0.06);
+      padding: 16px 20px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin: 24px 0;
+      color: var(--text-secondary);
+      font-style: normal;
+    }
+
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 24px 0;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+    th {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 600;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+    }
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    tr:hover td {
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    /* Code Blocks */
+    .code-block-wrapper {
+      position: relative;
+      margin: 24px 0;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--code-bg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .code-lang-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .code-lang-tag i {
+      color: var(--accent-indigo);
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+    .copy-btn.copied {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--accent-emerald);
+      color: var(--accent-emerald);
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    p code, li code, td code {
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    /* Mermaid Diagrams Container */
+    .mermaid-container {
+      margin: 28px 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+    .mermaid-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Interactive Quiz & Scenario Cards */
+    .quiz-card {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-left: 4px solid var(--accent-indigo);
+      border-radius: var(--radius-md);
+      padding: 22px 26px;
+      margin: 24px 0;
+      box-shadow: var(--shadow-sm);
+    }
+    .quiz-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-indigo);
+      background: rgba(99, 102, 241, 0.12);
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .quiz-question {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+    }
+    .quiz-accordion {
+      margin-top: 14px;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 12px;
+    }
+    .quiz-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--accent-indigo);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .quiz-toggle-btn:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent-indigo);
+    }
+    .quiz-solution {
+      display: none;
+      margin-top: 14px;
+      padding: 16px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+    .quiz-solution.open {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scenario Card */
+    .scenario-card {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      border-left: 4px solid var(--accent-cyan);
+      border-radius: var(--radius-md);
+      padding: 22px 26px;
+      margin: 24px 0;
+      box-shadow: var(--shadow-sm);
+    }
+    .scenario-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.12);
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* Floating Back to Top Button */
+    #back-to-top {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent-indigo);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 950;
+    }
+    #back-to-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    #back-to-top:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.6);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 1024px) {
+      aside.sidebar {
+        transform: translateX(-100%);
+      }
+      aside.sidebar.open {
+        transform: translateX(0);
+      }
+      main.content-wrapper {
+        margin-left: 0;
+        padding: 28px 20px 80px 20px;
+      }
+      .mobile-menu-btn {
+        display: block !important;
+      }
+    }
+    .mobile-menu-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      cursor: pointer;
+      margin-right: 12px;
+    }
+
+    /* Print Styles */
+    @media print {
+      header.top-header, aside.sidebar, #back-to-top, #progress-container {
+        display: none !important;
+      }
+      main.content-wrapper {
+        margin-left: 0;
+        padding: 0;
+        max-width: 100%;
+      }
+      body {
+        background: white;
+        color: black;
+      }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+<!-- Top Scroll Progress Bar -->
+<div id="progress-container">
+<div id="progress-bar"></div>
+</div>
+<!-- Top Header -->
+<header class="top-header">
+<div class="brand-group">
+<button aria-label="Toggle Menu" class="mobile-menu-btn" id="mobile-toggle">
+<i class="fa-solid fa-bars"></i>
+</button>
+<div class="brand-icon">
+<i class="fa-solid fa-network-wired"></i>
+</div>
+<div>
+<div class="brand-title">Agentic AI &amp; RAG Handbook</div>
+</div>
+<span class="brand-badge">Full Course Edition</span>
+</div>
+<div class="header-actions">
+<button class="action-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
+<i class="fa-solid fa-moon" id="theme-icon"></i>
+<span id="theme-text">Dark</span>
+</button>
+<button class="action-btn" onclick="window.print()" title="Print or Save as PDF">
+<i class="fa-solid fa-print"></i>
+<span>Print / PDF</span>
+</button>
+</div>
+</header>
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-search-box">
+<div class="search-input-wrapper">
+<i class="fa-solid fa-magnifying-glass"></i>
+<input class="search-input" id="filter-input" placeholder="Search topics &amp; modules..." type="text"/>
+</div>
+</div>
+<nav class="sidebar-nav" id="sidebar-nav">
+<div class="toc-section-title">Navigation Outline</div>
+<ul class="toc-list" id="toc-list">
+<!-- Dynamically generated from headings -->
+</ul>
+</nav>
+</aside>
+<!-- Main Content -->
+<main class="content-wrapper">
+<div class="hero-banner">
+<div class="hero-pill-group">
+<span class="hero-pill"><i class="fa-solid fa-code"></i> 100% Repository Code Intact</span>
+<span class="hero-pill cyan"><i class="fa-solid fa-diagram-project"></i> Complete Flowcharts</span>
+<span class="hero-pill emerald"><i class="fa-solid fa-graduation-cap"></i> Interactive Quizzes &amp; Scenarios</span>
+</div>
+<h1 class="hero-title">The Definitive Agentic AI &amp; RAG Engineering Handbook</h1>
+<p class="hero-subtitle">
+        From Ground Zero to Production Multi-Agent Systems. Complete architecture blueprint covering LangChain, LCEL, RAG Pipeline, LangGraph Multi-Agent Workflows, and End-to-End Real World Projects.
+      </p>
+<div class="hero-stats">
+<div class="stat-card">
+<span class="stat-val">8 Modules</span>
+<span class="stat-label">Comprehensive Scope</span>
+</div>
+<div class="stat-card">
+<span class="stat-val">2 Full Projects</span>
+<span class="stat-label">Research &amp; Video Agents</span>
+</div>
+<div class="stat-card">
+<span class="stat-val">5 Archetypes</span>
+<span class="stat-label">LangGraph Workflows</span>
+</div>
+<div class="stat-card">
+<span class="stat-val">30+ Challenges</span>
+<span class="stat-label">Quizzes &amp; Scenarios</span>
+</div>
+</div>
+</div>
+<article class="markdown-body" id="article-content">
+<!-- Rendered Markdown goes here -->
+<div id="loading-spinner" style="text-align: center; padding: 60px 0;">
+<i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color: var(--accent-indigo);"></i>
+<p style="margin-top: 14px; color: var(--text-muted);">Compiling textbook content and diagrams...</p>
+</div>
+</article>
+</main>
+<!-- Back to Top Button -->
+<button aria-label="Back to top" id="back-to-top" title="Back to top">
+<i class="fa-solid fa-arrow-up"></i>
+</button>
+<!-- Raw Markdown Source embedded securely -->
+<script id="source-markdown" type="text/markdown">
+# The Definitive Agentic AI & RAG Engineering Handbook
+### *From Ground Zero to Production Multi-Agent Systems*
+**Based on the Course by Akarsh Vyas (Sheryians AI School) — All Production Code Preserved Exactly from Repository**
+
+---
+
+## Master Table of Contents
+
+1. [Prologue: The Cognitive Revolution & Developer Empathy](#prologue)
+2. [Module 1: Foundations — LangChain, LLMs & LCEL](#module-1)
+3. [Module 2: The RAG Architecture](#module-2)
+4. [Module 3: Tools, Function Calling & Single-Agent Systems](#module-3)
+5. [Module 4: LangGraph — The 5 Core Workflow Archetypes](#module-4)
+6. [Module 5: Project 1 — Multi-Agent Research System](#module-5)
+7. [Module 6: Project 2 — AI Video Assistant](#module-6)
+8. [Module 7: The Universal Agent Design Blueprint](#module-7)
+9. [Module 8: Grand Summary & Final Exam](#module-8)
+
+---
+
+# Prologue: The Cognitive Revolution & Developer Empathy
+
+If you have ever spent hours pulling your hair out because a prompt worked yesterday but failed today — **welcome to the reality of building with Generative AI**.
+
+As software engineers, we grew up in a world of deterministic logic:
+```python
+if user.is_authenticated():
+    return render_dashboard()
+```
+
+Code was binary. An `if` evaluated to `True` or `False`. LLMs shatter this worldview — they are **probabilistic next-token predictors**. They don't "know" truths; they calculate statistical affinities across billions of parameters.
+
+> **Core Insight:** Agentic AI is the discipline of wrapping probabilistic model intelligence inside deterministic control structures.
+
+### The Four Eras of Software Engineering
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                       THE 4 ERAS OF SOFTWARE                             │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Era 1: DETERMINISTIC  (1950-2010)                                         │
+│   Developer writes every rule. if/else, loops, data structures.           │
+│   "If age > 18, allow access"                                            │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Era 2: MACHINE LEARNING  (2010-2020)                                      │
+│   Developer feeds data. Model learns patterns.                           │
+│   "Train on 1M examples, model predicts churn probability"               │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Era 3: GENERATIVE AI  (2020-2023)                                         │
+│   Developer writes a prompt. Model generates content.                    │
+│   "Summarize this document in 3 bullet points"                           │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Era 4: AGENTIC AI  (2023-Present)                                         │
+│   Developer defines goals + tools. Agent plans and executes.             │
+│   "Research LLM agents, write a report, get it reviewed, iterate"        │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### Core Mental Models
+
+| Concept | Analogy | Real-World Equivalent |
+|---|---|---|
+| LLM | Brilliant intern with no memory | Forgets everything after each conversation |
+| Prompt | The briefing document | Better brief = better output |
+| Tool | Intern's phone/computer | Lets the LLM interact with the real world |
+| Agent | Intern + task list + memory | Works independently toward a goal |
+| LangGraph | Project management system | Defines who does what, in what order |
+| State | Shared whiteboard | Everyone reads and writes to the same board |
+
+---
+
+# Module 1: Foundations — LangChain, LLMs & LCEL
+
+## 1.1 The Anatomy of Large Language Models
+
+An LLM is a **next-token prediction engine**. Given tokens, it outputs a probability distribution over the vocabulary for the next token.
+
+```
+Input Tokens  ->  [Transformer Layers]  ->  Logits  ->  Softmax  ->  Probabilities
+                                                                  ->  Sampling  ->  Token
+```
+
+The model is **not looking up facts** — it pattern-matches from training data. This is why LLMs hallucinate: they pick statistically likely tokens, not factually correct ones.
+
+## 1.2 Hyperparameter Mechanics
+
+### Temperature
+
+```
+LOW TEMPERATURE (0.1)          HIGH TEMPERATURE (0.9)
+--------------------------     --------------------------
+"mat"   -> 89% ||||||||||||    "mat"   -> 35% ||||
+"floor" ->  7% |               "floor" -> 28% ||||
+"chair" ->  3%                 "chair" -> 22% |||
+"roof"  ->  1%                 "roof"  -> 15% ||
+
+Predictable, repetitive        Creative, varied, riskier
+Use for: code, facts           Use for: stories, ideas
+```
+
+**Numerical Example:**
+- Raw logits: `[2.0, 1.0, 0.5]`
+- With temp=1.0: softmax -> `[0.59, 0.24, 0.17]`
+- With temp=0.5: divide by 0.5 -> `[4.0, 2.0, 1.0]` -> softmax -> `[0.84, 0.11, 0.05]`
+- With temp=2.0: divide by 2.0 -> `[1.0, 0.5, 0.25]` -> softmax -> `[0.47, 0.32, 0.21]`
+
+### Quick Cheat Sheet
+
+| Hyperparameter | Use | Don't Use |
+|---|---|---|
+| Temp 0.0-0.3 | Facts, code, SQL | Creative writing |
+| Temp 0.7-1.0 | Stories, brainstorm | Medical/legal answers |
+| Top-P 0.9 | General-purpose default | Very strict outputs |
+| Top-K 40-50 | Balanced variety | — |
+
+## 1.3 Chat Models & Message Types
+
+```
++------------------+------------------------------------------+
+| SystemMessage    | Sets AI persona/rules                    |
+| HumanMessage     | User's input                             |
+| AIMessage        | Model's previous response                |
+| ToolMessage      | Result from a tool call                  |
++------------------+------------------------------------------+
+```
+
+### Code: Minimal Chat Model (`chatmodels/chat.py`)
+
+```python
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from langchain_mistralai import ChatMistralAI
+
+model = ChatMistralAI(model = "mistral-small-2506",temperature=0.9)
+
+response = model.invoke("write a poem on AI")
+
+print(response.content)
+```
+
+**Why `load_dotenv()` first?** The Mistral API key lives in a `.env` file. Loading it before creating the model makes the key available in `os.environ`.
+
+---
+
+### Code: Multi-Turn Chatbot with Personality Modes (`chatmodels/chatbot.py`)
+
+```python
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from langchain_mistralai import ChatMistralAI
+from langchain_core.messages import AIMessage, SystemMessage , HumanMessage
+
+
+model = ChatMistralAI(model = "mistral-small-2506",temperature=0.9)
+
+print("chosse your AI mode")
+print("press 1 for Angry mode")
+print("press 2 for funny mode ")
+print("press 3 for sad mode")
+
+choice = int(input("tell your response :- "))
+
+if choice == 1:
+    mode = "You are an angry AI agent. You respond aggressively and impatiently."
+elif choice == 2:
+    mode = "You are a very funny AI agent. You respond with humor and jokes."
+elif choice == 3:
+    mode = "You are a very sad AI agent. You respond in a depressed and emotional tone."
+
+
+messages = [
+    SystemMessage(content=mode)
+]
+
+print("----------------- welcom type 0 to exit the application-----------------")
+while True:
+    
+    prompt = input("You : ")
+    messages.append(HumanMessage(content=prompt))
+    if prompt == "0":
+        break
+    response = model.invoke(messages)
+    messages.append(AIMessage(content=response.content))
+    print("Bot :",response.content)
+
+print(messages)
+```
+
+**How memory works here:** The `messages` list acts as **manual memory**. Every turn, both the human message and the AI response are appended. On the next `.invoke(messages)`, the model sees the full conversation history.
+
+**Flow:**
+```
+Start -> Pick Mode -> Create SystemMessage
+  |
+Loop:
+  User types -> append HumanMessage
+  model.invoke(all messages) -> get AIMessage
+  append AIMessage -> print -> repeat
+  |
+User types "0" -> break loop
+```
+
+---
+
+### Code: Streamlit UI Chatbot (`chatmodels/UIchatbot.py`)
+
+```python
+import streamlit as st
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from langchain_mistralai import ChatMistralAI
+from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
+
+
+# ---------------- MODEL ----------------
+model = ChatMistralAI(model="mistral-small-2506", temperature=0.9)
+
+
+# ---------------- PAGE ----------------
+st.set_page_config(
+    page_title="AI Mood Chatbot",
+    page_icon="robot",
+    layout="centered"
+)
+
+st.title("Mood Based AI Chatbot")
+st.caption("Choose AI personality and start chatting | Type 0 to stop")
+
+
+# ---------------- MODE SELECTION ----------------
+mode_choice = st.radio(
+    "Choose your AI Mode:",
+    ["Angry", "Funny", "Sad"],
+    horizontal=True
+)
+
+
+# Map mode
+if mode_choice == "Angry":
+    mode = "You are an angry AI agent. You respond aggressively and impatiently."
+elif mode_choice == "Funny":
+    mode = "You are a very funny AI agent. You respond with humor and jokes."
+else:
+    mode = "You are a very sad AI agent. You respond in a depressed and emotional tone."
+
+
+# ---------------- SESSION MEMORY ----------------
+if "messages" not in st.session_state or st.session_state.get("current_mode") != mode:
+    st.session_state.current_mode = mode
+    st.session_state.messages = [SystemMessage(content=mode)]
+
+
+# ---------------- DISPLAY CHAT ----------------
+for msg in st.session_state.messages:
+    if isinstance(msg, HumanMessage):
+        with st.chat_message("user"):
+            st.write(msg.content)
+
+    elif isinstance(msg, AIMessage):
+        with st.chat_message("assistant"):
+            st.write(msg.content)
+
+
+# ---------------- USER INPUT ----------------
+user_input = st.chat_input("Say something...")
+
+if user_input:
+
+    if user_input == "0":
+        st.warning("Conversation ended. Refresh page to start again.")
+        st.stop()
+
+    # Add user message
+    st.session_state.messages.append(HumanMessage(content=user_input))
+    with st.chat_message("user"):
+        st.write(user_input)
+
+    # Get AI response
+    response = model.invoke(st.session_state.messages)
+
+    # Add AI message
+    st.session_state.messages.append(AIMessage(content=response.content))
+
+    with st.chat_message("assistant"):
+        st.write(response.content)
+
+
+# ---------------- CLEAR BUTTON ----------------
+st.divider()
+if st.button("Reset Chat"):
+    st.session_state.messages = [SystemMessage(content=mode)]
+    st.rerun()
+```
+
+**Why `st.session_state`?** Streamlit re-runs the entire script on every user interaction. Without `session_state`, your `messages` list would reset to empty on every message.
+
+---
+
+### Code: HuggingFace Cloud Model (`chatmodels/huggingface.py`)
+
+```python
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+
+llm = HuggingFaceEndpoint(
+    repo_id="deepseek-ai/DeepSeek-R1"
+)
+
+model = ChatHuggingFace(llm=llm)
+
+response = model.invoke("who are you ? ")
+
+print(response.content)
+```
+
+### Code: Local Model (`chatmodels/localmodel.py`)
+
+```python
+from langchain_huggingface import ChatHuggingFace, HuggingFacePipeline
+
+llm = HuggingFacePipeline.from_model_id(
+    model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    task="text-generation",
+    pipeline_kwargs = dict(
+         max_new_tokens=512,
+        do_sample=False,
+        repetition_penalty=1.03,
+    )
+
+)
+
+
+chat_model = ChatHuggingFace(llm=llm)
+
+result = chat_model.invoke("what is data science ?")
+
+print(result.content)
+```
+
+### Model Comparison
+
+| Approach | Cost | Speed | Privacy | Use When |
+|---|---|---|---|---|
+| `HuggingFaceEndpoint` | API cost | Fast | Data leaves machine | Most cases |
+| `HuggingFacePipeline` (local) | Free | Slow (CPU) | 100% private | Air-gapped / sensitive data |
+
+---
+
+## 1.4 Embedding Models
+
+Embeddings convert text into dense numerical vectors capturing semantic meaning.
+
+```
+"Dog likes to play"     ->  [0.23, -0.87, 0.44, ...]  (similar vectors)
+"Puppy enjoys games"    ->  [0.21, -0.83, 0.47, ...]
+"Stock market crashed"  ->  [-0.92, 0.11, -0.33, ...] (very different)
+```
+
+### Code: OpenAI Embeddings (`embeddingmodels/embeddings.py`)
+
+```python
+from langchain_openai import OpenAIEmbeddings
+from dotenv import load_dotenv
+
+load_dotenv()
+
+embeddings = OpenAIEmbeddings(
+    model = 'text-embedding-3-large',
+    dimensions=64
+)
+
+texts = [
+    "Hello this is Akarsh Vyas",
+    "Hello your name is YouTube",
+    "And you all are very beautiful"
+]
+
+vector = embeddings.embed_documents(texts)
+
+print(vector)
+```
+
+### Code: HuggingFace Embeddings (`embeddingmodels/huggingface_embedding.py`)
+
+```python
+from langchain_huggingface import HuggingFaceEmbeddings
+
+embedding = HuggingFaceEmbeddings(
+    model_name = "sentence-transformers/all-MiniLM-L6-v2"
+
+)
+texts = [
+    "Hello this is Akarsh Vyas",
+    "Hello your name is YouTube",
+    "And you all are very beautiful"
+]
+
+
+
+vector = embedding.embed_documents(texts)
+
+print(vector)
+```
+
+### Embedding Model Comparison
+
+| Model | Dimensions | Cost | Quality |
+|---|---|---|---|
+| `text-embedding-3-large` | 3072 | $$ API | Best |
+| `text-embedding-3-small` | 1536 | $ API | Very Good |
+| `all-MiniLM-L6-v2` | 384 | Free (local) | Good |
+| `all-mpnet-base-v2` | 768 | Free (local) | Better |
+
+---
+
+## 1.5 Output Parsers & Structured Data
+
+### Code: Movie Information Extractor (`CineSage/core.py`)
+
+```python
+from dotenv import load_dotenv
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel
+from typing import List,Optional
+from langchain_core.output_parsers import PydanticOutputParser
+
+load_dotenv()
+from langchain_mistralai import ChatMistralAI
+
+
+model = ChatMistralAI(model = 'mistral-small-2506')
+
+
+
+class Movie(BaseModel):
+    title: str 
+    release_year : Optional[int]
+    genre: List[str]
+    director: Optional[str]
+    cast: List[str]
+    rating: Optional[float]
+    summary: str
+
+
+
+parser = PydanticOutputParser(pydantic_object=Movie)
+
+
+prompt = ChatPromptTemplate.from_messages([
+    ('system',"""
+Extract movie information from the paragraph
+     {format_instructions}
+"""),
+("human","{paragraph}")
+]
+)
+
+
+
+para = input("Give your paragraph : ")
+
+final_prompt = prompt.invoke(
+    {"paragraph" : para,
+     'format_instructions': parser.get_format_instructions()
+     }
+)
+
+response = model.invoke(final_prompt)
+movie_data = parser.parse(response.content)
+
+print(movie_data)
+```
+
+**How `PydanticOutputParser` works:**
+
+```
+1. parser.get_format_instructions()
+   -> Generates a JSON Schema injected into the prompt
+   -> The LLM "sees" the schema and formats its output accordingly
+
+2. parser.parse(response.content)
+   -> Validates JSON against the Pydantic model
+   -> Returns a typed Python object (not a dict!)
+   -> Raises ValidationError if the LLM output is malformed
+```
+
+### Code: CineSage Streamlit UI (`CineSage/UICore.py`)
+
+```python
+import streamlit as st
+from dotenv import load_dotenv
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel
+from typing import List, Optional
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_mistralai import ChatMistralAI
+
+# -------------------- Setup --------------------
+load_dotenv()
+
+@st.cache_resource
+def get_model():
+    return ChatMistralAI(model="mistral-small-2506")
+
+model = get_model()
+
+# -------------------- Schema --------------------
+class Movie(BaseModel):
+    title: str
+    release_year: Optional[int]
+    genre: List[str]
+    director: Optional[str]
+    cast: List[str]
+    rating: Optional[float]
+    summary: str
+
+parser = PydanticOutputParser(pydantic_object=Movie)
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", """
+Extract movie information from the paragraph.
+{format_instructions}
+"""),
+    ("human", "{paragraph}")
+])
+
+# -------------------- UI --------------------
+st.set_page_config(page_title="Movie Info Extractor", layout="centered")
+
+st.title("Movie Information Extractor")
+st.write("Paste any movie description and AI will convert it into structured data.")
+
+paragraph = st.text_area("Enter Movie Paragraph", height=200)
+
+if st.button("Extract Data"):
+    if not paragraph.strip():
+        st.warning("Please enter a paragraph first.")
+    else:
+        with st.spinner("Analyzing movie..."):
+            try:
+                final_prompt = prompt.invoke({
+                    "paragraph": paragraph,
+                    "format_instructions": parser.get_format_instructions()
+                })
+
+                response = model.invoke(final_prompt)
+
+                st.subheader("Raw Model Output")
+                st.code(response.content, language="json")
+
+                movie_data = parser.parse(response.content)
+
+                st.subheader("Structured Output")
+                st.json(movie_data.dict())
+
+                st.success("Extraction Completed Successfully!")
+
+            except Exception as e:
+                st.error("Failed to parse response. Model did not follow schema.")
+                st.exception(e)
+```
+
+---
+
+## 1.6 LCEL — LangChain Expression Language
+
+LCEL is LangChain's **pipe-based composition system**. The `|` operator chains components, like Unix pipes.
+
+```
+Unix:    cat file.txt | grep "error" | wc -l
+LCEL:    prompt | model | parser
+```
+
+### Code: Sequential Chain (`Generative-AI-video3-/sequencerunnable.py`)
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+
+# 1. Prompt Template
+prompt = ChatPromptTemplate.from_template(
+    "Explain {topic} in simple words"
+)
+
+# 2. Model
+model = ChatMistralAI(model="mistral-small-2506")
+
+# 3. Output Parser
+parser = StrOutputParser()
+
+
+chain = prompt | model | parser
+
+result = chain.invoke("Machine Learning")
+print(result)
+```
+
+**Data flow:**
+```
+chain.invoke("Machine Learning")
+         |
+  prompt.invoke({"topic": "Machine Learning"})
+  -> ChatPromptValue (formatted message)
+         |
+  model.invoke(ChatPromptValue)
+  -> AIMessage(content="Machine learning is...")
+         |
+  parser.invoke(AIMessage)
+  -> "Machine learning is..."  (plain string)
+```
+
+---
+
+### Code: Parallel Chain (`Generative-AI-video3-/parallelrunnable.py`)
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableParallel,RunnableLambda
+
+# Components
+model = ChatMistralAI(model="mistral-small-2506")
+parser = StrOutputParser()
+
+# Two different prompts
+short_prompt = ChatPromptTemplate.from_template(
+    "Explain {topic} in 1-2 lines"
+)
+
+detailed_prompt = ChatPromptTemplate.from_template(
+    "Explain {topic} in detail"
+)
+
+# Input
+topic = "Machine Learning"
+
+chain = RunnableParallel({
+    "short" :RunnableLambda(lambda x :x['short']) |short_prompt | model | parser ,
+    "detailed" :RunnableLambda(lambda x: x['detailed']) |detailed_prompt |model |parser
+})
+
+result = chain.invoke({
+    "short" : {"topic":"Machine Learning"},
+    "detailed" : {"topic":"Deep Learning"}
+})
+
+print(result['short'])
+print(result['detailed'])
+```
+
+**How `RunnableParallel` works:**
+```
+          +-- "short" branch  -> RunnableLambda -> prompt -> model -> parser --+
+Input  ---+                                                                     +-> {"short": ..., "detailed": ...}
+          +-- "detailed" branch -> RunnableLambda -> prompt -> model -> parser -+
+                     Both branches execute CONCURRENTLY
+```
+
+**When to use Parallel?** When operations don't depend on each other's output — cuts wall-clock time nearly in half.
+
+---
+
+### Code: Passthrough — Code Generator + Explainer (`Generative-AI-video3-/runnablepassthrough.py`)
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+
+
+model = ChatMistralAI(model="mistral-small-2506")
+parser = StrOutputParser()
+
+code_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a code generator"),
+    ("human", "{topic}")
+])
+
+explain_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant who explains code in simple terms"),
+    ("human", "Explain the following code in simple words:\n{code}")
+])
+
+seq = code_prompt | model | parser 
+
+
+seq2 = RunnableParallel(
+    {"code" :  RunnablePassthrough(),
+     "explanation" : explain_prompt | model | parser
+    }
+)
+
+chain = seq | seq2
+
+result = chain.invoke({"topic" : "please write a code of palindrome in python "})
+
+print(result['code'])
+print(result['explanation'])
+```
+
+**`RunnablePassthrough` explained:**
+
+```
+Stage 1 (seq):   topic -> code_prompt -> model -> parser -> "def is_palindrome(s)..."
+                                                                  |
+Stage 2 (seq2):  "def is_palindrome..."
+                    +-- "code" key -> RunnablePassthrough() -> "def is_palindrome..." (unchanged)
+                    +-- "explanation" key -> explain_prompt -> model -> parser -> "This code checks..."
+```
+
+---
+
+### LCEL Component Quick Reference
+
+| Component | Purpose | Example |
+|---|---|---|
+| `ChatPromptTemplate` | Format input into messages | `from_template("Explain {topic}")` |
+| `StrOutputParser` | Extract string from AIMessage | Plain text output |
+| `PydanticOutputParser` | Extract typed object | Structured JSON -> Python class |
+| `RunnableParallel` | Run branches concurrently | Two prompts at once |
+| `RunnableLambda` | Wrap any Python function | Custom data transformation |
+| `RunnablePassthrough` | Forward input unchanged | Pass data to multiple branches |
+| `\|` operator | Chain components | `prompt \| model \| parser` |
+
+---
+
+## Quiz 1 — LangChain Foundations
+
+### Multiple Choice
+
+**Q1.** What does `temperature=0` do to an LLM?
+- (A) Makes it more creative
+- **(B) Makes it always pick the highest-probability token (deterministic)**
+- (C) Disables the model
+- (D) Sets top-k to 0
+
+**Q2.** In the chatbot code, why do we append `AIMessage(content=response.content)` to the messages list?
+- (A) To display it in the terminal
+- **(B) To give the model memory of its own previous replies**
+- (C) It's required by the API
+- (D) To count total tokens
+
+**Q3.** What does `RunnablePassthrough` do?
+- (A) Skips the current step
+- (B) Transforms the input to uppercase
+- **(C) Forwards input to the next step unchanged**
+- (D) Adds a delay
+
+### Scenario Questions
+
+**Scenario 1:** You're building a medical diagnosis assistant that expects structured JSON output: `{diagnosis: str, confidence: float, tests_recommended: List[str]}`. Which LangChain components would you combine and in what order?
+
+**Scenario 2:** A content platform needs to simultaneously generate a Tweet (<=280 chars) and a LinkedIn post (300 words) from the same article summary. Which LCEL component enables this?
+
+> **Answers:** Q1=B, Q2=B, Q3=C | Scenario1: `ChatPromptTemplate | ChatModel | PydanticOutputParser` | Scenario2: `RunnableParallel`
+
+---
+
+# Module 2: The RAG Architecture
+
+## 2.1 Why RAG? The Triple Blindness Problem
+
+```
++----------------+------------------------------------------------------+
+| 1. TIME        | Knowledge cutoff. Asks about Oct 2026? Hallucination.|
+| 2. PRIVATE DATA| Never saw your company docs, Slack, internal PDFs.  |
+| 3. PRECISION   | Can't cite exact page 47, paragraph 3 of your PDF.  |
++----------------+------------------------------------------------------+
+```
+
+**RAG solves all three** by storing your documents in a vector store and injecting relevant chunks into the prompt at query time.
+
+## 2.2 The 5-Pillar RAG Architecture
+
+```
++============+============+============+============+============+
+| PILLAR 1   | PILLAR 2   | PILLAR 3   | PILLAR 4   | PILLAR 5   |
+| LOADING    | CHUNKING   | EMBEDDING  | STORING    | RETRIEVAL  |
+|            |            |            |            |            |
+| PDF/Web/   | Split into | Text ->    | Vectors    | Query ->   |
+| TXT ->     | overlapping| Dense      | in Chroma/ | Top-K      |
+| Documents  | chunks     | Vectors    | FAISS      | chunks ->  |
+|            |            |            |            | LLM        |
++============+============+============+============+============+
+```
+
+## 2.3 Document Loading
+
+### Code: PDF Loader (`GenAI-part2-Rag-implementation/document loaders/pdf.py`)
+
+```python
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+
+data = PyPDFLoader("document loaders/GRU.pdf")
+
+docs = data.load()
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size = 1000,
+    chunk_overlap=10
+)
+
+chunks = splitter.split_documents(docs)
+
+print(chunks[0].page_content)
+```
+
+### Code: Web Page Loader (`document loaders/page.py`)
+
+```python
+from langchain_community.document_loaders import WebBaseLoader
+
+url = "https://www.apple.com/in/macbook-pro/"
+
+data = WebBaseLoader(url)
+
+docs = data.load()
+
+print(docs[0].page_content)
+```
+
+## 2.4 Chunking Mathematics
+
+**Why chunk?** A 500-page PDF is ~375,000 tokens. Most models support 32K-128K tokens. You can't fit everything.
+
+**Why chunk overlap?** To avoid cutting sentences at chunk boundaries.
+
+```
+Text: "Machine learning is a subset of AI. It enables systems to learn
+       from data automatically. Neural networks are a key technique."
+
+chunk_size=50 chars, chunk_overlap=10:
+
+Chunk 1: "Machine learning is a subset of AI. It en"
+                                              ^^^^
+Chunk 2:                              "It enables systems to learn from dat"
+Chunk 3:                                          "from data automatically. Neural net"
+```
+
+**`RecursiveCharacterTextSplitter`** splits in priority order:
+1. `"\n\n"` (paragraph breaks)
+2. `"\n"` (line breaks)
+3. `" "` (spaces)
+4. `""` (individual characters — last resort)
+
+## 2.5 Vector Stores & Similarity Search
+
+### Code: ChromaDB Vector Store (`vector store/DB.py`)
+
+```python
+from langchain_community.vectorstores import Chroma
+from langchain_openai import OpenAIEmbeddings
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from langchain_core.documents import Document
+
+docs = [
+    Document(page_content="Python is widely used in Artificial Intelligence.", metadata={"source": "AI_book"}),
+    Document(page_content="Pandas is used for data analysis in Python.", metadata={"source": "DataScience_book"}),
+    Document(page_content="Neural networks are used in deep learning.", metadata={"source": "DL_book"}),
+]
+
+embedding_model = OpenAIEmbeddings()
+
+vectorstore = Chroma.from_documents(
+    documents = docs,
+    embedding= embedding_model,
+    persist_directory= "chroma-db"
+)
+
+result = vectorstore.similarity_search("what is used for data analysis?",k=2)
+
+for r in result:
+    print(r.page_content)
+    print(r.metadata)
+
+retriver = vectorstore.as_retriever()
+
+docs = retriver.invoke("Explain deep learning")
+
+for d in docs:
+    print(d.page_content)
+```
+
+### Cosine Similarity Formula
+
+```
+           Vector A . Vector B
+cos(th) = ---------------------
+           |Vector A| x |Vector B|
+
+Range: -1 (opposite) to +1 (identical)
+```
+
+**Worked Example:**
+- "dog" -> [0.8, 0.2], "puppy" -> [0.75, 0.25], "car" -> [-0.1, 0.9]
+- `cos("dog", "puppy") = (0.8*0.75 + 0.2*0.25) / (0.825 * 0.791) = 0.995` (Very similar!)
+- `cos("dog", "car") = 0.134` (Very different!)
+
+## 2.6 The Complete RAG Chain
+
+### Step 1: Build the Database (`create_database.py`)
+
+```python
+#load pdf 
+#split into chunks 
+#create the embeddings 
+#store into chroma 
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings 
+from langchain_community.vectorstores import Chroma 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+data = PyPDFLoader("document loaders/deeplearning.pdf")
+docs = data.load()
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size = 1000,
+    chunk_overlap = 200
+)
+
+chunks = splitter.split_documents(docs)
+
+embedding_model = OpenAIEmbeddings()
+
+vectorstore = Chroma.from_documents(
+    documents= chunks,
+    embedding=embedding_model,
+    persist_directory="chroma_db"
+)
+```
+
+### Step 2: Query the RAG System (`main.py`)
+
+```python
+from dotenv import load_dotenv
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+
+load_dotenv()
+
+embedding_model = OpenAIEmbeddings()
+
+vectorstore = Chroma(
+    persist_directory= "chroma_db",
+    embedding_function=embedding_model
+)
+
+retriever = vectorstore.as_retriever(
+    search_type = "mmr",
+    search_kwargs = {
+        "k" : 4,
+        "fetch_k":10,
+        "lambda_mult" :0.5
+    }
+)
+
+llm = ChatMistralAI(model = "mistral-small-2506")
+
+#prompt template 
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """You are a helpful AI assistant.
+
+Use ONLY the provided context to answer the question.
+
+If the answer is not present in the context,
+say: "I could not find the answer in the document."
+"""
+        ),
+        (
+            "human",
+            """Context:
+{context}
+
+Question:
+{question}
+"""
+        )
+    ]
+)
+
+print("Rag system created ")
+
+print("press 0 to exit ")
+
+while True:
+    query = input("You : ")
+    if query == "0":
+        break 
+    
+    docs = retriever.invoke(query)
+
+    context = "\n\n".join(
+        [doc.page_content for doc in docs]
+    )
+    
+    final_prompt = prompt.invoke({
+        "context" :context,
+        "question": query
+    })
+    
+    response = llm.invoke(final_prompt)
+
+    print(f"\n AI: {response.content}")
+```
+
+## 2.7 Advanced Retrieval
+
+### MMR — Maximal Marginal Relevance (`retrievers/mmr.py`)
+
+**Problem:** Pure similarity search returns 4 nearly identical chunks all saying "Gradient descent minimizes loss."
+
+**MMR solution:**
+```
+MMR Score = lambda * Similarity(chunk, query) - (1-lambda) * max_Similarity(chunk, selected_chunks)
+
+lambda = 1.0 -> pure similarity (no diversity)
+lambda = 0.0 -> pure diversity (no relevance)
+lambda = 0.5 -> balanced (recommended default)
+```
+
+```python
+from langchain_core.documents import Document
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+
+
+docs = [
+    Document(page_content="Gradient descent is an optimization algorithm used in machine learning."),
+    Document(page_content="Gradient descent minimizes the loss function."),
+    Document(page_content="Gradient descent is an optimization that minimizes the loss function."),
+    Document(page_content="Neural networks use gradient descent for training."),
+    Document(page_content="Support Vector Machines are supervised learning algorithms.")
+]
+
+
+embeddings = HuggingFaceEmbeddings()
+
+
+vectorstore = Chroma.from_documents(docs, embeddings)
+
+
+similarity_retriever = vectorstore.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k":3}
+)
+
+print("\n===== Similarity Search Results =====\n")
+
+similarity_docs = similarity_retriever.invoke("What is gradient descent?")
+
+for doc in similarity_docs:
+    print(doc.page_content)
+
+
+mmr_retriever = vectorstore.as_retriever(
+    search_type="mmr",
+    search_kwargs={"k":3}
+)
+
+print("\n===== MMR Results =====\n")
+
+mmr_docs = mmr_retriever.invoke("What is gradient descent?")
+
+for doc in mmr_docs:
+    print(doc.page_content)
+```
+
+### MultiQuery Retriever (`retrievers/multiquery.py`)
+
+**Problem:** Your question is ambiguous. "Tell me about gradient descent optimization" might miss chunks using "loss minimization algorithm."
+
+**Solution:** Generate N reformulations of the query, retrieve for each, deduplicate.
+
+```python
+from langchain_core.documents import Document
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_classic.retrievers.multi_query import MultiQueryRetriever
+from langchain_mistralai import ChatMistralAI
+from dotenv import load_dotenv
+
+
+
+load_dotenv()
+
+docs = [
+    Document(page_content="Gradient descent is an optimization algorithm used in machine learning."),
+    Document(page_content="Gradient descent minimizes the loss function."),
+    Document(page_content="Gradient descent is an optimization that minimizes the loss function."),
+    Document(page_content="Neural networks use gradient descent for training."),
+    Document(page_content="Support Vector Machines are supervised learning algorithms.")
+]
+
+
+embeddings = HuggingFaceEmbeddings()
+
+vectorstore = Chroma.from_documents(docs, embeddings)
+
+retriever = vectorstore.as_retriever()
+
+
+llm = ChatMistralAI(model="mistral-small-latest")
+
+multi_query_retriever = MultiQueryRetriever.from_llm(
+    retriever=retriever,
+    llm=llm
+)
+
+query = "What is gradient descent?"
+
+docs = multi_query_retriever.invoke(query)
+
+
+print("\nRetrieved Documents:\n")
+
+for doc in docs:
+    print(doc.page_content)
+```
+
+**Flow:**
+```
+"What is gradient descent?"
+         | (LLM generates variations)
+Query 1: "Explain the gradient descent algorithm"
+Query 2: "How does gradient descent minimize loss?"
+Query 3: "What optimization technique uses gradients?"
+         | (retrieve for each, deduplicate)
+Final: Union of all unique retrieved documents
+```
+
+### Arxiv Retriever (`retrievers/arixv.py`)
+
+```python
+from langchain_community.retrievers import ArxivRetriever
+
+# create the retriever
+retriever = ArxivRetriever(
+    load_max_docs=2,      # number of papers to retrieve
+    load_all_available_meta=True
+)
+
+# query arxiv
+docs = retriever.invoke("large language models")
+
+# print results
+for i, doc in enumerate(docs):
+    print(f"\nResult {i+1}")
+    print("Title:", doc.metadata.get("Title"))
+    print("Authors:", doc.metadata.get("Authors"))
+    print("Summary:", doc.page_content)  # print first 500 characters
+```
+
+## 2.8 RAG vs Fine-Tuning vs Long Context
+
+| Approach | When Data Changes | Cost | Private Data | Accuracy |
+|---|---|---|---|---|
+| **RAG** | Daily/real-time | Low | Yes | High |
+| **Fine-tuning** | Rarely (style/tone) | Very High | Risky | Depends |
+| **Long Context** | Small documents | Medium | Yes | High but expensive |
+
+> **Rule of thumb:** Use RAG for factual grounding. Use fine-tuning for style. Use long context for one-off short document analysis.
+
+---
+
+## Quiz 2 — RAG Architecture
+
+**Q1.** Why use `chunk_overlap`?
+- **(B) To avoid losing information at chunk boundaries**
+
+**Q2.** `lambda_mult=0.5` in MMR means:
+- **(B) Apply 50% relevance and 50% diversity**
+
+**Q3.** MultiQueryRetriever solves which problem?
+- **(B) Missing relevant chunks due to poor query phrasing**
+
+**Scenario:** A law firm wants a chatbot over 10,000 legal cases added weekly. Use RAG or fine-tuning?
+> **RAG.** New documents added weekly makes retraining impossible. RAG can index new documents in seconds and provides precise citations.
+
+---
+
+# Module 3: Tools, Function Calling & Single-Agent Systems
+
+## 3.1 The Function Calling Paradigm
+
+```
+WITHOUT TOOLS:
+User: "What's the weather in Mumbai?"
+LLM:  "The weather in Mumbai is typically warm..." <- Hallucination
+
+WITH TOOLS:
+User: "What's the weather in Mumbai?"
+LLM:  "I'll check." -> calls get_weather("Mumbai") -> 32C, Humid
+LLM:  "Current weather in Mumbai is 32C with high humidity."
+```
+
+**The Tool Calling Protocol:**
+```
+1. Developer binds tools:  llm.bind_tools([get_weather])
+2. User sends message
+3. LLM returns: AIMessage(tool_calls=[{"name": "get_weather", "args": {"city": "Mumbai"}}])
+4. Developer executes: get_weather("Mumbai") -> "32C Humid"
+5. Result wrapped in ToolMessage, sent back to LLM
+6. LLM generates final human-readable response
+```
+
+## 3.2 Creating Custom Tools (`Generative-AI-video3-/owntool.py`)
+
+```python
+from langchain.tools import tool
+
+
+@tool #decorator for creating tool 
+def get_greeting(name : str) -> str: #type hints
+    """Generate a greeting message for a user""" #docstring
+
+    return f"Hello {name}, Welcome to the AI world"
+
+
+result = get_greeting.invoke({"name":"akarsh"})
+print(result)
+
+print(get_greeting.name)
+print(get_greeting.description)
+print(get_greeting.args)
+```
+
+**Three requirements for `@tool`:**
+1. `@tool` decorator — registers it as a LangChain tool
+2. Type hints on ALL parameters — builds the JSON schema
+3. Docstring — the LLM uses this to decide WHEN to call the tool
+
+## 3.3 Tool Binding & Execution Protocol (`Generative-AI-video3-/toolcalling.py`)
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+from langchain_mistralai import ChatMistralAI
+from langchain.tools import tool 
+from langchain_core.messages import HumanMessage
+from rich import print 
+
+#1 creating a tool 
+
+@tool
+def get_text_length(text: str) -> int:
+    """Returns the number of character in a given text"""
+    return len(text)
+
+tools = {
+    "get_text_length" : get_text_length
+}
+llm = ChatMistralAI(model = "mistral-small-2506")
+
+#tool binding 
+llm_with_tool = llm.bind_tools([get_text_length])
+
+message = []
+prompt = input("You: ")
+query = HumanMessage(prompt)
+message.append(query)
+
+result = llm_with_tool.invoke(message)
+
+message.append(result)
+
+if result.tool_calls:
+    tool_name = result.tool_calls[0]["name"]
+    tool_message = tools[tool_name].invoke(result.tool_calls[0])
+    message.append(tool_message)
+   
+
+result = llm_with_tool.invoke(message)
+print(result.content)
+```
+
+**Step-by-step execution trace:**
+```
+Step 1: message = [HumanMessage("How many chars in 'hello world'?")]
+Step 2: llm_with_tool.invoke(message)
+        -> AIMessage(tool_calls=[{"name": "get_text_length", "args": {"text": "hello world"}}])
+Step 3: message = [HumanMessage, AIMessage(tool_calls)]
+Step 4: tools["get_text_length"].invoke(...) -> ToolMessage(content="11")
+Step 5: message = [HumanMessage, AIMessage(tool_calls), ToolMessage("11")]
+Step 6: llm_with_tool.invoke(message) -> "'hello world' has 11 characters."
+```
+
+## 3.4 News Summarizer with Tavily (`Generative-AI-video3-/newssummarizer.py`)
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+search_tool = TavilySearchResults(max_result = 5)
+
+llm = ChatMistralAI(model = "mistral-small-2506")
+
+prompt = ChatPromptTemplate.from_template(
+    """
+You are a helpful assistant
+
+summarize the following news into clear bullet points
+
+{news}
+"""
+)
+
+chain = prompt | llm | StrOutputParser()
+
+news_result = search_tool.run("Latest AI news of 2026 ")
+
+result = chain.invoke({"news" : news_result})
+
+print(result)
+
+
+print(search_tool.description)
+print(search_tool.name)
+print(search_tool.args)
+```
+
+**This is NOT an agent** — it's a tool-augmented chain. The difference: this code manually calls the tool; an agent decides autonomously when and whether to call it.
+
+## 3.5 The ReAct Framework
+
+```
+REACT LOOP:
+  [THOUGHT]  "I need to search for current iPhone prices in India."
+  [ACTION]   Call web_search("iPhone price India 2026")
+  [OBSERVE]  "iPhone 17 Pro: Rs.1,29,900..."
+  [THOUGHT]  "I have the price. I can answer now."
+  [ANSWER]   "The iPhone 17 Pro starts at Rs.1,29,900 in India."
+```
+
+## 3.6 Production Agent with Human Approval Middleware (`Generative-AI-video3-/Agents.py`)
+
+```python
+from dotenv import load_dotenv
+import os
+import requests
+
+load_dotenv()
+
+from langchain_mistralai import ChatMistralAI
+from langchain.tools import tool
+from langchain_core.messages import HumanMessage, ToolMessage
+from tavily import TavilyClient
+from rich import print
+from langchain.agents import create_agent 
+from langchain.agents.middleware import wrap_tool_call
+
+# =========================
+# Weather Tool
+# =========================
+
+@tool
+def get_weather(city: str) -> str:
+    """Get current weather of a city"""
+    
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city},IN&appid={api_key}&units=metric"
+    
+    response = requests.get(url)
+    data = response.json()
+    
+    if str(data.get("cod")) != "200":
+        return f"Error: {data.get('message', 'Could not fetch weather')}"
+    
+    temp = data["main"]["temp"]
+    desc = data["weather"][0]["description"]
+    
+    return f"Weather in {city}: {desc}, {temp}C"
+
+
+# =========================
+# News Tool (Tavily)
+# =========================
+
+tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+
+@tool
+def get_news(city: str) -> str:
+    """Get latest news about a city"""
+    
+    response = tavily_client.search(
+        query=f"latest news in {city}",
+        search_depth="basic",
+        max_results=3
+    )
+    
+    results = response.get("results", [])
+    
+    if not results:
+        return f"No news found for {city}"
+    
+    news_list = []
+    
+    for r in results:
+        title = r.get("title", "No title")
+        url = r.get("url", "")
+        snippet = r.get("content", "")
+        
+        news_list.append(
+            f"- {title}\n  {url}\n  {snippet[:100]}..."
+        )
+    
+    return f"Latest news in {city}:\n\n" + "\n\n".join(news_list)
+# =========================
+# LLM Setup
+# =========================
+
+llm = ChatMistralAI(model="mistral-small-2506")
+
+
+@wrap_tool_call
+def human_approval(request, handler):
+    """Ask for human approval before every tool call."""
+    tool_name = request.tool_call["name"]
+    confirm = input(f"Agent wants to call '{tool_name}'. Approve? (yes/no): ")
+
+    if confirm.lower() != "yes":
+        return ToolMessage(
+            content="Tool call denied by user.",
+            tool_call_id=request.tool_call["id"]
+        )
+
+    return handler(request)  
+
+agent = create_agent(
+    llm,
+    tools = [get_weather,get_news],
+    system_prompt= "you are a helpful city assistant.",
+    middleware= [human_approval]
+)
+
+print("City Agent | type exit to quit")
+
+while True:
+    user_input = input("You : ")
+    if user_input.lower() == "exit":
+        break 
+    result = agent.invoke({
+        "messages": [{"role": "user", "content": user_input}]
+    })
+
+    print("bot : ", result['messages'][-1].content )
+```
+
+---
+
+## Quiz 3 — Tools & Agents
+
+**Q1.** Why is the docstring on a `@tool` function critical?
+- **(B) The LLM reads it to decide when to call the tool**
+
+**Q2.** In `toolcalling.py`, why do we invoke the LLM TWICE?
+- **(B) First call -> tool call decision; Second call -> final answer using tool result**
+
+**Q3.** What does `middleware=[human_approval]` accomplish?
+- **(B) Intercepts every tool call and requires human confirmation before running it**
+
+**Scenario:** Banking assistant with `check_balance()`, `transfer_money()`, `get_statement()`. Should you use human approval middleware?
+> **Yes, for `transfer_money()` only.** The other two are read-only. Only `transfer_money` is irreversible.
+
+---
+
+# Module 4: LangGraph — The 5 Core Workflow Archetypes
+
+## 4.1 Why LangGraph?
+
+```
+LCEL:        A -> B -> C                (always linear)
+LangGraph:   A -> B -> C               (sequential)
+             A -> B or C               (conditional)
+             A -> B -> A -> B          (iterative/cyclic)
+             A -> B -> [PAUSE] -> C    (human-in-loop)
+             A -> B and C              (parallel)
+```
+
+## 4.2 State Modeling (`langgraph/Agentic-AI-youtube/states.py`)
+
+```python
+#1) TypedDict approach - simplest, most common
+
+from typing import TypedDict
+
+class State(TypedDict):
+    topic : str 
+    summary : str 
+    score : int 
+
+
+#2) pydantic approach
+#it is good at data validation and type checking at 
+#runtime 
+
+from pydantic import BaseModel, field_validator
+
+class State(BaseModel):
+    topic : str 
+    score :int 
+    summary : str = ""
+
+    @field_validator
+    def score_positive(cls,v):
+        if v < 0:
+            raise ValueError("score must be positive")
+
+#python dataclaseess 
+
+#standard python dataclass but it is used very rarelty 
+
+from dataclasses import dataclass, field 
+
+@dataclass
+class State:
+    topic : str = ""
+    summary  : str = ""
+    messages : list = field(default_factory=list)
+
+
+from langgraph.graph import MessagesState
+
+class State(MessagesState):
+    # messages field is already included with add_messages reducer
+    # just add your extra fields
+    user_name: str
+    language: str
+```
+
+### State Approach Comparison
+
+| Approach | Validation | Use When |
+|---|---|---|
+| `TypedDict` | None (type hints only) | Most LangGraph workflows |
+| `Pydantic BaseModel` | Runtime validation | Data must be validated |
+| `@dataclass` | None | Rare — prefer TypedDict |
+| `MessagesState` | add_messages built-in | Chatbot/conversation flows |
+
+---
+
+## 4.3 Archetype 1 — Sequential Workflow
+
+**Analogy:** Assembly line — each station completes one job, passes the baton.
+
+```
+START -> [editor_node] -> [scriptwriter_node] -> [translator_node] -> END
+```
+
+### Code: Video Content Pipeline (`sequential_base.py`)
+
+```python
+import os 
+from typing import TypedDict
+
+#Lets create the state first 
+
+class pipelinestate(TypedDict):
+    raw_input : str 
+    edited_text : str 
+    script_text : str 
+    final_output : str 
+
+from langchain_groq import ChatGroq 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
+
+def editor_node(state :pipelinestate) -> dict:
+    """Stage 1: Cleans up grammar, removes typos, and refines the tone."""
+
+    prompt = (
+        "You are an expert copyeditor. Clean up the following raw text. "
+        "Fix any grammatical errors, spelling mistakes, and smooth out the transition flow "
+        "while keeping the core message intact. Return only the edited text.\n\n"
+        f"Text:\n{state['raw_input']}"
+    )
+    response = llm.invoke(prompt)
+
+    return {"edited_text" : response.content.strip()}
+
+def scriptwriter_node(state: pipelinestate) -> dict:
+    """Stage 2: Formats the clean text into an engaging video script style."""
+    print("\n--- [Stage 2] Executing Scriptwriter Node ---")
+    
+    prompt = (
+        "You are a charismatic YouTube content creator. Take this edited text and transform "
+        "it into a highly engaging, punchy, conversational video script hook. Make it sound "
+        "like a real person speaking passionately. Return only the script content.\n\n"
+        f"Edited Text:\n{state['edited_text']}"
+    )
+    
+    response = llm.invoke(prompt)
+    return {"script_text": response.content.strip()}
+
+def translator_node(state: pipelinestate) -> dict:
+    """Stage 3: Translates the script into natural flowing Hinglish."""
+    print("\n--- [Stage 3] Executing Hinglish Translator Node ---")
+    
+    prompt = (
+        "You are an expert content localizer for the Indian market. Take the following script "
+        "and convert it into natural, flowing 'Hinglish'. Do not simply translate it sentence-by-sentence "
+        "or repeat information. Alternating comfortably between Hindi and English phrases just like "
+        "an intellectual tech educator would speak naturally on a live stream. Keep the energy high! "
+        "Return only the final Hinglish text.\n\n"
+        f"Script:\n{state['script_text']}"
+    )
+    
+    response = llm.invoke(prompt)
+    return {"final_output": response.content.strip()}
+
+
+#now your state and nodes are ready and now it is time to create the graph 
+#and for creating the graph you have to connect tese nodes and for that you have 
+#to use the edges 
+#edges are very important to create the workflows 
+
+from langgraph.graph import StateGraph , START , END 
+
+#create the graph
+graph = StateGraph(pipelinestate)
+
+#add the nodes in our graph 
+
+graph.add_node("editor",editor_node)
+graph.add_node("scriptwriter",scriptwriter_node)
+graph.add_node("translator",translator_node)
+
+
+#Add edges (sequential - one after another)
+
+graph.add_edge(START,"editor")
+graph.add_edge('editor',"scriptwriter")
+graph.add_edge('scriptwriter',"translator")
+graph.add_edge('translator',END)
+
+#compile the graph 
+app = graph.compile()
+
+result = app.invoke({
+    "raw_input" :"AI agents are the future of tech. They can think, plan, and act on their own. LangGraph helps you build these agents with proper control and memory."
+})
+
+#output 
+print("your result are : - \n\n")
+print(result['final_output'])
+```
+
+---
+
+## 4.4 Archetype 2 — Parallel Workflow with Custom Reducer
+
+**Analogy:** Reconnaissance squad — multiple scouts gather different intel simultaneously.
+
+```
+START -> +-- [toxicity_node] ------+-> END
+         +-- [copyright_node] -----+
+         +-- [culture_node] -------+
+         
+All 3 write to "safety_scores" dict -- the reducer MERGES them
+```
+
+### Code: Multi-Branch Safety Analyzer (`parallel_reducers.py`)
+
+```python
+import os 
+from typing import TypedDict, Annotated
+from dotenv import load_dotenv
+from langchain_groq import ChatGroq
+from langgraph.graph import StateGraph, START , END 
+
+load_dotenv()
+
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1)
+def merge_score_dicts(existing :dict , newupdate : dict) -> dict:
+    if existing is None:
+        return newupdate 
+    return {**existing , **newupdate}
+
+#create a state 
+class AnalyzerState(TypedDict):
+    raw_text : str 
+    safety_scores : Annotated[dict[str , int],merge_score_dicts]
+
+
+#nodes 
+def toxicity_node(state: AnalyzerState) -> dict:
+    print("\n [Branch 1] Analyzing Toxicity and Hate Speech...")
+    prompt = (
+        "Analyze the following text for profanity, aggression, hate speech, or toxicity. "
+        "Provide a score from 0 to 100, where 0 means perfectly clean and 100 means highly toxic. "
+        "Return ONLY the plain integer number, nothing else.\n\n"
+        f"Text:\n{state['raw_text']}"
+    )
+    response = llm.invoke(prompt)
+    try:
+        score = int(response.content.strip())
+    except ValueError:
+        score = 0
+        
+    # Return a sub-dictionary under our single state key
+    return {"safety_scores": {"toxicity_level": score}}
+
+def copyright_node(state: AnalyzerState) -> dict:
+    print("\n [Branch 2] Analyzing Copyright & Originality Risks...")
+    prompt = (
+        "Analyze the following text. Judge if it sounds heavily plagiarized, unoriginal, "
+        "or presents a corporate trademark risk. Provide a score from 0 to 100, "
+        "where 0 means entirely original and 100 means high risk. "
+        "Return ONLY the plain integer number, nothing else.\n\n"
+        f"Text:\n{state['raw_text']}"
+    )
+    response = llm.invoke(prompt)
+    try:
+        score = int(response.content.strip())
+    except ValueError:
+        score = 0
+        
+    # Return a sub-dictionary under the EXACT SAME state key
+    return {"safety_scores": {"copyright_risk": score}}
+
+
+def culture_node(state: AnalyzerState) -> dict:
+    print("\n [Branch 3] Analyzing Regional & Cultural Sensitivity...")
+    prompt = (
+        "Analyze the following text for regional sensitivities, political landmines, "
+        "or cultural insensitivity that might offend a global audience. Provide a score from 0 to 100, "
+        "where 0 means completely safe and 100 means highly offensive. "
+        "Return ONLY the plain integer number, nothing else.\n\n"
+        f"Text:\n{state['raw_text']}"
+    )
+    response = llm.invoke(prompt)
+    try:
+        score = int(response.content.strip())
+    except ValueError:
+        score = 0
+        
+    # Return a sub-dictionary under the EXACT SAME state key
+    return {"safety_scores": {"cultural_insensitivity": score}}
+
+
+builder = StateGraph(AnalyzerState)
+
+
+builder.add_node("toxicity_node",toxicity_node)
+builder.add_node("copyright_check",copyright_node)
+builder.add_node("culture_node",culture_node)
+
+
+builder.add_edge(START,"toxicity_node")
+builder.add_edge(START,"copyright_check")
+builder.add_edge(START,"culture_node")
+
+
+builder.add_edge("toxicity_node",END)
+builder.add_edge("copyright_check",END)
+builder.add_edge("culture_node",END)
+
+
+app = builder.compile()
+
+sample_script = """
+    Yo guys! Welcome back to the stream. Today I am going to show you how to hack into 
+    your friend's system using a script I copied directly from an online forum. 
+    Honestly, traditional security protocols are absolute garbage and anyone still using 
+    them is an absolute idiot. Let's dive into the code!
+    """
+    
+
+    
+initial_state = {
+    "raw_text": sample_script,
+    "safety_scores": {} # Initialized as an empty dictionary
+}
+    
+final_state = app.invoke(initial_state)
+    
+
+print(final_state["safety_scores"])
+```
+
+**The `Annotated[dict, merge_score_dicts]` explained:**
+
+```
+WITHOUT reducer (default: last-write wins):
+  Branch 1: {"safety_scores": {"toxicity_level": 85}}
+  Branch 2: {"safety_scores": {"copyright_risk": 60}}
+  Branch 3: {"safety_scores": {"cultural_insensitivity": 40}}
+  Result:   {"safety_scores": {"cultural_insensitivity": 40}}  <- ONLY last write survives!
+
+WITH merge_score_dicts reducer:
+  Result:   {"toxicity_level": 85, "copyright_risk": 60, "cultural_insensitivity": 40}  <- ALL preserved!
+```
+
+---
+
+## 4.5 Archetype 3 — Conditional Workflow (`conditional_RAG.py`)
+
+**Analogy:** Hospital triage doctor routing patients to the right department.
+
+```
+                    +--- [academic_rag_node] ---+
+START -> [classifier] --+--- [fee_rag_node] --------+-- [response_node] -> END
+                    +--- [general_node] ---------+
+```
+
+```python
+import os 
+from typing import TypedDict, Annotated
+from langgraph.graph.message import add_messages 
+from langgraph.graph import StateGraph , START , END 
+from langchain_groq import ChatGroq
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from dotenv import load_dotenv 
+
+load_dotenv()
+
+
+#Step 1 - Building the RAG retrievers 
+
+embeddings = HuggingFaceEmbeddings(model_name = "sentence-transformers/all-MiniLM-L6-v2" )
+
+def build_retriver(pdf_path : str):
+    loader = PyPDFLoader(pdf_path)
+    document = loader.load()
+
+    splitter = RecursiveCharacterTextSplitter(chunk_size = 800, 
+                                              chunk_overlap = 100)
+    
+    chunks = splitter.split_documents(document)
+
+    vectorstore = FAISS.from_documents(chunks,embeddings)
+
+    return vectorstore.as_retriever(search_kwargs = {"k":4})
+
+acedemic_retriever = build_retriver("academics_handbook.pdf")
+fee_retriever = build_retriver("fee_structure.pdf")
+
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.4)
+
+#step2 - State 
+
+class State(TypedDict):
+    programme : str  
+    messages : Annotated[list,add_messages]
+    query_type : str 
+    retrieved_context : str 
+
+#Step 3 - Nodes generation 
+    
+def classifier_node(state : State) -> dict:
+    """Look at the latest user message and decide which path to take."""
+
+    last_message = state['messages'][-1].content
+
+    prompt = (
+        "Classify the following student query into exactly one category: "
+        "'academic', 'fee', or 'general'.\n\n"
+        "Use 'academic' for questions about attendance, exams, grading, credits, "
+        "promotion, course structure, summer training, or degree requirements.\n"
+        "Use 'fee' for questions about tuition, payment, refund, late charges, "
+        "scholarships, or any money-related topic.\n"
+        "Use 'general' for greetings, casual talk, or anything not related to "
+        "the college rules or fee.\n\n"
+        f"Query: {last_message}\n\n"
+        "Return only one word: academic, fee, or general."
+    )
+
+    response = llm.invoke(prompt)
+    category = response.content.strip().lower()
+
+    if "academic" in category:
+        category = "academic"
+    elif "fee" in category:
+        category = "fee"
+    else:
+        category = "general"
+    
+    return {"query_type" : category}
+
+def academic_rag_node(state: State) -> dict:
+    """Retrieves relevant chunks from the academics handbook."""
+    query = state["messages"][-1].content
+    docs = acedemic_retriever.invoke(query)
+    context = "\n\n".join([doc.page_content for doc in docs])
+    return {"retrieved_context": context}
+
+def fee_rag_node(state: State) -> dict:
+    """Retrieves relevant chunks from the fee structure PDF."""
+    query = state["messages"][-1].content
+    docs = fee_retriever.invoke(query)
+    context = "\n\n".join([doc.page_content for doc in docs])
+    return {"retrieved_context": context}
+
+
+def general_node(state: State) -> dict:
+    """Answers directly using the LLM's own knowledge, no retrieval needed."""
+    return {"retrieved_context": "NO_RETRIEVAL_NEEDED"}
+
+
+def response_node(state: State) -> dict:
+    """Generates the final answer, personalized using the student's programme."""
+    query = state["messages"][-1].content
+    programme = state.get("programme", "Unknown")
+    context = state["retrieved_context"]
+
+    if context == "NO_RETRIEVAL_NEEDED":
+        prompt = (
+            f"You are a friendly college assistant talking to a {programme} student. "
+            f"Answer this question using your own general knowledge:\n\n{query}"
+        )
+    else:
+        prompt = (
+            f"You are a college assistant helping a {programme} student. "
+            f"Use the following context from the official college documents to answer "
+            f"the question accurately. If the context mentions specific figures for "
+            f"different programmes, highlight the one relevant to {programme} if possible.\n\n"
+            f"Context:\n{context}\n\n"
+            f"Question: {query}\n\n"
+            f"Give a clear, friendly, and precise answer."
+        )
+
+    response = llm.invoke(prompt)
+    return {"messages": [("ai", response.content.strip())]}
+
+
+#step 4 - router function 
+
+def route_query(state:State):
+    if state['query_type'] == 'academic':
+        return "academic_rag"
+    elif state['query_type'] == "fee":
+        return "fee_rag"
+    else:
+        return "general"
+
+
+#step 5 - Building the graph 
+
+graph = StateGraph(State)
+
+graph.add_node("classifier",classifier_node)
+graph.add_node("academic_rag",academic_rag_node)
+graph.add_node("fee_rag",fee_rag_node)
+graph.add_node("general",general_node)
+graph.add_node("response",response_node)
+
+#edges 
+
+graph.add_edge(START,"classifier")
+
+graph.add_conditional_edges(
+    "classifier",route_query
+)
+
+graph.add_edge("academic_rag","response")
+graph.add_edge("fee_rag","response")
+graph.add_edge("general","response")
+
+graph.add_edge("response",END)
+
+app = graph.compile()
+#step 6 - Run the code 
+
+print("welcome to the College assistant \n\n")
+
+print("which programe are you in ")
+print("1. BCA")
+print("2. BBA")
+print("3. B.com (H)")
+
+choice = input("\nEnter 1, 2 or 3 ")
+
+programme_map = {
+    "1": "BCA",
+    "2": "BBA",
+    "3": "B.Com (H)"
+}
+student_programme = programme_map.get(choice, "BCA")
+
+print(f"\nGreat! You're set as a {student_programme} student.")
+
+while True:
+    user_query = input("You:  ")
+
+    if user_query.lower() in ["exit","quit"]:
+        break
+    
+    result = app.invoke({
+        "programme": student_programme,
+        "messages": [("human",user_query)]
+    })
+
+    print(f"Assistant : {result['messages'][-1].content}")
+```
+
+---
+
+## 4.6 Archetype 4 — Iterative / Cyclic Workflow (`iterative_tools.py`)
+
+**Analogy:** Author and ruthless editor — write, review, reject, rewrite until approved.
+
+```
+START -> [writer_node] --(tool calls?)--> [tools] --> [extract_draft] --> [reviewer_node]
+                |                                                               |
+                +<-- REJECTED & attempt<3 <-------------------------------------+
+                                                                               |
+                                                                         APPROVED or max attempts -> END
+```
+
+```python
+import os 
+from typing import TypedDict, Annotated
+from langgraph.graph.message import add_messages
+from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import ToolNode
+from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
+from langchain_tavily import TavilySearch
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+#tools 
+
+search_tool = TavilySearch(max_results = 3)
+
+
+tools = [search_tool]
+
+#llms 
+
+#writer
+writer_llm = ChatOpenAI(model= "gpt-4o-mini",temperature=0.7)
+writer_llm_with_tools = writer_llm.bind_tools(tools)
+
+#reviewer
+
+reviewer_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
+
+#state building 
+
+class State(TypedDict):
+    topic : str 
+    messages : Annotated[list,add_messages]
+    draft : str 
+    review_feedback : str
+    is_approved : bool 
+    attempt : int
+
+
+#nodes 
+
+WRITER_SYSTEM_PROMPT = (
+    "You are an expert LinkedIn content writer. Your job is to write "
+    "engaging, professional LinkedIn posts about the given topic. "
+    "If the topic requires up-to-date information, statistics, or "
+    "current trends, use the web search tool to gather fresh context "
+    "before writing. If you have already received feedback on a "
+    "previous draft, carefully address every point in the new draft. "
+    "Rules for good LinkedIn posts: strong hook in the first line, "
+    "1 clear takeaway, easy to skim (short paragraphs), around "
+    "150-200 words, ends with a question or call-to-action to invite "
+    "engagement. Do not use hashtags."
+)
+
+
+def writer_node(state : State) -> dict:
+    """Writes (or rewrites) the LinkedIn post. Can call Tavily to search first."""
+    attempt = state.get("attempt",0) + 1 
+    topic = state["topic"]
+    previous_feedback = state['review_feedback']
+
+    if attempt == 1:
+        user_message = (
+            f"Write a LinkedIn post on this topic {topic}"
+            f"if you need current info search the web first "
+        )
+    else:
+        user_message = (
+            f"your previous draft on '{topic}' was rejected"
+            f"Here is the reviewer's feedback \n\n {previous_feedback}\n\n"
+            f"Write a new, improved draft that fixes every issue mentiond"
+            f"do not repeat the same mistake"
+        )
+    messages = [("system",WRITER_SYSTEM_PROMPT),("human",user_message)]
+    response = writer_llm_with_tools.invoke(messages)
+
+    return {
+        "messages" : [("human",user_message),response],
+        "attempt" : attempt
+    }
+
+tool_node = ToolNode(tools)
+
+def extract_draft_node(state:State) -> dict:
+    """After the writer finishes tool calls, pulls the final text out as the draft."""
+    last_message = state['messages'][-1]
+    draft = last_message.content 
+    print(f"\n\n generated post \n {draft} \n ")
+    return {"draft" : draft}
+    
+
+REVIEWER_SYSTEM_PROMPT = (
+    "You are a strict LinkedIn content reviewer. You judge whether a "
+    "post is publish-ready. Evaluate against these criteria:\n"
+    "1. Strong hook in the first line\n"
+    "2. One clear, valuable takeaway\n"
+    "3. Easy to skim - uses short paragraphs\n"
+    "4. Roughly 150-200 words\n"
+    "5. Ends with an engaging question or CTA\n"
+    "6. Professional but human tone (not corporate-robotic)\n"
+    "7. No hashtags\n\n"
+    "Respond in exactly this format:\n"
+    "VERDICT: APPROVED or REJECTED\n"
+    "FEEDBACK: <one short paragraph explaining why>\n\n"
+    "Be strict but fair. Approve only if the post genuinely meets all "
+    "criteria. Reject if even one criterion is clearly missing."
+)
+
+def reviewer_node(state:State) -> dict:
+    """Reviews the draft and decides: approve or reject with feedback."""
+    draft = state['draft']
+
+    prompt = (
+        f"review this LinkedIn post draft : \n"
+        f"{draft}\n"
+        f"give your reviews"
+    )
+    response = reviewer_llm.invoke(
+        [("system",REVIEWER_SYSTEM_PROMPT),("human",prompt)]
+    )
+    review_text = response.content.strip()
+    
+    is_approved = "APPROVED" in review_text.upper().split("FEEDBACK")[0]
+
+    if "FEEDBACK:" in review_text:
+        feedback = review_text.split("FEEDBACK:", 1)[1].strip()
+    else:
+        feedback = review_text
+
+    verdict = "APPROVED" if is_approved else "REJECTED"
+    print(f"[Verdict: {verdict}]")
+    print(f"[Feedback: {feedback}]")
+
+    return {
+        "review_feedback": feedback,
+        "is_approved": is_approved,
+    }
+
+#router function 
+
+def should_use_tool(state:State):
+    last_message = state['messages'][-1]
+
+    if getattr(last_message,'tool_calls',None):
+        return "tools"
+    return "extract_draft"
+
+def should_stop_looping(state:State):
+    if state['is_approved']:
+        print("post haas been approved \n")
+        return END
+    if state['attempt'] >= 3:
+        print("reached max attempts")
+        return END 
+    return "writer"
+
+#build the graph 
+graph = StateGraph(State)
+
+graph.add_node("writer",writer_node)
+graph.add_node("tools",tool_node)
+graph.add_node("extract_draft",extract_draft_node)
+graph.add_node("reviewer",reviewer_node)
+
+graph.add_edge(START,"writer")
+
+graph.add_conditional_edges(
+    "writer",should_use_tool,
+)
+
+graph.add_edge("tools","reviewer")
+graph.add_edge("extract_draft", "reviewer")
+
+graph.add_conditional_edges(
+    "reviewer",should_stop_looping
+)
+
+app = graph.compile()
+
+
+print("=" * 55)
+print("Welcome to the LinkedIn Post Generator")
+print("=" * 55)
+print("\nThis tool will draft a LinkedIn post for you, review it")
+print("itself, and iterate until it's publish-ready.")
+
+print("=" * 55)
+
+topic = input("\nWhat topic do you want a LinkedIn post about?\n> ").strip()
+
+if not topic:
+    print("\nNo topic given. Exiting.")
+else:
+    print("\nStarting generation...\n")
+
+    initial_state = {
+        "topic": topic,
+        "messages": [],
+        "draft": "",
+        "review_feedback": "",
+        "is_approved": False,
+        "attempt": 0,
+    }
+
+    final_state = app.invoke(initial_state)
+
+    print("\n" + "=" * 55)
+    print("FINAL LINKEDIN POST")
+    print("=" * 55)
+    print(final_state["draft"])
+    print("=" * 55)
+    print(f"Total attempts: {final_state['attempt']}")
+    print(f"Approved: {final_state['is_approved']}")
+```
+
+**Why two different LLMs?** The writer uses GPT-4o-mini (creative) while the reviewer uses Llama 3.3 (fast, cheap, structured evaluation). Using different models for different roles is a common multi-agent pattern.
+
+---
+
+## 4.7 Archetype 5 — Human-in-the-Loop (`humanintheloop.py`)
+
+**Analogy:** Nuclear launch code — requires a human key turn. No automation can bypass it.
+
+Key primitives:
+- `MemorySaver` — checkpoints graph state after every node
+- `interrupt(data)` — pauses graph and surfaces data to caller
+- `Command(resume=value)` — resumes from checkpoint with human input
+
+```python
+import os 
+from typing import TypedDict, Annotated
+from langgraph.graph.message import add_messages
+from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import interrupt, Command
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+# writer llm
+writer_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+
+# state building 
+class State(TypedDict):
+    topic: str 
+    messages: Annotated[list, add_messages]
+    draft: str 
+    review_feedback: str
+    is_approved: bool 
+    attempt: int
+
+
+WRITER_SYSTEM_PROMPT = (
+    "You are an expert LinkedIn content writer. Write engaging, professional "
+    "LinkedIn posts about the given topic. "
+    "Rules: strong hook in the first line, one clear takeaway, easy to skim "
+    "with short paragraphs, roughly 150-200 words, end with an engaging "
+    "question or CTA, no hashtags. "
+    "If you receive feedback on a previous draft, address every point carefully."
+)
+
+
+def writer_node(state: State) -> dict:
+    """Writes (or rewrites) the LinkedIn post."""
+    attempt = state.get("attempt", 0) + 1 
+    topic = state["topic"]
+    previous_feedback = state.get("review_feedback", "")
+
+    print(f"\n[Attempt {attempt}] Writer is drafting the post...")
+
+    if attempt == 1:
+        user_message = f"Write a LinkedIn post on this topic: {topic}"
+    else:
+        user_message = (
+            f"Your previous draft on '{topic}' was rejected.\n\n"
+            f"Reviewer feedback:\n{previous_feedback}\n\n"
+            f"Write a NEW improved LinkedIn post that fixes every issue mentioned."
+        )
+
+    messages = [("system", WRITER_SYSTEM_PROMPT), ("human", user_message)]
+    response = writer_llm.invoke(messages)
+
+    draft = response.content
+    print(f"\n[Draft ready]\n{'-' * 55}\n{draft}\n{'-' * 55}")
+
+    return {
+        "draft": draft,
+        "attempt": attempt
+    }
+
+
+def human_review_node(state: State) -> dict:
+    """Pauses the graph and waits for the human to approve or give feedback."""
+    print(f"\n[Reached human review - Attempt {state['attempt']}]")
+
+    human_response = interrupt({
+        "draft": state["draft"],
+        "attempt": state["attempt"],
+        "instruction": "Type 'approved' to accept, or type your feedback to request a rewrite."
+    })
+
+    response = human_response.strip()
+
+    if response.lower() in ["approved", "approve", "yes", "ok", "good"]:
+        return {
+            "is_approved": True,
+            "review_feedback": "Approved by human."
+        }
+    else:
+        return {
+            "is_approved": False,
+            "review_feedback": response
+        }
+
+
+def should_stop_looping(state: State):
+    if state['is_approved']:
+        print("\n[Post approved by human. Ending workflow.]")
+        return END
+    if state['attempt'] >= 3:
+        print("\n[Reached max 3 attempts. Ending with last draft.]")
+        return END 
+    print(f"\n[Rejected. Looping back to writer for attempt {state['attempt'] + 1}...]")
+    return "writer"
+
+
+# build the graph 
+graph = StateGraph(State)
+
+graph.add_node("writer", writer_node)
+graph.add_node("human_review", human_review_node)
+
+graph.add_edge(START, "writer")
+graph.add_edge("writer", "human_review")
+
+graph.add_conditional_edges(
+    "human_review",
+    should_stop_looping,
+    {
+        "writer": "writer",
+        END: END,
+    },
+)
+
+checkpointer = MemorySaver()
+app = graph.compile(checkpointer=checkpointer)
+
+
+print("=" * 55)
+print("Welcome to the LinkedIn Post Generator (HITL Edition)")
+print("=" * 55)
+print("\nThis tool will draft a LinkedIn post for you, show it to")
+print("YOU for review, and rewrite based on your feedback.")
+print("=" * 55)
+
+topic = input("\nWhat topic do you want a LinkedIn post about?\n> ").strip()
+
+if not topic:
+    print("\nNo topic given. Exiting.")
+else:
+    print("\nStarting generation...\n")
+
+    config = {"configurable": {"thread_id": "linkedin_session_1"}}
+
+    initial_state = {
+        "topic": topic,
+        "messages": [],
+        "draft": "",
+        "review_feedback": "",
+        "is_approved": False,
+        "attempt": 0,
+    }
+
+    result = app.invoke(initial_state, config=config)
+
+    while "__interrupt__" in result:
+        interrupt_data = result["__interrupt__"][0].value
+
+        print("\n" + "=" * 55)
+        print(f"DRAFT FOR YOUR REVIEW (Attempt {interrupt_data['attempt']})")
+        print("=" * 55)
+        print(interrupt_data["draft"])
+        print("=" * 55)
+        print(f"\n{interrupt_data['instruction']}")
+
+        human_input = input("\nYour response: ").strip()
+
+        result = app.invoke(Command(resume=human_input), config=config)
+
+    print("\n" + "=" * 55)
+    print("FINAL LINKEDIN POST")
+    print("=" * 55)
+    print(result["draft"])
+    print("=" * 55)
+    print(f"Total attempts: {result['attempt']}")
+    print(f"Approved by human: {result['is_approved']}")
+```
+
+**The HITL flow:**
+```
+app.invoke(initial_state, config)
+    -> writer_node runs (drafts post)
+    -> human_review_node: interrupt() fires -> execution PAUSES
+    -> Returns {"__interrupt__": [{...draft data...}]}
+
+# Human reads draft, types feedback
+app.invoke(Command(resume="make it shorter"), config)
+    -> Resumes from checkpoint
+    -> human_review_node gets "make it shorter"
+    -> Returns {is_approved: False, review_feedback: "make it shorter"}
+    -> should_stop_looping -> loops back to "writer"
+    -> writer_node writes improved draft -> interrupts again...
+```
+
+**`thread_id` is critical** — identifies which checkpoint to resume from. Each user session needs a unique thread_id.
+
+---
+
+## 4.8 Master Comparison Matrix
+
+| Archetype | Pattern | Edge Type | When to Use |
+|---|---|---|---|
+| Sequential | A->B->C | `add_edge` | Linear pipeline |
+| Parallel | A->{B,C,D} | Multiple `add_edge(START, X)` | Independent simultaneous tasks |
+| Conditional | A->B or C | `add_conditional_edges` | Route based on content |
+| Iterative | A->B->A | `add_conditional_edges` returning node | Self-improvement loops |
+| HITL | A->[PAUSE]->B | `interrupt()` + `MemorySaver` | Critical human judgment needed |
+
+---
+
+## Quiz 4 — LangGraph Archetypes
+
+**Q1.** Without `merge_score_dicts` reducer in `parallel_reducers.py`, what happens?
+- **(B) Only the last branch's result would be stored in safety_scores**
+
+**Q2.** `MemorySaver` is required for HITL because:
+- **(B) It checkpoints graph state so execution can resume after interrupt()**
+
+**Q3.** The `should_use_tool` router checks for `tool_calls`. This means:
+- **(A) The writer decided to use the search tool before writing**
+
+**Design Challenge:** Build a code review system: accept code -> parallel static analysis + security scan -> if both pass: approve; if either fails: human expert review -> human can approve or request fix.
+
+> **Solution:** Parallel archetype (two scanners) + Conditional (pass/fail routing) + HITL (human review with interrupt()) + Iterative (if fix requested, loop back)
+
+---
+
+# Module 5: Project 1 — Multi-Agent Research System
+
+## 5.1 Architecture
+
+```
+User Input: "Quantum computing breakthroughs"
+     |
+[SEARCH AGENT] -> Tavily web search -> Titles, URLs, Snippets
+     |
+[READER AGENT] -> Pick best URL -> BeautifulSoup scrape -> Text
+     |
+[WRITER CHAIN] -> Combine search+scraped -> Draft report
+     |
+[CRITIC CHAIN] -> Review report -> Score/10 + Strengths/Weaknesses
+```
+
+## 5.2 `tools.py`
+
+```python
+from langchain.tools import tool 
+import requests
+from bs4 import BeautifulSoup
+from tavily import TavilyClient
+import os 
+from dotenv import load_dotenv
+from rich import print
+load_dotenv()
+
+tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+
+@tool
+def web_search(query : str) -> str:
+    """Search the web for recent and reliable information on a topic . Returns Titles , URLs and snippets."""
+    results = tavily.search(query=query,max_results=5)
+
+    out = []
+
+    for r in results['results']:
+        out.append(
+            f"Title: {r['title']}\nURL: {r['url']}\nSnippet: {r['content'][:300]}\n"
+        )
+    
+    return "\n----\n".join(out)
+
+@tool
+def scrape_url(url: str) -> str:
+    """Scrape and return clean text content from a given URL for deeper reading."""
+    try:
+        resp = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for tag in soup(["script", "style", "nav", "footer"]):
+            tag.decompose()
+        return soup.get_text(separator=" ", strip=True)[:3000]
+    except Exception as e:
+        return f"Could not scrape URL: {str(e)}"
+```
+
+**`scrape_url` design notes:**
+- `User-Agent: Mozilla/5.0` — prevents most bot-detection blocks
+- Remove `script`, `style`, `nav`, `footer` — noise that confuses the LLM
+- `[:3000]` — limit to stay within context window
+- `timeout=8` — don't hang on slow sites
+
+## 5.3 `agents.py`
+
+```python
+from langchain.agents import create_agent
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from tools import web_search , scrape_url 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+#model setup 
+llm = ChatOpenAI(model = "gpt-4o-mini",temperature=0)
+
+
+#1st agent 
+def build_search_agent():
+    return create_agent(
+        model = llm,
+        tools= [web_search]
+    )
+
+#2nd agent 
+
+def build_reader_agent():
+    return create_agent(
+        model = llm,
+        tools = [scrape_url]
+    )
+
+
+#writer chain 
+
+writer_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are an expert research writer. Write clear, structured and insightful reports."),
+    ("human", """Write a detailed research report on the topic below.
+
+Topic: {topic}
+
+Research Gathered:
+{research}
+
+Structure the report as:
+- Introduction
+- Key Findings (minimum 3 well-explained points)
+- Conclusion
+- Sources (list all URLs found in the research)
+
+Be detailed, factual and professional."""),
+])
+
+writer_chain = writer_prompt | llm | StrOutputParser()
+
+#critic_chain 
+
+critic_prompt = ChatPromptTemplate.from_messages([
+     ("system", "You are a sharp and constructive research critic. Be honest and specific."),
+    ("human", """Review the research report below and evaluate it strictly.
+
+Report:
+{report}
+
+Respond in this exact format:
+
+Score: X/10
+
+Strengths:
+- ...
+- ...
+
+Areas to Improve:
+- ...
+- ...
+
+One line verdict:
+..."""),
+])
+
+critic_chain = critic_prompt | llm | StrOutputParser()
+```
+
+## 5.4 `pipeline.py`
+
+```python
+from agents import build_reader_agent , build_search_agent , writer_chain , critic_chain
+
+def run_research_pipeline(topic : str) -> dict:
+
+    state = {}
+
+    #search agent working 
+    print("\n"+" ="*50)
+    print("step 1 - search agent is working ...")
+    print("="*50)
+
+    search_agent = build_search_agent()
+    search_result = search_agent.invoke({
+        "messages" : [("user", f"Find recent, reliable and detailed information about: {topic}")]
+    })
+    state["search_results"] = search_result['messages'][-1].content
+
+    print("\n search result ",state['search_results'])
+
+    #step 2 - reader agent 
+    print("\n"+" ="*50)
+    print("step 2 - Reader agent is scraping top resources ...")
+    print("="*50)
+
+    reader_agent = build_reader_agent()
+    reader_result = reader_agent.invoke({
+        "messages": [("user",
+            f"Based on the following search results about '{topic}', "
+            f"pick the most relevant URL and scrape it for deeper content.\n\n"
+            f"Search Results:\n{state['search_results'][:800]}"
+        )]
+    })
+
+    state['scraped_content'] = reader_result['messages'][-1].content
+
+    print("\nscraped content: \n", state['scraped_content'])
+
+    #step 3 - writer chain 
+
+    print("\n"+" ="*50)
+    print("step 3 - Writer is drafting the report ...")
+    print("="*50)
+
+    research_combined = (
+        f"SEARCH RESULTS : \n {state['search_results']} \n\n"
+        f"DETAILED SCRAPED CONTENT : \n {state['scraped_content']}"
+    )
+
+    state["report"] = writer_chain.invoke({
+        "topic" : topic,
+        "research" : research_combined
+    })
+
+    print("\n Final Report\n",state['report'])
+
+    #critic report 
+
+    print("\n"+" ="*50)
+    print("step 4 - critic is reviewing the report ")
+    print("="*50)
+
+    state["feedback"] = critic_chain.invoke({
+        "report":state['report']
+    })
+
+    print("\n critic report \n", state['feedback'])
+
+    return state
+
+
+
+if __name__ == "__main__":
+    topic = input("\n Enter a research topic : ")
+    run_research_pipeline(topic)
+```
+
+---
+
+## Quiz 5 — Multi-Agent Research System
+
+**Q1.** Why does the reader agent only see `search_results[:800]`?
+- **(B) To limit context given to reader agent (saves tokens, focuses on top results)**
+
+**Q2.** Why do we `tag.decompose()` script/style/nav/footer tags?
+- **(B) They contain HTML/JS and navigation text meaningless to the LLM**
+
+**Scenario:** Add a 5th step — if the final report exceeds 1000 words, summarize it to 500 words. How?
+```python
+word_count = len(state["report"].split())
+if word_count > 1000:
+    state["report"] = summarize_chain.invoke({"report": state["report"]})
+```
+
+---
+
+# Module 6: Project 2 — AI Video Assistant
+
+## 6.1 System Design
+
+```
+INPUT: YouTube URL or local video file
+     |
+[audio_processor.py]
+  Download audio (yt-dlp) or convert file (pydub)
+  Convert to 16kHz mono WAV
+  Chunk into 10-minute pieces
+     |
+[transcriber.py]  <- DUAL ENGINE
+  English -> Whisper (local, fast)
+  Hinglish -> Sarvam AI (cloud, 25s chunks)
+     |
+[summarizer.py]   Map-Reduce over chunks
+[extractor.py]    Action items, decisions, questions
+     |
+[vector_store.py] ChromaDB with HuggingFace embeddings
+     |
+[rag_engine.py]   LCEL RAG chain for Q&A
+     |
+OUTPUT: Summary + Action Items + Chat interface
+```
+
+## 6.2 `utils/audio_processor.py`
+
+```python
+import yt_dlp
+from pydub import AudioSegment
+import os
+
+DOWNLOAD_DIR = 'downloades'
+os.makedirs(DOWNLOAD_DIR,exist_ok = True)
+
+def download_youtube_audio(url :str) ->str:
+    output_path = os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s")
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "outtmpl": output_path,
+        "postprocessors": [
+            {
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "wav",
+                "preferredquality": "192",
+            }
+        ],
+        "quiet": True,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        filename = ydl.prepare_filename(info).replace(".webm", ".wav").replace(".m4a", ".wav")
+    return filename
+
+
+
+def convert_to_wav(input_path: str) -> str:
+    """Convert any audio/video file to WAV format using pydub."""
+    output_path = os.path.splitext(input_path)[0] + "_converted.wav"
+    audio = AudioSegment.from_file(input_path)
+    audio = audio.set_channels(1).set_frame_rate(16000) #16khz
+    audio.export(output_path, format="wav")
+    return output_path
+
+
+
+def chunk_audio(wav_path : str , chunk_minutes : int = 10) -> list:
+    audio = AudioSegment.from_wav(wav_path)
+    chunk_ms = chunk_minutes * 60 * 1000 
+
+    chunks = []
+
+    for i, start in enumerate(range(0,len(audio),chunk_ms)):
+        chunk = audio[start : start + chunk_ms]
+        chunk_path = f"{wav_path}_chunk_{i}.wav"
+        chunk.export(chunk_path , format = "wav")
+
+        chunks.append(chunk_path)
+    
+    return chunks
+
+def process_input(source: str) -> list:
+    if source.startswith("http://") or source.startswith("https://"):
+        print("Detected YouTube URL. Downloading audio...")
+        wav_path = download_youtube_audio(source)
+    else:
+        print("Detected local file. Converting to WAV...")
+        wav_path = convert_to_wav(source)
+
+    print("Chunking audio...")
+    chunks = chunk_audio(wav_path)
+    print(f"Audio ready - {len(chunks)} chunk(s) created.")
+    return chunks
+```
+
+**Why 16kHz mono?** Whisper and Sarvam both expect 16kHz single-channel WAV. Higher sample rates waste disk without improving speech transcription accuracy.
+
+## 6.3 `core/transcriber.py`
+
+```python
+import whisper
+import os
+import requests
+from pydub import AudioSegment
+
+# Sarvam's sync STT-translate API rejects audio longer than 30s.
+# We slice each chunk into 25s pieces (with a 5s safety margin) before sending.
+SARVAM_PIECE_SECONDS = 25
+
+
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
+
+
+SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+SARVAM_STT_TRANSLATE_URL = "https://api.sarvam.ai/speech-to-text-translate"
+SARVAM_MODEL = os.getenv("SARVAM_STT_MODEL", "saaras:v2.5")
+
+_model = None
+
+
+def load_model():
+
+    global _model  
+
+    if _model is None: 
+        print(f"Loading Whisper model: {WHISPER_MODEL} ...")
+        _model = whisper.load_model(WHISPER_MODEL) 
+        print("Whisper model loaded.")
+    return _model 
+
+
+def transcribe_chunk_whisper(chunk_path: str) -> str:
+
+    model = load_model()  
+
+    result = model.transcribe(chunk_path, task="transcribe")  
+    return result["text"]  
+
+
+def _send_to_sarvam(piece_path: str) -> str:
+    """Send one <=30s WAV file to Sarvam and return the English transcript."""
+    headers = {"api-subscription-key": SARVAM_API_KEY}
+
+    with open(piece_path, "rb") as f:
+        files = {"file": (os.path.basename(piece_path), f, "audio/wav")}
+        data = {"model": SARVAM_MODEL, "with_diarization": "false"}
+        response = requests.post(
+            SARVAM_STT_TRANSLATE_URL,
+            headers=headers,
+            files=files,
+            data=data,
+            timeout=120,
+        )
+
+    if not response.ok:
+        print(f"\n Sarvam returned {response.status_code}")
+        print(f"Response body: {response.text}\n")
+        response.raise_for_status()
+
+    return response.json().get("transcript", "")
+
+
+def transcribe_chunk_sarvam(chunk_path: str) -> str:
+    """
+    Sarvam sync API only accepts <=30s audio. We split this chunk into
+    25-second pieces, send each separately, and join the transcripts.
+    """
+    if not SARVAM_API_KEY:
+        raise RuntimeError("SARVAM_API_KEY is not set in environment / .env")
+
+    audio = AudioSegment.from_wav(chunk_path)
+    piece_ms = SARVAM_PIECE_SECONDS * 1000
+
+    full_text = ""
+    total_pieces = (len(audio) + piece_ms - 1) // piece_ms
+
+    for i, start in enumerate(range(0, len(audio), piece_ms)):
+        piece = audio[start: start + piece_ms]
+        piece_path = f"{chunk_path}_sv_{i}.wav"
+        piece.export(piece_path, format="wav")
+
+        try:
+            print(f"  -> Sarvam piece {i + 1}/{total_pieces} ...")
+            full_text += _send_to_sarvam(piece_path) + " "
+        finally:
+            if os.path.exists(piece_path):
+                os.remove(piece_path)
+
+    return full_text.strip()
+
+   
+
+
+def transcribe_chunk(chunk_path: str, language: str = "english") -> str:
+    """
+    Route one chunk to Whisper or Sarvam depending on language choice.
+    - english  -> Whisper (local model)
+    - hinglish -> Sarvam (translates to English while transcribing)
+    """
+    if language.lower() == "hinglish":
+        return transcribe_chunk_sarvam(chunk_path)
+    return transcribe_chunk_whisper(chunk_path)
+
+
+def transcribe_all(chunks: list, language: str = "english") -> str:
+
+    full_transcript = "" 
+
+    engine = "Sarvam AI" if language.lower() == "hinglish" else "Whisper"
+    print(f"Using {engine} for transcription.")
+
+    for i, chunk in enumerate(chunks):  
+
+        print(f"Transcribing chunk {i + 1}/{len(chunks)}...")
+
+        text = transcribe_chunk(chunk, language=language)  
+
+        full_transcript += text + " "  
+
+    print("Transcription complete.")
+
+    return full_transcript.strip()  
+```
+
+**The `_model = None` singleton pattern:** Loading Whisper takes 5-10 seconds. `global _model` ensures it's loaded only once per process, not once per chunk.
+
+**Why Sarvam for Hinglish?** Whisper's Hinglish quality is poor — it tends to transcribe Hindi words as English phonetically. Sarvam AI is purpose-built for Indian languages and can translate Hinglish to clean English simultaneously.
+
+## 6.4 `core/vector_store.py`
+
+```python
+import os 
+from langchain_chroma import Chroma 
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
+
+CHROMA_DIR = "vector_db"
+COLLECTION_NAME = "meeting_transcript"
+EMBEDDING_MODEL  = "all-MiniLM-L6-v2"
+
+def get_embeddings():
+    return HuggingFaceEmbeddings(
+        model_name = EMBEDDING_MODEL,
+        model_kwargs = {"device" : 'cpu'}
+    )
+
+def build_vector_store(transcript : str)->Chroma:
+    print("Building vector Store")
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size = 500,
+        chunk_overlap = 50
+    )
+    chunks = splitter.split_text(transcript)
+
+    docs = [
+        Document(page_content=chunk, metadata = {'chunk_index' : i})
+        for i,chunk in enumerate(chunks)
+    ]
+
+    embeddings = get_embeddings()
+    vector_store = Chroma.from_documents(
+        documents= docs,
+        embedding=embeddings,
+        collection_name=COLLECTION_NAME,
+        persist_directory=CHROMA_DIR
+    )
+
+    return vector_store
+
+
+
+def load_vector_store() ->Chroma:
+    embeddings = get_embeddings()
+    vector_store = Chroma(
+        collection_name=COLLECTION_NAME,
+        embedding_function= embeddings,
+        persist_directory=CHROMA_DIR
+    )
+
+    return vector_store
+
+def get_retriever(vector_store : Chroma, k :int = 4):
+    return vector_store.as_retriever(
+        search_type = 'similarity',
+        search_kwargs = {"k":k}
+    )
+```
+
+## 6.5 `core/rag_engine.py`
+
+```python
+import os
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from core.vector_store import build_vector_store, load_vector_store, get_retriever
+
+def get_llm():
+    return ChatMistralAI(
+        model="mistral-small-latest",
+        mistral_api_key=os.getenv("MISTRAL_API_KEY"),
+        temperature=0.3,
+    )
+
+def format_docs(docs):
+    return "\n\n".join([doc.page_content for doc in docs])
+
+def build_rag_chain(transcript:str):
+
+    vector_store = build_vector_store(transcript)
+
+    retriever = get_retriever(vector_store, k = 4)
+
+    llm = get_llm()
+
+    prompt = ChatPromptTemplate.from_messages(
+
+        [("system",
+            """You are an expert meeting assistant. Answer the user's question 
+based ONLY on the meeting transcript context provided below.
+
+If the answer is not found in the context, say: 
+"I could not find this information in the meeting transcript."
+
+Always be concise and precise. If quoting someone, mention it clearly.
+
+Context from meeting transcript:
+{context}""",
+        ),
+        ("human", "{question}"),
+    ]
+    )
+
+    #full LCEL Rag pipeline 
+
+    rag_chain = (
+
+        {"context" : retriever | RunnableLambda(format_docs),
+         "question": RunnablePassthrough()
+         }
+         |prompt|llm|StrOutputParser()
+    )
+
+    return rag_chain
+
+
+def load_rag_chain():
+    vector_store = load_vector_store()
+    retriver = get_retriever()
+
+    llm = get_llm()
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            """You are an expert meeting assistant. Answer the user's question 
+based ONLY on the meeting transcript context provided below.
+
+If the answer is not found in the context, say: 
+"I could not find this information in the meeting transcript."
+
+Always be concise and precise. If quoting someone, mention it clearly.
+
+Context from meeting transcript:
+{context}""",
+        ),
+        ("human", "{question}"),
+    ])
+
+    rag_chain = (
+        {
+            "context":  retriver| RunnableLambda(format_docs),
+            "question": RunnablePassthrough(),
+        }
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+
+    return rag_chain
+
+
+def ask_question(rag_chain, question:str) -> str:
+    print(f"Question : {question}")
+    answer = rag_chain.invoke(question)
+    print(f"answer :{answer}")
+    return answer
+```
+
+## 6.6 `core/summarizer.py`
+
+```python
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+
+import os 
+
+def get_llm():
+    return ChatMistralAI(model = "mistral-small-latest", mistral_api_key = os.getenv("MISTRAL_API_KEY"),temperature=0.3)
+
+
+def split_transcript(transcript: str) -> list:
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size = 3000,
+        chunk_overlap = 200
+    )
+
+    return splitter.split_text(transcript)
+
+def summarize(transcript : str) -> str:
+    llm = get_llm()
+
+    map_prompt = ChatPromptTemplate.from_messages(
+        [
+        ("system", "Summarize this portion of a meeting transcript concisely."),
+        ("human", "{text}"),
+    ]
+    )
+
+    map_chain = map_prompt | llm | StrOutputParser()
+
+    chunks = split_transcript(transcript)
+
+    chunk_summaries = [map_chain.invoke({"text" : chunk}) for chunk in chunks]
+
+    combined = "\n\n".join(chunk_summaries)
+
+    combined_prompt = ChatPromptTemplate.from_messages(
+        [
+        (
+            "system",
+            "You are an expert meeting summarizer. Combine these partial summaries "
+            "into one final professional meeting summary in bullet points.",
+        ),
+        ("human", "{text}"),
+    ]
+    )
+
+    combined_chain = (
+        RunnablePassthrough() | RunnableLambda(lambda x:{"text":x}) | combined_prompt | llm | StrOutputParser()
+    )
+
+    return combined_chain.invoke(combined)
+
+def generate_title(transcipt : str) -> str:
+    llm = get_llm()
+
+    
+
+    title_chain = (
+        RunnablePassthrough() | RunnableLambda(lambda x:{"text":x}) | 
+        ChatPromptTemplate.from_messages([
+             (
+                "system",
+                "Based on the meeting transcript, generate a short professional meeting title "
+                "(max 8 words). Only return the title, nothing else.",
+            ),
+            ("human", "{text}"),
+        ])
+        | llm
+        |StrOutputParser()
+    )
+
+    return title_chain.invoke(transcipt[:2000])
+```
+
+**Map-Reduce Summarization:**
+```
+A 2-hour meeting transcript ~ 30,000 tokens
+Model context window ~ 32,000 tokens
+Problem: Can't fit the whole transcript!
+
+MAP phase:
+  Chunk 1 (3000 chars) -> mini-summary 1
+  Chunk 2 (3000 chars) -> mini-summary 2
+  Chunk 3 (3000 chars) -> mini-summary 3
+  ...
+
+REDUCE phase:
+  [mini-summary 1, 2, 3...] -> final comprehensive summary
+```
+
+## 6.7 `core/extractor.py`
+
+```python
+from langchain_mistralai import ChatMistralAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+
+import os 
+
+def get_llm():
+    return ChatMistralAI(model = "mistral-small-latest", mistral_api_key = os.getenv("MISTRAL_API_KEY"),temperature=0.2)
+
+
+
+def build_chain(system_prompt : str):
+    llm = get_llm()
+    return (
+        RunnablePassthrough() | RunnableLambda(lambda x : {"text" : x}) |ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("human","{text}"),
+    ]) | llm |StrOutputParser()
+    )
+
+def extract_action_items(transcript:str)->str:
+    chain = build_chain(
+         "You are an expert meeting analyst. From the meeting transcript, "
+        "extract all action items. For each provide:\n"
+        "- Task description\n"
+        "- Owner (who is responsible)\n"
+        "- Deadline (if mentioned, else write 'Not specified')\n\n"
+        "Format as a numbered list. If none found say 'No action items found.'"
+    )
+
+    return chain.invoke(transcript)
+
+
+def extract_key_decisions(transcript: str) -> str:
+    chain = build_chain(
+        "You are an expert meeting analyst. From the meeting transcript, "
+        "extract all key decisions made. Format as a numbered list. "
+        "If none found say 'No key decisions found.'"
+    )
+    return chain.invoke(transcript)
+
+
+def extract_questions(transcript: str) -> str:
+    chain = build_chain(
+        "From the meeting transcript, extract all unresolved questions "
+        "or topics needing follow-up. Format as a numbered list. "
+        "If none found say 'No open questions found.'"
+    )
+    return chain.invoke(transcript)
+```
+
+**`build_chain` factory pattern:** Instead of writing 3 identical chain definitions with different prompts, `build_chain(system_prompt)` creates the chain dynamically. DRY code.
+
+## 6.8 `main.py`
+
+```python
+from dotenv import load_dotenv
+from utils.audio_processor import process_input
+from core.transcriber import transcribe_all
+from core.summarizer import summarize, generate_title
+from core.extractor import extract_action_items, extract_key_decisions, extract_questions
+from core.rag_engine import build_rag_chain, ask_question
+
+
+load_dotenv()
+
+def run_pipeline(source :str, language :str = "english") -> dict:
+    print("starting AI Video Assistant")
+
+    chunks = process_input(source)
+
+    transcript = transcribe_all(chunks,language)
+    print(f"raw transcription (first 300 characters ) {transcript[:300]}")
+
+    title = generate_title(transcript)
+
+    summary = summarize(transcript)
+
+    action_item = extract_action_items(transcript)
+
+    decisions = extract_key_decisions(transcript)
+    questions = extract_questions(transcript)
+    
+    rag_chain = build_rag_chain(transcript)
+
+    return {
+        "title": title,
+        "transcript": transcript,
+        "summary": summary,
+        "action_items": action_item,
+        "key_decisions": decisions,
+        "open_questions": questions,
+        "rag_chain": rag_chain,
+    }
+
+if __name__ == "__main__":
+    # CLI entry point
+    source = input("Enter YouTube URL or local file path: ").strip()
+    language = input("Language (english/hinglish): ").strip() or "english"
+    result = run_pipeline(source, language)
+
+    print("\n" + "=" * 60)
+    print(f"Title: {result['title']}")
+    print(f"\n Summary:\n{result['summary']}")
+    print(f"\n Action Items:\n{result['action_items']}")
+    print(f"\n Key Decisions:\n{result['key_decisions']}")
+    print(f"\n Open Questions:\n{result['open_questions']}")
+    print("=" * 60)
+
+    # Phase 2 - Chat with your meeting via RAG
+    print("\n Chat with your meeting (type 'exit' to quit)\n")
+    rag_chain = result["rag_chain"]
+    while True:
+        question = input("You: ").strip()
+        if question.lower() in ["exit", "quit", "q"]:
+            print("Goodbye!")
+            break
+        if not question:
+            continue
+        answer = ask_question(rag_chain, question)
+        print(f"\n Assistant: {answer}\n")
+```
+
+---
+
+## Quiz 6 — AI Video Assistant
+
+**Q1.** Why is the Whisper model loaded with a singleton pattern (`global _model`)?
+- **(B) To avoid reloading a 500MB+ model for every 10-minute chunk**
+
+**Q2.** `SARVAM_PIECE_SECONDS = 25` exists because:
+- **(A) Sarvam's API has a 30-second limit; 25 seconds adds a 5-second safety margin**
+
+**Q3.** Why is `chunk_size=3000` in `summarizer.py` vs `500` in `vector_store.py`?
+- **(A) Summarization needs more context per chunk for meaningful mini-summaries; RAG needs smaller chunks for precise retrieval**
+
+**Advanced Scenario:** A user reports wrong answers for "What did the CTO say about the budget?"
+
+| Cause | Fix |
+|---|---|
+| Transcription errors in "CTO" or "budget" | Switch to larger Whisper model (medium/large) |
+| Relevant chunks not retrieved | Switch to MMR retrieval, increase k to 6-8 |
+| Answer at chunk boundary | Increase chunk_overlap from 50 to 150 |
+
+---
+
+# Module 7: The Universal Agent Design Blueprint
+
+## 7.1 The 6-Step Agent Design Matrix
+
+```
++----+---------------------+-------------------------------------------+
+| 1  | WHAT IS THE GOAL?   | Single clear objective the agent achieves |
+| 2  | WHAT IS THE STATE?  | Data that persists across all node calls  |
+| 3  | WHAT ARE THE NODES? | One function = one responsibility         |
+| 4  | WHAT ARE THE TOOLS? | External actions the agent can take       |
+| 5  | WHAT WORKFLOW TYPE? | Sequential/Parallel/Conditional/HITL/Loop |
+| 6  | NEEDS HUMAN INPUT?  | interrupt() + MemorySaver                 |
++----+---------------------+-------------------------------------------+
+```
+
+## 7.2 When NOT to Use an Agent
+
+| Situation | Use Agent? | Use Instead |
+|---|---|---|
+| Fixed 3-step pipeline | No | LCEL sequential chain |
+| Static FAQ answering | No | RAG chain |
+| Always same tool used | No | Direct tool call in chain |
+| Needs dynamic tool selection | Yes | Agent |
+| Needs iterative refinement | Yes | LangGraph cyclic graph |
+| Needs human approval | Yes | LangGraph HITL |
+| Unpredictable number of steps | Yes | Agent |
+
+---
+
+# Module 8: Grand Summary & Final Exam
+
+## One-Page Cheat Sheet
+
+```
+LANGCHAIN CORE
++-- Chat Models: ChatMistralAI, ChatOpenAI, ChatHuggingFace, HuggingFacePipeline
++-- Messages: SystemMessage, HumanMessage, AIMessage, ToolMessage
++-- Embeddings: OpenAIEmbeddings, HuggingFaceEmbeddings
++-- Output Parsers: StrOutputParser, PydanticOutputParser
++-- LCEL: | pipe, RunnableParallel, RunnableLambda, RunnablePassthrough
+
+RAG PIPELINE
++-- Loaders: PyPDFLoader, WebBaseLoader, ArxivRetriever
++-- Splitters: RecursiveCharacterTextSplitter(chunk_size, chunk_overlap)
++-- Stores: Chroma, FAISS
++-- Retrieval: similarity, mmr (lambda_mult), MultiQueryRetriever
+
+TOOLS & AGENTS
++-- @tool: name, description (docstring), args schema (type hints)
++-- llm.bind_tools([...]) -> llm that can make tool calls
++-- create_agent(model, tools) -> full ReAct loop agent
+
+LANGGRAPH
++-- State: TypedDict / Pydantic / MessagesState
++-- Nodes: Pure Python functions returning dict
++-- Edges: add_edge, add_conditional_edges
++-- Reducers: Annotated[type, reducer_function]
++-- ToolNode: prebuilt parallel tool executor
++-- MemorySaver: checkpoint for thread continuity
++-- interrupt() + Command(resume=): HITL pattern
+```
+
+## Key Formulas
+
+```
+Cosine Similarity:
+  cos(th) = (A . B) / (|A| x |B|)
+  Range: -1 (opposite) to +1 (identical)
+
+MMR Score:
+  MMR(d) = lambda * sim(d, query) - (1-lambda) * max_sim(d, selected)
+
+Temperature effect:
+  adjusted_logits = raw_logits / temperature
+  probabilities = softmax(adjusted_logits)
+```
+
+---
+
+## Final Exam
+
+### Section A: Conceptual
+
+**Q1.** You set `temperature=0` AND `top_p=0`. What happens?
+- **(B) Always picks the single highest-probability token (fully deterministic)**
+
+**Q2.** `ToolMessage` tells the LLM:
+- **(B) The result of a tool call that was already executed**
+
+**Q3.** `Annotated[list, add_messages]` means:
+- **(B) New messages are appended to the existing list instead of replacing it**
+
+**Q4.** "Run 3 database queries simultaneously and combine results" — which archetype?
+- **(B) Parallel with reducer**
+
+**Q5.** Why does `transcribe_all` iterate over chunks instead of transcribing the whole WAV?
+- **(C) Very long audio increases error rate; chunking keeps context windows manageable and allows progress logging**
+
+### Section B: Scenario Design
+
+**Scenario — E-Commerce Order Assistant:**
+Needs: Answer product questions from PDF + check order status via API + process refunds (manager approval for >Rs.10,000) + remember conversation.
+
+1. Archetypes: **Conditional** (route by query type) + **HITL** (for large refunds) + **Iterative** (retry on tool failure)
+2. State: `{customer_id, query, query_type, retrieved_context, response, messages}`
+3. Nodes: `classifier`, `product_rag`, `order_status`, `refund_processor`, `human_approval`, `responder`
+4. `interrupt()` called in `refund_processor` when amount > Rs.10,000
+
+### Section C: Code Debug
+
+**Bug 1:**
+```python
+@tool
+def get_population(country):  # Bug: no type hint!
+    """Get population"""
+    return population_data[country]
+```
+**Fix:** Add `country: str -> int`
+
+**Bug 2:**
+```python
+class State(TypedDict):
+    messages: list  # Bug: no reducer! Last write wins.
+```
+**Fix:** `messages: Annotated[list, add_messages]`
+
+**Bug 3:**
+```python
+result = app.invoke(Command(resume=human_input))  # Bug: missing config!
+```
+**Fix:** `result = app.invoke(Command(resume=human_input), config=config)`
+
+---
+
+## Philosophical Takeaway
+
+> **The best agentic system is the simplest one that solves the problem.**
+
+Not every problem needs a 5-node LangGraph with parallel reducers. The skill is knowing which tool to reach for:
+
+- Simple extraction -> LCEL chain + PydanticOutputParser
+- Knowledge-grounded answers -> RAG with ChromaDB
+- Multi-step with tools -> ReAct agent
+- Complex workflows with loops -> LangGraph
+- Critical actions -> LangGraph with `interrupt()`
+
+**Now go build something that matters.**
+
+---
+
+*End of The Definitive Agentic AI & RAG Engineering Handbook*
+*Code by Akarsh Vyas (Sheryians AI School) | Enhanced Textbook Guide*
+
+  </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // 1. Theme Toggle
+      const themeToggle = document.getElementById("theme-toggle");
+      const themeIcon = document.getElementById("theme-icon");
+      const themeText = document.getElementById("theme-text");
+      const body = document.body;
+
+      const savedTheme = localStorage.getItem("handbook_theme") || "dark";
+      applyTheme(savedTheme);
+
+      themeToggle.addEventListener("click", () => {
+        const currentTheme = body.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        applyTheme(newTheme);
+      });
+
+      function applyTheme(theme) {
+        body.setAttribute("data-theme", theme);
+        localStorage.setItem("handbook_theme", theme);
+        if (theme === "dark") {
+          themeIcon.className = "fa-solid fa-moon";
+          themeText.textContent = "Dark";
+          document.getElementById("hljs-theme").href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css";
+        } else {
+          themeIcon.className = "fa-solid fa-sun";
+          themeText.textContent = "Light";
+          document.getElementById("hljs-theme").href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
+        }
+      }
+
+      // 2. Mobile Menu Toggle
+      const mobileToggle = document.getElementById("mobile-toggle");
+      const sidebar = document.getElementById("sidebar");
+      if (mobileToggle) {
+        mobileToggle.addEventListener("click", () => {
+          sidebar.classList.toggle("open");
+        });
+      }
+
+      // 3. Scroll Progress & Back to Top
+      const progressBar = document.getElementById("progress-bar");
+      const backToTopBtn = document.getElementById("back-to-top");
+
+      window.addEventListener("scroll", () => {
+        const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        progressBar.style.width = scrolled + "%";
+
+        if (winScroll > 400) {
+          backToTopBtn.classList.add("visible");
+        } else {
+          backToTopBtn.classList.remove("visible");
+        }
+      });
+
+      backToTopBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // 4. Parse and Render Markdown
+      const rawMarkdown = document.getElementById("source-markdown").textContent;
+      const articleContent = document.getElementById("article-content");
+
+      // Configure marked
+      marked.setOptions({
+        gfm: true,
+        breaks: false,
+        highlight: function(code, lang) {
+          if (lang && hljs.getLanguage(lang)) {
+            try {
+              return hljs.highlight(code, { language: lang }).value;
+            } catch (__) {}
+          }
+          return hljs.highlightAuto(code).value;
+        }
+      });
+
+      // Render Markdown to HTML
+      const htmlContent = marked.parse(rawMarkdown);
+      articleContent.innerHTML = htmlContent;
+
+      // 5. Enhance Rendered HTML:
+      // a. Wrap tables in responsive container
+      articleContent.querySelectorAll("table").forEach(table => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "table-container";
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+      });
+
+      // b. Code block headers with language badges & copy button
+      articleContent.querySelectorAll("pre code").forEach(codeBlock => {
+        const pre = codeBlock.parentElement;
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block-wrapper";
+        
+        let lang = "code";
+        codeBlock.classList.forEach(cls => {
+          if (cls.startsWith("language-")) {
+            lang = cls.replace("language-", "");
+          }
+        });
+
+        // Skip mermaid blocks for code styling
+        if (lang === "mermaid") {
+          const mermaidContainer = document.createElement("div");
+          mermaidContainer.className = "mermaid-container";
+          mermaidContainer.innerHTML = `<div class="mermaid-title"><i class="fa-solid fa-project-diagram"></i> Architecture Diagram</div><div class="mermaid">${codeBlock.textContent}</div>`;
+          pre.parentNode.replaceChild(mermaidContainer, pre);
+          return;
+        }
+
+        const header = document.createElement("div");
+        header.className = "code-block-header";
+        header.innerHTML = `
+          <span class="code-lang-tag"><i class="fa-solid fa-code"></i> ${lang.toUpperCase()}</span>
+          <button class="copy-btn" title="Copy code"><i class="fa-regular fa-copy"></i> Copy</button>
+        `;
+
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(header);
+        wrapper.appendChild(pre);
+
+        const copyBtn = header.querySelector(".copy-btn");
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+            copyBtn.classList.add("copied");
+            copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            setTimeout(() => {
+              copyBtn.classList.remove("copied");
+              copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+            }, 2000);
+          });
+        });
+      });
+
+      // c. Transform Quizzes & Scenarios into Interactive Collapsible Cards
+      enhanceQuizzesAndScenarios(articleContent);
+
+      // 6. Generate Dynamic Table of Contents in Sidebar
+      generateTOC(articleContent);
+
+      // 7. Initialize Mermaid
+      if (window.mermaid) {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'dark',
+          themeVariables: {
+            darkMode: true,
+            background: '#151d2d',
+            primaryColor: '#6366f1',
+            primaryTextColor: '#ffffff',
+            primaryBorderColor: '#818cf8',
+            lineColor: '#06b6d4',
+            secondaryColor: '#1e293b',
+            tertiaryColor: '#0f172a'
+          }
+        });
+        mermaid.run();
+      }
+
+      // 8. Search / Filter in Sidebar
+      const filterInput = document.getElementById("filter-input");
+      filterInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll("#toc-list .toc-item").forEach(item => {
+          const text = item.textContent.toLowerCase();
+          if (text.includes(query)) {
+            item.style.display = "";
+          } else {
+            item.style.display = "none";
+          }
+        });
+      });
+
+      // Helper function to build TOC
+      function generateTOC(root) {
+        const tocList = document.getElementById("toc-list");
+        tocList.innerHTML = "";
+        const headings = root.querySelectorAll("h1, h2");
+
+        headings.forEach((heading, index) => {
+          let text = heading.textContent.trim();
+          // Skip master TOC heading or hero title duplicates
+          if (text.includes("Master Table of Contents") || text.includes("Definitive Agentic AI")) {
+            return;
+          }
+
+          const id = heading.id || "section-" + index;
+          heading.id = id;
+
+          const li = document.createElement("li");
+          li.className = "toc-item";
+          
+          const isH1 = heading.tagName.toLowerCase() === "h1";
+          const icon = isH1 ? "fa-solid fa-bookmark" : "fa-regular fa-circle-dot";
+
+          li.innerHTML = `
+            <a href="#${id}" class="toc-link ${isH1 ? 'toc-h1' : 'toc-h2'}">
+              <i class="${icon}"></i>
+              <span>${text}</span>
+            </a>
+          `;
+
+          tocList.appendChild(li);
+        });
+
+        // Scroll spy
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const activeId = entry.target.id;
+              document.querySelectorAll(".toc-link").forEach(link => {
+                if (link.getAttribute("href") === "#" + activeId) {
+                  link.classList.add("active");
+                } else {
+                  link.classList.remove("active");
+                }
+              });
+            }
+          });
+        }, { rootMargin: "-20% 0px -70% 0px" });
+
+        headings.forEach(h => observer.observe(h));
+      }
+
+      // Helper function to format quizzes & scenarios
+      function enhanceQuizzesAndScenarios(root) {
+        const h4s = root.querySelectorAll("h4");
+        h4s.forEach(h4 => {
+          const text = h4.textContent;
+          if (text.includes("Scenario") || text.includes("Quiz Question")) {
+            const isScenario = text.includes("Scenario");
+            const card = document.createElement("div");
+            card.className = isScenario ? "scenario-card" : "quiz-card";
+
+            const badge = document.createElement("span");
+            badge.className = isScenario ? "scenario-badge" : "quiz-badge";
+            badge.innerHTML = isScenario 
+              ? '<i class="fa-solid fa-lightbulb"></i> Architectural Scenario' 
+              : '<i class="fa-solid fa-circle-question"></i> Knowledge Check';
+
+            card.appendChild(badge);
+
+            const title = document.createElement("div");
+            title.className = "quiz-question";
+            title.textContent = text;
+            card.appendChild(title);
+
+            // Collect sibling elements until next h4 or h3 or hr
+            const siblings = [];
+            let curr = h4.nextElementSibling;
+            while (curr && !['H1', 'H2', 'H3', 'H4', 'HR'].includes(curr.tagName)) {
+              siblings.push(curr);
+              curr = curr.nextElementSibling;
+            }
+
+            // Create accordion if answers/solutions exist
+            const contentDiv = document.createElement("div");
+            const solutionDiv = document.createElement("div");
+            solutionDiv.className = "quiz-solution";
+
+            let inSolution = false;
+            siblings.forEach(el => {
+              if (el.textContent.includes("Architectural Decision:") || 
+                  el.textContent.includes("Answer:") || 
+                  el.textContent.includes("Correct Answer:") ||
+                  el.textContent.includes("Analysis:")) {
+                inSolution = true;
+              }
+              if (inSolution) {
+                solutionDiv.appendChild(el);
+              } else {
+                contentDiv.appendChild(el);
+              }
+            });
+
+            card.appendChild(contentDiv);
+
+            if (solutionDiv.children.length > 0) {
+              const accWrapper = document.createElement("div");
+              accWrapper.className = "quiz-accordion";
+              const toggleBtn = document.createElement("button");
+              toggleBtn.className = "quiz-toggle-btn";
+              toggleBtn.innerHTML = '<i class="fa-solid fa-key"></i> Reveal Solution & Rationale';
+              
+              toggleBtn.addEventListener("click", () => {
+                solutionDiv.classList.toggle("open");
+                if (solutionDiv.classList.contains("open")) {
+                  toggleBtn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Hide Solution';
+                } else {
+                  toggleBtn.innerHTML = '<i class="fa-solid fa-key"></i> Reveal Solution & Rationale';
+                }
+              });
+
+              accWrapper.appendChild(toggleBtn);
+              accWrapper.appendChild(solutionDiv);
+              card.appendChild(accWrapper);
+            }
+
+            h4.parentNode.replaceChild(card, h4);
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

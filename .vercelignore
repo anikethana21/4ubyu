@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+.env
+.venv
+venv
+.git
+.gitignore
+notes_vectordb
+*.log
+scratch
+*.tmp

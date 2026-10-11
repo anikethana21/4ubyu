@@ -1,0 +1,11 @@
+/* 4 U By U — Theme: Light Minimalist */
+[data-theme="light_minimal"] {
+  --theme-bg: #f8fafc;
+  --theme-pane-bg: #ffffff;
+  --theme-header-bg: rgba(255, 255, 255, 0.95);
+  --theme-card-bg: #f1f5f9;
+  --theme-border: #e2e8f0;
+  --theme-text: #0f172a;
+  --theme-muted: #64748b;
+  --theme-accent: #4f46e5;
+}

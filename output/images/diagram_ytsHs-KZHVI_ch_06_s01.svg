@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 310" width="100%" height="100%" style="font-family:'Roboto',system-ui,sans-serif;">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#0f766e" />
+    </marker>
+  </defs>
+
+  <!-- Clean Pure White Background with Subtle Border -->
+  <rect width="800" height="310" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+
+  <!-- Top Header Bar -->
+  <rect x="20" y="14" width="170" height="26" rx="5" fill="#f0fdfa" stroke="#0f766e" stroke-width="1.2" />
+  <text x="28" y="31" font-size="10.5" font-weight="700" fill="#0f766e" letter-spacing="0.5">REACTIVE FLOWCHART</text>
+
+  <rect x="685" y="14" width="95" height="26" rx="5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+  <text x="702" y="31" font-size="11.5" font-weight="700" fill="#0f172a">▶ 02:02:10</text>
+
+  <text x="205" y="32" font-size="13" font-weight="700" fill="#0f172a">Dynamic Routing with Conditional Edges</text>
+
+  <!-- Node 1: Input / Source -->
+  <g transform="translate(25, 68)" filter="url(#shadow)">
+    <rect width="215" height="180" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect x="12" y="12" width="191" height="30" rx="5" fill="#e0f2fe" stroke="#0369a1" stroke-width="1" />
+    <text x="22" y="32" font-size="11.5" font-weight="700" fill="#0369a1">1. Intent Classifier</text>
+    
+    <circle cx="25" cy="66" r="3" fill="#0f172a" />
+    <text x="35" y="70" font-size="11" font-weight="600" fill="#0f172a">User prompt parsed</text>
+    <circle cx="25" cy="90" r="3" fill="#475569" />
+    <text x="35" y="94" font-size="11" font-weight="600" fill="#475569">Intent classification node</text>
+    <circle cx="25" cy="114" r="3" fill="#0369a1" />
+    <text x="35" y="118" font-size="11" font-weight="600" fill="#0369a1">Output: &#x27;rag&#x27; vs &#x27;direct&#x27;</text>
+    <circle cx="25" cy="138" r="3" fill="#475569" />
+    <text x="35" y="142" font-size="11" font-weight="600" fill="#475569">Decision dictionary returned</text>
+
+    <rect x="14" y="142" width="187" height="24" rx="4" fill="#ffffff" stroke="#e2e8f0" />
+    <text x="22" y="158" font-size="10.5" font-weight="600" fill="#0369a1">Classifier Node</text>
+  </g>
+
+  <!-- Arrow 1 to 2 -->
+  <path d="M 240 158 L 285 158" stroke="#0f766e" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <!-- Node 2: Core Processing / Graph Engine -->
+  <g transform="translate(290, 56)" filter="url(#shadow)">
+    <rect width="235" height="202" rx="10" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
+    <rect x="14" y="14" width="207" height="32" rx="6" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1.2" />
+    <text x="24" y="35" font-size="12" font-weight="800" fill="#6d28d9">2. Conditional Router</text>
+
+    <circle cx="25" cy="66" r="3" fill="#7c3aed" />
+    <text x="35" y="70" font-size="11" font-weight="600" fill="#7c3aed">add_conditional_edges()</text>
+    <circle cx="25" cy="90" r="3" fill="#0f172a" />
+    <text x="35" y="94" font-size="11" font-weight="600" fill="#0f172a">eval_route() routing function</text>
+    <circle cx="25" cy="114" r="3" fill="#0f766e" />
+    <text x="35" y="118" font-size="11" font-weight="600" fill="#0f766e">Branch A: vector_rag_node</text>
+    <circle cx="25" cy="138" r="3" fill="#0284c7" />
+    <text x="35" y="142" font-size="11" font-weight="600" fill="#0284c7">Branch B: direct_llm_node</text>
+
+    <rect x="16" y="156" width="203" height="26" rx="4" fill="#f8fafc" stroke="#cbd5e1" />
+    <text x="24" y="173" font-size="10.5" font-weight="700" fill="#6d28d9">Dynamic Routing Gate</text>
+  </g>
+
+  <!-- Arrow 2 to 3 -->
+  <path d="M 525 158 L 570 158" stroke="#0f766e" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <!-- Node 3: Target Output / State -->
+  <g transform="translate(575, 68)" filter="url(#shadow)">
+    <rect width="200" height="180" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+    <rect x="12" y="12" width="176" height="30" rx="5" fill="#ecfdf5" stroke="#059669" stroke-width="1" />
+    <text x="20" y="32" font-size="11.5" font-weight="700" fill="#059669">3. Specialized Output</text>
+
+    <circle cx="25" cy="66" r="3" fill="#0f172a" />
+    <text x="35" y="70" font-size="11" font-weight="600" fill="#0f172a">RAG: Grounded with sources</text>
+    <circle cx="25" cy="90" r="3" fill="#0f172a" />
+    <text x="35" y="94" font-size="11" font-weight="600" fill="#0f172a">Direct: Fast zero-latency</text>
+    <circle cx="25" cy="114" r="3" fill="#059669" />
+    <text x="35" y="118" font-size="11" font-weight="600" fill="#059669">Optimized execution path</text>
+    <circle cx="25" cy="138" r="3" fill="#059669" />
+    <text x="35" y="142" font-size="11" font-weight="600" fill="#059669">Merged into final answer</text>
+
+    <rect x="14" y="142" width="172" height="24" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+    <text x="20" y="158" font-size="10.5" font-weight="700" fill="#059669">Target Node Reached</text>
+  </g>
+
+  <!-- Bottom Info Footer -->
+  <text x="25" y="285" font-size="11" font-weight="600" fill="#334155">Concept: Dynamic Conditional Routing Between Vector RAG and Direct Synthesis</text>
+  <text x="660" y="285" font-size="11" font-weight="700" fill="#0f766e">4 U BY U VERIFIED</text>
+</svg>

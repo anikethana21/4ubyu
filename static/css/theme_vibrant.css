@@ -1,0 +1,11 @@
+/* 4 U By U — Theme: Vibrant Cyberpunk */
+[data-theme="vibrant"] {
+  --theme-bg: #09090b;
+  --theme-pane-bg: #14141c;
+  --theme-header-bg: rgba(20, 20, 28, 0.95);
+  --theme-card-bg: #1e1e2d;
+  --theme-border: #2e2e44;
+  --theme-text: #f4f4f5;
+  --theme-muted: #a1a1aa;
+  --theme-accent: #a855f7;
+}

@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Agentic AI &amp; LangGraph Engineering Handbook</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Outfit:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Highlight.js & Themes -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="hljs-theme" rel="stylesheet"/>
+<!-- FontAwesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<!-- Marked.js for GFM Parsing -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.1/marked.min.js"></script>
+<!-- Highlight.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<!-- Mermaid.js for Dynamic Diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --bg-card: #151d2d;
+      --bg-card-hover: #1c263b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366f1;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-indigo: #06b6d4;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --code-bg: #090d16;
+      --sidebar-width: 320px;
+      --header-height: 64px;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
+      --shadow-lg: 0 10px 30px -10px rgba(0,0,0,0.5);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8fafc;
+      --border-color: #e2e8f0;
+      --border-focus: #4f46e5;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --code-bg: #1e293b;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 30px -10px rgba(0,0,0,0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-indigo); }
+
+    #progress-container {
+      position: fixed; top: 0; left: 0; width: 100%; height: 4px; z-index: 1000;
+    }
+    #progress-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--accent-indigo), var(--accent-cyan));
+      transition: width 0.1s ease;
+    }
+
+    header.top-header {
+      position: fixed; top: 4px; left: 0; right: 0; height: var(--header-height);
+      background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; z-index: 900;
+    }
+    [data-theme="light"] header.top-header { background: rgba(255, 255, 255, 0.9); }
+
+    .brand-group { display: flex; align-items: center; gap: 12px; }
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan));
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+    .brand-title { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+    .brand-badge {
+      font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 12px;
+      background: rgba(99, 102, 241, 0.15); color: var(--accent-indigo);
+      border: 1px solid rgba(99, 102, 241, 0.3); text-transform: uppercase;
+    }
+
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .action-btn {
+      background: var(--bg-secondary); border: 1px solid var(--border-color);
+      color: var(--text-secondary); padding: 8px 14px; border-radius: var(--radius-sm);
+      font-size: 0.88rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    .action-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--accent-indigo); }
+
+    aside.sidebar {
+      position: fixed; top: calc(var(--header-height) + 4px); left: 0; bottom: 0;
+      width: var(--sidebar-width); background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color); display: flex; flex-direction: column;
+      z-index: 800; overflow: hidden;
+    }
+
+    .sidebar-search-box { padding: 16px; border-bottom: 1px solid var(--border-color); }
+    .search-input-wrapper { position: relative; }
+    .search-input-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-input {
+      width: 100%; padding: 8px 12px 8px 36px; background: var(--bg-primary);
+      border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+      color: var(--text-primary); font-size: 0.88rem; outline: none;
+    }
+    .search-input:focus { border-color: var(--accent-indigo); }
+
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; }
+    .toc-section-title {
+      font-size: 0.72rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 12px 4px 12px;
+    }
+    .toc-list { list-style: none; margin-bottom: 16px; }
+    .toc-item { margin: 2px 0; }
+    .toc-link {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      color: var(--text-secondary); text-decoration: none; font-size: 0.86rem;
+      border-radius: var(--radius-sm); transition: all 0.2s ease; line-height: 1.4;
+    }
+    .toc-link:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .toc-link.active {
+      background: rgba(99, 102, 241, 0.15); color: var(--accent-indigo);
+      font-weight: 600; border-left: 3px solid var(--accent-indigo);
+    }
+    .toc-link i { font-size: 0.85rem; width: 16px; text-align: center; color: var(--text-muted); }
+    .toc-link.active i { color: var(--accent-indigo); }
+
+    main.content-wrapper {
+      margin-left: var(--sidebar-width); margin-top: calc(var(--header-height) + 4px);
+      flex: 1; padding: 40px 60px 100px 60px; max-width: 1300px; min-width: 0;
+    }
+
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9)), url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1.5" fill="%236366f1" fill-opacity="0.12"/></svg>');
+      border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+      padding: 40px 48px; margin-bottom: 48px; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);
+    }
+    .hero-pill-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .hero-pill {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600;
+      padding: 4px 12px; border-radius: 20px; background: rgba(99, 102, 241, 0.15); color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .hero-pill.cyan { background: rgba(6, 182, 212, 0.15); color: #67e8f9; border-color: rgba(6, 182, 212, 0.3); }
+    .hero-pill.emerald { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3); }
+    .hero-title {
+      font-family: 'Outfit', sans-serif; font-size: 2.3rem; font-weight: 800; line-height: 1.2;
+      margin-bottom: 12px; background: linear-gradient(120deg, #ffffff 0%, #cbd5e1 50%, #818cf8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-secondary); max-width: 900px; margin-bottom: 24px; }
+    .hero-stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 24px;
+    }
+    .stat-card { display: flex; flex-direction: column; }
+    .stat-val { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; color: #ffffff; }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .markdown-body { font-size: 1.05rem; color: var(--text-primary); }
+    .markdown-body h1 {
+      font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800;
+      margin-top: 56px; margin-bottom: 24px; padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-color); color: var(--text-primary);
+    }
+    .markdown-body h1:first-of-type { margin-top: 0; }
+    .markdown-body h2 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; margin-top: 44px; margin-bottom: 18px; }
+    .markdown-body h3 { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 600; margin-top: 32px; margin-bottom: 14px; color: #818cf8; }
+    .markdown-body h4 { font-size: 1.1rem; font-weight: 600; margin-top: 24px; margin-bottom: 12px; color: var(--text-secondary); }
+    .markdown-body p { margin-bottom: 18px; color: var(--text-secondary); }
+    .markdown-body strong { color: var(--text-primary); font-weight: 600; }
+    .markdown-body hr { border: 0; height: 1px; background: var(--border-color); margin: 40px 0; }
+    .markdown-body ul, .markdown-body ol { margin-bottom: 22px; padding-left: 28px; color: var(--text-secondary); }
+    .markdown-body li { margin-bottom: 8px; }
+    .markdown-body blockquote {
+      border-left: 4px solid var(--accent-indigo); background: rgba(99, 102, 241, 0.06);
+      padding: 16px 20px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 24px 0; color: var(--text-secondary);
+    }
+
+    .table-container { width: 100%; overflow-x: auto; margin: 24px 0; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
+    th { background: var(--bg-tertiary); color: var(--text-primary); font-weight: 600; padding: 14px 18px; border-bottom: 1px solid var(--border-color); }
+    td { padding: 14px 18px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: rgba(255, 255, 255, 0.02); }
+
+    .code-block-wrapper {
+      position: relative; margin: 24px 0; border-radius: var(--radius-md);
+      border: 1px solid var(--border-color); background: var(--code-bg); overflow: hidden;
+    }
+    .code-block-header {
+      display: flex; align-items: center; justify-content: space-between; padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.04); border-bottom: 1px solid var(--border-color);
+    }
+    .code-lang-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
+    .copy-btn {
+      background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary); border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; cursor: pointer;
+    }
+    .copy-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
+    .copy-btn.copied { background: rgba(16, 185, 129, 0.2); border-color: var(--accent-emerald); color: var(--accent-emerald); }
+
+    pre { margin: 0; padding: 18px 20px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; line-height: 1.6; }
+    code { font-family: 'JetBrains Mono', monospace; }
+    p code, li code, td code {
+      background: rgba(99, 102, 241, 0.12); color: #a5b4fc; padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+    }
+
+    .mermaid-container {
+      margin: 28px 0; background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 28px; text-align: center; overflow-x: auto;
+    }
+    .mermaid-title { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 18px; }
+
+    .quiz-card {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid rgba(99, 102, 241, 0.25); border-left: 4px solid var(--accent-indigo);
+      border-radius: var(--radius-md); padding: 22px 26px; margin: 24px 0;
+    }
+    .quiz-badge {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 700;
+      text-transform: uppercase; color: var(--accent-indigo); background: rgba(99, 102, 241, 0.12);
+      padding: 3px 10px; border-radius: 12px; margin-bottom: 12px;
+    }
+    .quiz-question { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
+    .quiz-accordion { margin-top: 14px; border-top: 1px dashed var(--border-color); padding-top: 12px; }
+    .quiz-toggle-btn {
+      background: transparent; border: 1px solid var(--border-color); color: var(--accent-indigo);
+      padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.84rem; font-weight: 600; cursor: pointer;
+    }
+    .quiz-toggle-btn:hover { background: rgba(99, 102, 241, 0.15); }
+    .quiz-solution {
+      display: none; margin-top: 14px; padding: 16px; background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-sm);
+    }
+    .quiz-solution.open { display: block; animation: fadeIn 0.3s ease; }
+
+    .scenario-card {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid rgba(6, 182, 212, 0.25); border-left: 4px solid var(--accent-cyan);
+      border-radius: var(--radius-md); padding: 22px 26px; margin: 24px 0;
+    }
+    .scenario-badge {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 700;
+      text-transform: uppercase; color: var(--accent-cyan); background: rgba(6, 182, 212, 0.12);
+      padding: 3px 10px; border-radius: 12px; margin-bottom: 12px;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    #back-to-top {
+      position: fixed; bottom: 28px; right: 28px; width: 44px; height: 44px;
+      border-radius: 50%; background: var(--accent-indigo); color: white; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 950;
+    }
+    #back-to-top.visible { opacity: 1; visibility: visible; }
+
+    @media (max-width: 1024px) {
+      aside.sidebar { transform: translateX(-100%); }
+      aside.sidebar.open { transform: translateX(0); }
+      main.content-wrapper { margin-left: 0; padding: 28px 20px 80px 20px; }
+    }
+    @media print {
+      header.top-header, aside.sidebar, #back-to-top, #progress-container { display: none !important; }
+      main.content-wrapper { margin-left: 0; padding: 0; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+<div id="progress-container"><div id="progress-bar"></div></div>
+<header class="top-header">
+<div class="brand-group">
+<div class="brand-icon"><i class="fa-solid fa-network-wired"></i></div>
+<div><div class="brand-title">Agentic AI &amp; LangGraph</div></div>
+<span class="brand-badge">Track 2: LangGraph &amp; Agents</span>
+</div>
+<div class="header-actions">
+<button class="action-btn" id="theme-toggle"><i class="fa-solid fa-moon" id="theme-icon"></i><span id="theme-text">Dark</span></button>
+<button class="action-btn" onclick="window.print()"><i class="fa-solid fa-print"></i><span>Print / PDF</span></button>
+</div>
+</header>
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-search-box">
+<div class="search-input-wrapper">
+<i class="fa-solid fa-magnifying-glass"></i>
+<input class="search-input" id="filter-input" placeholder="Search modules &amp; topics..." type="text"/>
+</div>
+</div>
+<nav class="sidebar-nav">
+<div class="toc-section-title">Navigation Outline</div>
+<ul class="toc-list" id="toc-list"></ul>
+</nav>
+</aside>
+<main class="content-wrapper">
+<div class="hero-banner">
+<div class="hero-pill-group">
+<span class="hero-pill"><i class="fa-solid fa-code"></i> 100% Repository Code Intact</span>
+<span class="hero-pill cyan"><i class="fa-solid fa-diagram-project"></i> Architecture Diagrams</span>
+<span class="hero-pill emerald"><i class="fa-solid fa-graduation-cap"></i> Quizzes &amp; Scenarios</span>
+</div>
+<h1 class="hero-title">The Agentic AI &amp; LangGraph Engineering Handbook</h1>
+<p class="hero-subtitle">State Modeling, Cyclic Graphs, The 5 Core Workflow Archetypes &amp; Production Multi-Agent Systems. Preserving 100% Repository Code.</p>
+<div class="hero-stats">
+<div class="stat-card"><span class="stat-val">9 Modules</span><span class="stat-label">State &amp; Graphs</span></div>
+<div class="stat-card"><span class="stat-val">5 Archetypes</span><span class="stat-label">Sequential to HITL</span></div>
+<div class="stat-card"><span class="stat-val">Full App</span><span class="stat-label">Multi-Pattern UI</span></div>
+<div class="stat-card"><span class="stat-val">15+ Scenarios</span><span class="stat-label">Design &amp; Debug</span></div>
+</div>
+</div>
+<article class="markdown-body" id="article-content"></article>
+</main>
+<button id="back-to-top"><i class="fa-solid fa-arrow-up"></i></button>
+<script id="source-markdown" type="text/markdown">
+# The Agentic AI & LangGraph Engineering Handbook
+### *State Modeling, Cyclic Graphs, The 5 Core Workflow Archetypes & Production Multi-Agent Systems*
+**Based on the Course by Akarsh Vyas (Sheryians AI School) — Agentic AI & LangGraph Track**  
+*All Production Repository Code Preserved Exactly from `langgraph/Agentic-AI-youtube`*
+
+---
+
+## Master Table of Contents
+
+1. [Prologue: The Agentic Paradigm Shift & Core Mental Models](#prologue)
+2. [Module 1: LangGraph Foundations & State Architecture (`states.py`)](#module-1)
+3. [Module 2: Archetype 1 — Sequential Base Graph (`sequential_base.py`)](#module-2)
+4. [Module 3: Archetype 2 — Parallel Graph & Reducer Merging (`parallel_reducers.py`)](#module-3)
+5. [Module 4: Archetype 3 — Conditional Routing & Multi-Source RAG (`conditional_RAG.py`)](#module-4)
+6. [Module 5: Archetype 4 — Iterative Tool Execution & Cyclic ReAct Loops (`iterative_tools.py`)](#module-5)
+7. [Module 6: Archetype 5 — Human-in-the-Loop (HITL), Checkpoints & Interrupts (`humanintheloop.py`)](#module-6)
+8. [Module 7: Production LangGraph Application Architecture (`app.py`)](#module-7)
+9. [Module 8: The Universal Agent Design Blueprint & Production Systems](#module-8)
+10. [Module 9: Master Quizzes, Real-World Scenarios, Debugging & Final Exam](#module-9)
+
+---
+
+# Prologue: The Agentic Paradigm Shift & Core Mental Models
+
+## From Linear Chains to Stateful Cyclic Graphs
+
+Traditional LLM applications were linear pipelines (chains):
+```
+User Prompt  ──>  PromptTemplate  ──>  LLM  ──>  OutputParser  ──>  User
+```
+
+In the real world, human problem-solving is **rarely linear**. When writing a complex software feature or conducting a medical diagnosis, you:
+1. Formulate a hypothesis
+2. Take an action (run a test, query a database)
+3. Observe the outcome
+4. If an error occurs, **loop back** and try a different tool
+5. If an action is dangerous (e.g. charging a credit card), **pause** for human approval
+
+Chains fail at this because DAGs (Directed Acyclic Graphs) cannot loop backward. **LangGraph was created specifically to bring cycles, stateful persistence, and human checkpoints to AI engineering.**
+
+### Core Mental Model: The Shared Whiteboard
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                      THE LANGGRAPH MENTAL MODEL                        │
+│                                                                        │
+│   [NODE 1: Research] ──┐                                              │
+│                        ├─── Updates State ───> ┌───────────────────┐  │
+│   [NODE 2: Analyze]  ──┤                       │   SHARED STATE    │  │
+│                        ├─── Reads State  ────> │    WHITEBOARD     │  │
+│   [NODE 3: Critic]   ──┘                       └───────────────────┘  │
+│         │                                                             │
+│         └── Conditional Edge: If score < 7 -> LOOP BACK to Node 1     │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+| Component | Analogy | Engineering Reality |
+|---|---|---|
+| **State** | Shared whiteboard in a war room | A `TypedDict` or `Pydantic` schema shared by all nodes |
+| **Node** | A team member with a specific job | A Python function that takes State and returns a dict of updates |
+| **Edge** | The standard conveyor belt | Connects Node A to Node B directly |
+| **Conditional Edge** | The traffic cop / router | Examines current State and decides which Node to execute next |
+| **Reducers** | Rules for updating the whiteboard | Dictates whether new data replaces, appends, or aggregates |
+| **Checkpointer** | The time-travel save point | Saves graph state snapshot after every node step for thread continuity |
+
+---
+
+
+
+
+
+
+```
+LCEL:        A -> B -> C                (always linear)
+LangGraph:   A -> B -> C               (sequential)
+             A -> B or C               (conditional)
+             A -> B -> A -> B          (iterative/cyclic)
+             A -> B -> [PAUSE] -> C    (human-in-loop)
+             A -> B and C              (parallel)
+```
+
+# Module 1: LangGraph Foundations & State Architecture (`states.py`)
+
+```python
+#1) TypedDict approach - simplest, most common
+
+from typing import TypedDict
+
+class State(TypedDict):
+    topic : str 
+    summary : str 
+    score : int 
+
+
+#2) pydantic approach
+#it is good at data validation and type checking at 
+#runtime 
+
+from pydantic import BaseModel, field_validator
+
+class State(BaseModel):
+    topic : str 
+    score :int 
+    summary : str = ""
+
+    @field_validator
+    def score_positive(cls,v):
+        if v < 0:
+            raise ValueError("score must be positive")
+
+#python dataclaseess 
+
+#standard python dataclass but it is used very rarelty 
+
+from dataclasses import dataclass, field 
+
+@dataclass
+class State:
+    topic : str = ""
+    summary  : str = ""
+    messages : list = field(default_factory=list)
+
+
+from langgraph.graph import MessagesState
+
+class State(MessagesState):
+    # messages field is already included with add_messages reducer
+    # just add your extra fields
+    user_name: str
+    language: str
+```
+
+### State Approach Comparison
+
+| Approach | Validation | Use When |
+|---|---|---|
+| `TypedDict` | None (type hints only) | Most LangGraph workflows |
+| `Pydantic BaseModel` | Runtime validation | Data must be validated |
+| `@dataclass` | None | Rare — prefer TypedDict |
+| `MessagesState` | add_messages built-in | Chatbot/conversation flows |
+
+---
+
+## 4.3 Archetype 1 — Sequential Workflow
+
+**Analogy:** Assembly line — each station completes one job, passes the baton.
+
+```
+START -> [editor_node] -> [scriptwriter_node] -> [translator_node] -> END
+```
+
+### Code: Video Content Pipeline (`sequential_base.py`)
+
+```python
+import os 
+from typing import TypedDict
+
+#Lets create the state first 
+
+class pipelinestate(TypedDict):
+    raw_input : str 
+    edited_text : str 
+    script_text : str 
+    final_output : str 
+
+from langchain_groq import ChatGroq 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
+
+def editor_node(state :pipelinestate) -> dict:
+    """Stage 1: Cleans up grammar, removes typos, and refines the tone."""
+
+    prompt = (
+        "You are an expert copyeditor. Clean up the following raw text. "
+        "Fix any grammatical errors, spelling mistakes, and smooth out the transition flow "
+        "while keeping the core message intact. Return only the edited text.\n\n"
+        f"Text:\n{state['raw_input']}"
+    )
+    response = llm.invoke(prompt)
+
+    return {"edited_text" : response.content.strip()}
+
+def scriptwriter_node(state: pipelinestate) -> dict:
+    """Stage 2: Formats the clean text into an engaging video script style."""
+    print("\n--- [Stage 2] Executing Scriptwriter Node ---")
+    
+    prompt = (
+        "You are a charismatic YouTube content creator. Take this edited text and transform "
+        "it into a highly engaging, punchy, conversational video script hook. Make it sound "
+        "like a real person speaking passionately. Return only the script content.\n\n"
+        f"Edited Text:\n{state['edited_text']}"
+    )
+    
+    response = llm.invoke(prompt)
+    return {"script_text": response.content.strip()}
+
+def translator_node(state: pipelinestate) -> dict:
+    """Stage 3: Translates the script into natural flowing Hinglish."""
+    print("\n--- [Stage 3] Executing Hinglish Translator Node ---")
+    
+    prompt = (
+        "You are an expert content localizer for the Indian market. Take the following script "
+        "and convert it into natural, flowing 'Hinglish'. Do not simply translate it sentence-by-sentence "
+        "or repeat information. Alternating comfortably between Hindi and English phrases just like "
+        "an intellectual tech educator would speak naturally on a live stream. Keep the energy high! "
+        "Return only the final Hinglish text.\n\n"
+        f"Script:\n{state['script_text']}"
+    )
+    
+    response = llm.invoke(prompt)
+    return {"final_output": response.content.strip()}
+
+
+#now your state and nodes are ready and now it is time to create the graph 
+#and for creating the graph you have to connect tese nodes and for that you have 
+#to use the edges 
+#edges are very important to create the workflows 
+
+from langgraph.graph import StateGraph , START , END 
+
+#create the graph
+graph = StateGraph(pipelinestate)
+
+#add the nodes in our graph 
+
+graph.add_node("editor",editor_node)
+graph.add_node("scriptwriter",scriptwriter_node)
+graph.add_node("translator",translator_node)
+
+
+#Add edges (sequential - one after another)
+
+graph.add_edge(START,"editor")
+graph.add_edge('editor',"scriptwriter")
+graph.add_edge('scriptwriter',"translator")
+graph.add_edge('translator',END)
+
+#compile the graph 
+app = graph.compile()
+
+result = app.invoke({
+    "raw_input" :"AI agents are the future of tech. They can think, plan, and act on their own. LangGraph helps you build these agents with proper control and memory."
+})
+
+#output 
+print("your result are : - \n\n")
+print(result['final_output'])
+```
+
+---
+
+## 4.4 Archetype 2 — Parallel Workflow with Custom Reducer
+
+**Analogy:** Reconnaissance squad — multiple scouts gather different intel simultaneously.
+
+```
+START -> +-- [toxicity_node] ------+-> END
+         +-- [copyright_node] -----+
+         +-- [culture_node] -------+
+         
+All 3 write to "safety_scores" dict -- the reducer MERGES them
+```
+
+### Code: Multi-Branch Safety Analyzer (`parallel_reducers.py`)
+
+```python
+import os 
+from typing import TypedDict, Annotated
+from dotenv import load_dotenv
+from langchain_groq import ChatGroq
+from langgraph.graph import StateGraph, START , END 
+
+load_dotenv()
+
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.1)
+def merge_score_dicts(existing :dict , newupdate : dict) -> dict:
+    if existing is None:
+        return newupdate 
+    return {**existing , **newupdate}
+
+#create a state 
+class AnalyzerState(TypedDict):
+    raw_text : str 
+    safety_scores : Annotated[dict[str , int],merge_score_dicts]
+
+
+#nodes 
+def toxicity_node(state: AnalyzerState) -> dict:
+    print("\n [Branch 1] Analyzing Toxicity and Hate Speech...")
+    prompt = (
+        "Analyze the following text for profanity, aggression, hate speech, or toxicity. "
+        "Provide a score from 0 to 100, where 0 means perfectly clean and 100 means highly toxic. "
+        "Return ONLY the plain integer number, nothing else.\n\n"
+        f"Text:\n{state['raw_text']}"
+    )
+    response = llm.invoke(prompt)
+    try:
+        score = int(response.content.strip())
+    except ValueError:
+        score = 0
+        
+    # Return a sub-dictionary under our single state key
+    return {"safety_scores": {"toxicity_level": score}}
+
+def copyright_node(state: AnalyzerState) -> dict:
+    print("\n [Branch 2] Analyzing Copyright & Originality Risks...")
+    prompt = (
+        "Analyze the following text. Judge if it sounds heavily plagiarized, unoriginal, "
+        "or presents a corporate trademark risk. Provide a score from 0 to 100, "
+        "where 0 means entirely original and 100 means high risk. "
+        "Return ONLY the plain integer number, nothing else.\n\n"
+        f"Text:\n{state['raw_text']}"
+    )
+    response = llm.invoke(prompt)
+    try:
+        score = int(response.content.strip())
+    except ValueError:
+        score = 0
+        
+    # Return a sub-dictionary under the EXACT SAME state key
+    return {"safety_scores": {"copyright_risk": score}}
+
+
+def culture_node(state: AnalyzerState) -> dict:
+    print("\n [Branch 3] Analyzing Regional & Cultural Sensitivity...")
+    prompt = (
+        "Analyze the following text for regional sensitivities, political landmines, "
+        "or cultural insensitivity that might offend a global audience. Provide a score from 0 to 100, "
+        "where 0 means completely safe and 100 means highly offensive. "
+        "Return ONLY the plain integer number, nothing else.\n\n"
+        f"Text:\n{state['raw_text']}"
+    )
+    response = llm.invoke(prompt)
+    try:
+        score = int(response.content.strip())
+    except ValueError:
+        score = 0
+        
+    # Return a sub-dictionary under the EXACT SAME state key
+    return {"safety_scores": {"cultural_insensitivity": score}}
+
+
+builder = StateGraph(AnalyzerState)
+
+
+builder.add_node("toxicity_node",toxicity_node)
+builder.add_node("copyright_check",copyright_node)
+builder.add_node("culture_node",culture_node)
+
+
+builder.add_edge(START,"toxicity_node")
+builder.add_edge(START,"copyright_check")
+builder.add_edge(START,"culture_node")
+
+
+builder.add_edge("toxicity_node",END)
+builder.add_edge("copyright_check",END)
+builder.add_edge("culture_node",END)
+
+
+app = builder.compile()
+
+sample_script = """
+    Yo guys! Welcome back to the stream. Today I am going to show you how to hack into 
+    your friend's system using a script I copied directly from an online forum. 
+    Honestly, traditional security protocols are absolute garbage and anyone still using 
+    them is an absolute idiot. Let's dive into the code!
+    """
+    
+
+    
+initial_state = {
+    "raw_text": sample_script,
+    "safety_scores": {} # Initialized as an empty dictionary
+}
+    
+final_state = app.invoke(initial_state)
+    
+
+print(final_state["safety_scores"])
+```
+
+**The `Annotated[dict, merge_score_dicts]` explained:**
+
+```
+WITHOUT reducer (default: last-write wins):
+  Branch 1: {"safety_scores": {"toxicity_level": 85}}
+  Branch 2: {"safety_scores": {"copyright_risk": 60}}
+  Branch 3: {"safety_scores": {"cultural_insensitivity": 40}}
+  Result:   {"safety_scores": {"cultural_insensitivity": 40}}  <- ONLY last write survives!
+
+WITH merge_score_dicts reducer:
+  Result:   {"toxicity_level": 85, "copyright_risk": 60, "cultural_insensitivity": 40}  <- ALL preserved!
+```
+
+---
+
+## 4.5 Archetype 3 — Conditional Workflow (`conditional_RAG.py`)
+
+**Analogy:** Hospital triage doctor routing patients to the right department.
+
+```
+                    +--- [academic_rag_node] ---+
+START -> [classifier] --+--- [fee_rag_node] --------+-- [response_node] -> END
+                    +--- [general_node] ---------+
+```
+
+```python
+import os 
+from typing import TypedDict, Annotated
+from langgraph.graph.message import add_messages 
+from langgraph.graph import StateGraph , START , END 
+from langchain_groq import ChatGroq
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from dotenv import load_dotenv 
+
+load_dotenv()
+
+
+#Step 1 - Building the RAG retrievers 
+
+embeddings = HuggingFaceEmbeddings(model_name = "sentence-transformers/all-MiniLM-L6-v2" )
+
+def build_retriver(pdf_path : str):
+    loader = PyPDFLoader(pdf_path)
+    document = loader.load()
+
+    splitter = RecursiveCharacterTextSplitter(chunk_size = 800, 
+                                              chunk_overlap = 100)
+    
+    chunks = splitter.split_documents(document)
+
+    vectorstore = FAISS.from_documents(chunks,embeddings)
+
+    return vectorstore.as_retriever(search_kwargs = {"k":4})
+
+acedemic_retriever = build_retriver("academics_handbook.pdf")
+fee_retriever = build_retriver("fee_structure.pdf")
+
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.4)
+
+#step2 - State 
+
+class State(TypedDict):
+    programme : str  
+    messages : Annotated[list,add_messages]
+    query_type : str 
+    retrieved_context : str 
+
+#Step 3 - Nodes generation 
+    
+def classifier_node(state : State) -> dict:
+    """Look at the latest user message and decide which path to take."""
+
+    last_message = state['messages'][-1].content
+
+    prompt = (
+        "Classify the following student query into exactly one category: "
+        "'academic', 'fee', or 'general'.\n\n"
+        "Use 'academic' for questions about attendance, exams, grading, credits, "
+        "promotion, course structure, summer training, or degree requirements.\n"
+        "Use 'fee' for questions about tuition, payment, refund, late charges, "
+        "scholarships, or any money-related topic.\n"
+        "Use 'general' for greetings, casual talk, or anything not related to "
+        "the college rules or fee.\n\n"
+        f"Query: {last_message}\n\n"
+        "Return only one word: academic, fee, or general."
+    )
+
+    response = llm.invoke(prompt)
+    category = response.content.strip().lower()
+
+    if "academic" in category:
+        category = "academic"
+    elif "fee" in category:
+        category = "fee"
+    else:
+        category = "general"
+    
+    return {"query_type" : category}
+
+def academic_rag_node(state: State) -> dict:
+    """Retrieves relevant chunks from the academics handbook."""
+    query = state["messages"][-1].content
+    docs = acedemic_retriever.invoke(query)
+    context = "\n\n".join([doc.page_content for doc in docs])
+    return {"retrieved_context": context}
+
+def fee_rag_node(state: State) -> dict:
+    """Retrieves relevant chunks from the fee structure PDF."""
+    query = state["messages"][-1].content
+    docs = fee_retriever.invoke(query)
+    context = "\n\n".join([doc.page_content for doc in docs])
+    return {"retrieved_context": context}
+
+
+def general_node(state: State) -> dict:
+    """Answers directly using the LLM's own knowledge, no retrieval needed."""
+    return {"retrieved_context": "NO_RETRIEVAL_NEEDED"}
+
+
+def response_node(state: State) -> dict:
+    """Generates the final answer, personalized using the student's programme."""
+    query = state["messages"][-1].content
+    programme = state.get("programme", "Unknown")
+    context = state["retrieved_context"]
+
+    if context == "NO_RETRIEVAL_NEEDED":
+        prompt = (
+            f"You are a friendly college assistant talking to a {programme} student. "
+            f"Answer this question using your own general knowledge:\n\n{query}"
+        )
+    else:
+        prompt = (
+            f"You are a college assistant helping a {programme} student. "
+            f"Use the following context from the official college documents to answer "
+            f"the question accurately. If the context mentions specific figures for "
+            f"different programmes, highlight the one relevant to {programme} if possible.\n\n"
+            f"Context:\n{context}\n\n"
+            f"Question: {query}\n\n"
+            f"Give a clear, friendly, and precise answer."
+        )
+
+    response = llm.invoke(prompt)
+    return {"messages": [("ai", response.content.strip())]}
+
+
+#step 4 - router function 
+
+def route_query(state:State):
+    if state['query_type'] == 'academic':
+        return "academic_rag"
+    elif state['query_type'] == "fee":
+        return "fee_rag"
+    else:
+        return "general"
+
+
+#step 5 - Building the graph 
+
+graph = StateGraph(State)
+
+graph.add_node("classifier",classifier_node)
+graph.add_node("academic_rag",academic_rag_node)
+graph.add_node("fee_rag",fee_rag_node)
+graph.add_node("general",general_node)
+graph.add_node("response",response_node)
+
+#edges 
+
+graph.add_edge(START,"classifier")
+
+graph.add_conditional_edges(
+    "classifier",route_query
+)
+
+graph.add_edge("academic_rag","response")
+graph.add_edge("fee_rag","response")
+graph.add_edge("general","response")
+
+graph.add_edge("response",END)
+
+app = graph.compile()
+#step 6 - Run the code 
+
+print("welcome to the College assistant \n\n")
+
+print("which programe are you in ")
+print("1. BCA")
+print("2. BBA")
+print("3. B.com (H)")
+
+choice = input("\nEnter 1, 2 or 3 ")
+
+programme_map = {
+    "1": "BCA",
+    "2": "BBA",
+    "3": "B.Com (H)"
+}
+student_programme = programme_map.get(choice, "BCA")
+
+print(f"\nGreat! You're set as a {student_programme} student.")
+
+while True:
+    user_query = input("You:  ")
+
+    if user_query.lower() in ["exit","quit"]:
+        break
+    
+    result = app.invoke({
+        "programme": student_programme,
+        "messages": [("human",user_query)]
+    })
+
+    print(f"Assistant : {result['messages'][-1].content}")
+```
+
+---
+
+## 4.6 Archetype 4 — Iterative / Cyclic Workflow (`iterative_tools.py`)
+
+**Analogy:** Author and ruthless editor — write, review, reject, rewrite until approved.
+
+```
+START -> [writer_node] --(tool calls?)--> [tools] --> [extract_draft] --> [reviewer_node]
+                |                                                               |
+                +<-- REJECTED & attempt<3 <-------------------------------------+
+                                                                               |
+                                                                         APPROVED or max attempts -> END
+```
+
+```python
+import os 
+from typing import TypedDict, Annotated
+from langgraph.graph.message import add_messages
+from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import ToolNode
+from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
+from langchain_tavily import TavilySearch
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+#tools 
+
+search_tool = TavilySearch(max_results = 3)
+
+
+tools = [search_tool]
+
+#llms 
+
+#writer
+writer_llm = ChatOpenAI(model= "gpt-4o-mini",temperature=0.7)
+writer_llm_with_tools = writer_llm.bind_tools(tools)
+
+#reviewer
+
+reviewer_llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
+
+#state building 
+
+class State(TypedDict):
+    topic : str 
+    messages : Annotated[list,add_messages]
+    draft : str 
+    review_feedback : str
+    is_approved : bool 
+    attempt : int
+
+
+#nodes 
+
+WRITER_SYSTEM_PROMPT = (
+    "You are an expert LinkedIn content writer. Your job is to write "
+    "engaging, professional LinkedIn posts about the given topic. "
+    "If the topic requires up-to-date information, statistics, or "
+    "current trends, use the web search tool to gather fresh context "
+    "before writing. If you have already received feedback on a "
+    "previous draft, carefully address every point in the new draft. "
+    "Rules for good LinkedIn posts: strong hook in the first line, "
+    "1 clear takeaway, easy to skim (short paragraphs), around "
+    "150-200 words, ends with a question or call-to-action to invite "
+    "engagement. Do not use hashtags."
+)
+
+
+def writer_node(state : State) -> dict:
+    """Writes (or rewrites) the LinkedIn post. Can call Tavily to search first."""
+    attempt = state.get("attempt",0) + 1 
+    topic = state["topic"]
+    previous_feedback = state['review_feedback']
+
+    if attempt == 1:
+        user_message = (
+            f"Write a LinkedIn post on this topic {topic}"
+            f"if you need current info search the web first "
+        )
+    else:
+        user_message = (
+            f"your previous draft on '{topic}' was rejected"
+            f"Here is the reviewer's feedback \n\n {previous_feedback}\n\n"
+            f"Write a new, improved draft that fixes every issue mentiond"
+            f"do not repeat the same mistake"
+        )
+    messages = [("system",WRITER_SYSTEM_PROMPT),("human",user_message)]
+    response = writer_llm_with_tools.invoke(messages)
+
+    return {
+        "messages" : [("human",user_message),response],
+        "attempt" : attempt
+    }
+
+tool_node = ToolNode(tools)
+
+def extract_draft_node(state:State) -> dict:
+    """After the writer finishes tool calls, pulls the final text out as the draft."""
+    last_message = state['messages'][-1]
+    draft = last_message.content 
+    print(f"\n\n generated post \n {draft} \n ")
+    return {"draft" : draft}
+    
+
+REVIEWER_SYSTEM_PROMPT = (
+    "You are a strict LinkedIn content reviewer. You judge whether a "
+    "post is publish-ready. Evaluate against these criteria:\n"
+    "1. Strong hook in the first line\n"
+    "2. One clear, valuable takeaway\n"
+    "3. Easy to skim - uses short paragraphs\n"
+    "4. Roughly 150-200 words\n"
+    "5. Ends with an engaging question or CTA\n"
+    "6. Professional but human tone (not corporate-robotic)\n"
+    "7. No hashtags\n\n"
+    "Respond in exactly this format:\n"
+    "VERDICT: APPROVED or REJECTED\n"
+    "FEEDBACK: <one short paragraph explaining why>\n\n"
+    "Be strict but fair. Approve only if the post genuinely meets all "
+    "criteria. Reject if even one criterion is clearly missing."
+)
+
+def reviewer_node(state:State) -> dict:
+    """Reviews the draft and decides: approve or reject with feedback."""
+    draft = state['draft']
+
+    prompt = (
+        f"review this LinkedIn post draft : \n"
+        f"{draft}\n"
+        f"give your reviews"
+    )
+    response = reviewer_llm.invoke(
+        [("system",REVIEWER_SYSTEM_PROMPT),("human",prompt)]
+    )
+    review_text = response.content.strip()
+    
+    is_approved = "APPROVED" in review_text.upper().split("FEEDBACK")[0]
+
+    if "FEEDBACK:" in review_text:
+        feedback = review_text.split("FEEDBACK:", 1)[1].strip()
+    else:
+        feedback = review_text
+
+    verdict = "APPROVED" if is_approved else "REJECTED"
+    print(f"[Verdict: {verdict}]")
+    print(f"[Feedback: {feedback}]")
+
+    return {
+        "review_feedback": feedback,
+        "is_approved": is_approved,
+    }
+
+#router function 
+
+def should_use_tool(state:State):
+    last_message = state['messages'][-1]
+
+    if getattr(last_message,'tool_calls',None):
+        return "tools"
+    return "extract_draft"
+
+def should_stop_looping(state:State):
+    if state['is_approved']:
+        print("post haas been approved \n")
+        return END
+    if state['attempt'] >= 3:
+        print("reached max attempts")
+        return END 
+    return "writer"
+
+#build the graph 
+graph = StateGraph(State)
+
+graph.add_node("writer",writer_node)
+graph.add_node("tools",tool_node)
+graph.add_node("extract_draft",extract_draft_node)
+graph.add_node("reviewer",reviewer_node)
+
+graph.add_edge(START,"writer")
+
+graph.add_conditional_edges(
+    "writer",should_use_tool,
+)
+
+graph.add_edge("tools","reviewer")
+graph.add_edge("extract_draft", "reviewer")
+
+graph.add_conditional_edges(
+    "reviewer",should_stop_looping
+)
+
+app = graph.compile()
+
+
+print("=" * 55)
+print("Welcome to the LinkedIn Post Generator")
+print("=" * 55)
+print("\nThis tool will draft a LinkedIn post for you, review it")
+print("itself, and iterate until it's publish-ready.")
+
+print("=" * 55)
+
+topic = input("\nWhat topic do you want a LinkedIn post about?\n> ").strip()
+
+if not topic:
+    print("\nNo topic given. Exiting.")
+else:
+    print("\nStarting generation...\n")
+
+    initial_state = {
+        "topic": topic,
+        "messages": [],
+        "draft": "",
+        "review_feedback": "",
+        "is_approved": False,
+        "attempt": 0,
+    }
+
+    final_state = app.invoke(initial_state)
+
+    print("\n" + "=" * 55)
+    print("FINAL LINKEDIN POST")
+    print("=" * 55)
+    print(final_state["draft"])
+    print("=" * 55)
+    print(f"Total attempts: {final_state['attempt']}")
+    print(f"Approved: {final_state['is_approved']}")
+```
+
+**Why two different LLMs?** The writer uses GPT-4o-mini (creative) while the reviewer uses Llama 3.3 (fast, cheap, structured evaluation). Using different models for different roles is a common multi-agent pattern.
+
+---
+
+## 4.7 Archetype 5 — Human-in-the-Loop (`humanintheloop.py`)
+
+**Analogy:** Nuclear launch code — requires a human key turn. No automation can bypass it.
+
+Key primitives:
+- `MemorySaver` — checkpoints graph state after every node
+- `interrupt(data)` — pauses graph and surfaces data to caller
+- `Command(resume=value)` — resumes from checkpoint with human input
+
+```python
+import os 
+from typing import TypedDict, Annotated
+from langgraph.graph.message import add_messages
+from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import interrupt, Command
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+# writer llm
+writer_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+
+# state building 
+class State(TypedDict):
+    topic: str 
+    messages: Annotated[list, add_messages]
+    draft: str 
+    review_feedback: str
+    is_approved: bool 
+    attempt: int
+
+
+WRITER_SYSTEM_PROMPT = (
+    "You are an expert LinkedIn content writer. Write engaging, professional "
+    "LinkedIn posts about the given topic. "
+    "Rules: strong hook in the first line, one clear takeaway, easy to skim "
+    "with short paragraphs, roughly 150-200 words, end with an engaging "
+    "question or CTA, no hashtags. "
+    "If you receive feedback on a previous draft, address every point carefully."
+)
+
+
+def writer_node(state: State) -> dict:
+    """Writes (or rewrites) the LinkedIn post."""
+    attempt = state.get("attempt", 0) + 1 
+    topic = state["topic"]
+    previous_feedback = state.get("review_feedback", "")
+
+    print(f"\n[Attempt {attempt}] Writer is drafting the post...")
+
+    if attempt == 1:
+        user_message = f"Write a LinkedIn post on this topic: {topic}"
+    else:
+        user_message = (
+            f"Your previous draft on '{topic}' was rejected.\n\n"
+            f"Reviewer feedback:\n{previous_feedback}\n\n"
+            f"Write a NEW improved LinkedIn post that fixes every issue mentioned."
+        )
+
+    messages = [("system", WRITER_SYSTEM_PROMPT), ("human", user_message)]
+    response = writer_llm.invoke(messages)
+
+    draft = response.content
+    print(f"\n[Draft ready]\n{'-' * 55}\n{draft}\n{'-' * 55}")
+
+    return {
+        "draft": draft,
+        "attempt": attempt
+    }
+
+
+def human_review_node(state: State) -> dict:
+    """Pauses the graph and waits for the human to approve or give feedback."""
+    print(f"\n[Reached human review - Attempt {state['attempt']}]")
+
+    human_response = interrupt({
+        "draft": state["draft"],
+        "attempt": state["attempt"],
+        "instruction": "Type 'approved' to accept, or type your feedback to request a rewrite."
+    })
+
+    response = human_response.strip()
+
+    if response.lower() in ["approved", "approve", "yes", "ok", "good"]:
+        return {
+            "is_approved": True,
+            "review_feedback": "Approved by human."
+        }
+    else:
+        return {
+            "is_approved": False,
+            "review_feedback": response
+        }
+
+
+def should_stop_looping(state: State):
+    if state['is_approved']:
+        print("\n[Post approved by human. Ending workflow.]")
+        return END
+    if state['attempt'] >= 3:
+        print("\n[Reached max 3 attempts. Ending with last draft.]")
+        return END 
+    print(f"\n[Rejected. Looping back to writer for attempt {state['attempt'] + 1}...]")
+    return "writer"
+
+
+# build the graph 
+graph = StateGraph(State)
+
+graph.add_node("writer", writer_node)
+graph.add_node("human_review", human_review_node)
+
+graph.add_edge(START, "writer")
+graph.add_edge("writer", "human_review")
+
+graph.add_conditional_edges(
+    "human_review",
+    should_stop_looping,
+    {
+        "writer": "writer",
+        END: END,
+    },
+)
+
+checkpointer = MemorySaver()
+app = graph.compile(checkpointer=checkpointer)
+
+
+print("=" * 55)
+print("Welcome to the LinkedIn Post Generator (HITL Edition)")
+print("=" * 55)
+print("\nThis tool will draft a LinkedIn post for you, show it to")
+print("YOU for review, and rewrite based on your feedback.")
+print("=" * 55)
+
+topic = input("\nWhat topic do you want a LinkedIn post about?\n> ").strip()
+
+if not topic:
+    print("\nNo topic given. Exiting.")
+else:
+    print("\nStarting generation...\n")
+
+    config = {"configurable": {"thread_id": "linkedin_session_1"}}
+
+    initial_state = {
+        "topic": topic,
+        "messages": [],
+        "draft": "",
+        "review_feedback": "",
+        "is_approved": False,
+        "attempt": 0,
+    }
+
+    result = app.invoke(initial_state, config=config)
+
+    while "__interrupt__" in result:
+        interrupt_data = result["__interrupt__"][0].value
+
+        print("\n" + "=" * 55)
+        print(f"DRAFT FOR YOUR REVIEW (Attempt {interrupt_data['attempt']})")
+        print("=" * 55)
+        print(interrupt_data["draft"])
+        print("=" * 55)
+        print(f"\n{interrupt_data['instruction']}")
+
+        human_input = input("\nYour response: ").strip()
+
+        result = app.invoke(Command(resume=human_input), config=config)
+
+    print("\n" + "=" * 55)
+    print("FINAL LINKEDIN POST")
+    print("=" * 55)
+    print(result["draft"])
+    print("=" * 55)
+    print(f"Total attempts: {result['attempt']}")
+    print(f"Approved by human: {result['is_approved']}")
+```
+
+**The HITL flow:**
+```
+app.invoke(initial_state, config)
+    -> writer_node runs (drafts post)
+    -> human_review_node: interrupt() fires -> execution PAUSES
+    -> Returns {"__interrupt__": [{...draft data...}]}
+
+# Human reads draft, types feedback
+app.invoke(Command(resume="make it shorter"), config)
+    -> Resumes from checkpoint
+    -> human_review_node gets "make it shorter"
+    -> Returns {is_approved: False, review_feedback: "make it shorter"}
+    -> should_stop_looping -> loops back to "writer"
+    -> writer_node writes improved draft -> interrupts again...
+```
+
+**`thread_id` is critical** — identifies which checkpoint to resume from. Each user session needs a unique thread_id.
+
+---
+
+## 4.8 Master Comparison Matrix
+
+| Archetype | Pattern | Edge Type | When to Use |
+|---|---|---|---|
+| Sequential | A->B->C | `add_edge` | Linear pipeline |
+| Parallel | A->{B,C,D} | Multiple `add_edge(START, X)` | Independent simultaneous tasks |
+| Conditional | A->B or C | `add_conditional_edges` | Route based on content |
+| Iterative | A->B->A | `add_conditional_edges` returning node | Self-improvement loops |
+| HITL | A->[PAUSE]->B | `interrupt()` + `MemorySaver` | Critical human judgment needed |
+
+---
+
+## Quiz 4 — LangGraph Archetypes
+
+**Q1.** Without `merge_score_dicts` reducer in `parallel_reducers.py`, what happens?
+- **(B) Only the last branch's result would be stored in safety_scores**
+
+**Q2.** `MemorySaver` is required for HITL because:
+- **(B) It checkpoints graph state so execution can resume after interrupt()**
+
+**Q3.** The `should_use_tool` router checks for `tool_calls`. This means:
+- **(A) The writer decided to use the search tool before writing**
+
+**Design Challenge:** Build a code review system: accept code -> parallel static analysis + security scan -> if both pass: approve; if either fails: human expert review -> human can approve or request fix.
+
+> **Solution:** Parallel archetype (two scanners) + Conditional (pass/fail routing) + HITL (human review with interrupt()) + Iterative (if fix requested, loop back)
+
+---
+
+
+
+# Module 8: The Universal Agent Design Blueprint & Production Systems
+
+## 7.1 The 6-Step Agent Design Matrix
+
+```
++----+---------------------+-------------------------------------------+
+| 1  | WHAT IS THE GOAL?   | Single clear objective the agent achieves |
+| 2  | WHAT IS THE STATE?  | Data that persists across all node calls  |
+| 3  | WHAT ARE THE NODES? | One function = one responsibility         |
+| 4  | WHAT ARE THE TOOLS? | External actions the agent can take       |
+| 5  | WHAT WORKFLOW TYPE? | Sequential/Parallel/Conditional/HITL/Loop |
+| 6  | NEEDS HUMAN INPUT?  | interrupt() + MemorySaver                 |
++----+---------------------+-------------------------------------------+
+```
+
+## 7.2 When NOT to Use an Agent
+
+| Situation | Use Agent? | Use Instead |
+|---|---|---|
+| Fixed 3-step pipeline | No | LCEL sequential chain |
+| Static FAQ answering | No | RAG chain |
+| Always same tool used | No | Direct tool call in chain |
+| Needs dynamic tool selection | Yes | Agent |
+| Needs iterative refinement | Yes | LangGraph cyclic graph |
+| Needs human approval | Yes | LangGraph HITL |
+| Unpredictable number of steps | Yes | Agent |
+
+---
+
+
+
+
+---
+
+# Module 9: Master Quizzes, Real-World Scenarios, Debugging & Final Exam
+
+## Section A: Conceptual Quizzes
+
+#### ❓ Quiz Question 1: State Reducer Mechanics
+**In `messages: Annotated[list, add_messages]`, what happens if Node A returns `{"messages": [AIMessage("Hello")]}`?**
+- (A) The entire messages list is overwritten with just `[AIMessage("Hello")]`
+- (B) `AIMessage("Hello")` is appended to the existing conversation list without erasing prior messages
+- (C) The graph crashes with a reducer type mismatch
+- (D) The message is routed directly to the user without updating graph memory
+
+> **Answer:** **(B)**
+> **Explanation:** The `add_messages` reducer is an append-and-upsert reducer. Rather than overwriting the state key (which is the default behavior in LangGraph), it merges the new list of messages with existing history and handles ID deduplication.
+
+#### ❓ Quiz Question 2: Parallel Reducer Conflicts
+**Why do parallel branches in LangGraph require an `Annotated[..., reducer]` field if they write to the same key?**
+- (A) Because LangGraph cannot run nodes in parallel otherwise
+- (B) Without a reducer, concurrent writes cause an `InvalidUpdateError` because LangGraph does not know which branch's value should take precedence
+- (C) Reducers are required only when writing numbers
+- (D) To encrypt the state before saving to SQLite
+
+> **Answer:** **(B)**
+> **Explanation:** If Node B and Node C run simultaneously and both attempt to write to `summary: str`, LangGraph encounters a non-deterministic race condition. Using `Annotated[list, operator.add]` allows both nodes to return lists that are automatically combined.
+
+#### ❓ Quiz Question 3: Human-in-the-Loop Resumption
+**How do you resume a LangGraph execution that paused on an `interrupt()` call?**
+- (A) `app.invoke({"status": "resume"})`
+- (B) `app.invoke(Command(resume=user_input), config=config)`
+- (C) Call the interrupted node function directly in Python
+- (D) Restart the server process
+
+> **Answer:** **(B)**
+> **Explanation:** `Command(resume=...)` provides the human payload to the exact point where `interrupt()` paused, and `config={"configurable": {"thread_id": "..."}}` ensures the checkpointer loads the exact execution state of that specific conversation thread.
+
+---
+
+## Section B: Real-World System Design Scenarios
+
+#### 💡 Scenario 1: Autonomous Customer Refund Agent with Hard Human Approval
+**Design an agent that investigates refund requests: queries the transaction DB, verifies eligibility, issues refunds below $50 immediately, but halts for human manager approval if the refund exceeds $500.**
+
+* **Architectural Decision:**
+  * Use **Archetype 4 (Iterative Tools)** combined with **Archetype 5 (Human-in-the-Loop)**.
+  * Define state with `amount`, `customer_id`, `status`, and `messages`.
+  * Node `evaluator` calls tool to check order DB.
+  * Node `refund_agent`: If `amount > 500`, triggers `interrupt({"reason": "High value refund", "amount": amount})`.
+  * The frontend UI renders an "Approve / Reject" card. When clicked, it resumes via `Command(resume="Approved", config=config)`.
+
+#### 💡 Scenario 2: Infinite Loop Prevention in ReAct Agent
+**An iterative tool agent gets stuck in a loop calling `get_weather("New York")` repeatedly because the tool returns an empty string.**
+
+* **Architectural Decision:**
+  * Add a `retry_count` counter in state initialized to 0.
+  * In the tool node, increment `retry_count`.
+  * In the conditional router edge: `if state["retry_count"] >= 3: return "fallback_node"` instead of looping back to the LLM.
+  * Set `recursion_limit=15` in `app.invoke(..., config={"recursion_limit": 15})` as an infrastructure safeguard.
+
+---
+
+## Section C: Final Agentic AI & LangGraph Exam
+
+**Q1.** When should you use `StateGraph` instead of an LCEL `RunnableSequence`?
+- **Answer:** Use `StateGraph` whenever the workflow requires cycles/loops (e.g., self-correction, iterative tool usage), multiple conditional branches, parallel execution with merge reducers, or persistence across human interrupts. Use `RunnableSequence` for simple, linear input-to-output chains.
+
+**Q2.** What is the purpose of `thread_id` in LangGraph config?
+- **Answer:** `thread_id` partitions checkpoints in the checkpointer (`MemorySaver` or Postgres). It allows multiple independent users or conversations to maintain their own isolated state histories concurrently.
+
+**Q3.** What does `START` and `END` represent in `from langgraph.graph import START, END`?
+- **Answer:** `START` is the entry point node of the graph where user input enters. `END` is the terminal sink node where the graph terminates execution and returns the final state to the caller.
+
+---
+
+*End of The Agentic AI & LangGraph Engineering Handbook*  
+*Code by Akarsh Vyas (Sheryians AI School) | Track 2*
+
+  </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const themeToggle = document.getElementById("theme-toggle");
+      const themeIcon = document.getElementById("theme-icon");
+      const themeText = document.getElementById("theme-text");
+      const body = document.body;
+
+      const savedTheme = localStorage.getItem("handbook_theme") || "dark";
+      applyTheme(savedTheme);
+
+      themeToggle.addEventListener("click", () => {
+        const newTheme = body.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        applyTheme(newTheme);
+      });
+
+      function applyTheme(theme) {
+        body.setAttribute("data-theme", theme);
+        localStorage.setItem("handbook_theme", theme);
+        if (theme === "dark") {
+          themeIcon.className = "fa-solid fa-moon";
+          themeText.textContent = "Dark";
+          document.getElementById("hljs-theme").href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css";
+        } else {
+          themeIcon.className = "fa-solid fa-sun";
+          themeText.textContent = "Light";
+          document.getElementById("hljs-theme").href = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
+        }
+      }
+
+      const progressBar = document.getElementById("progress-bar");
+      const backToTopBtn = document.getElementById("back-to-top");
+      window.addEventListener("scroll", () => {
+        const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        progressBar.style.width = ((winScroll / height) * 100) + "%";
+        if (winScroll > 400) { backToTopBtn.classList.add("visible"); } else { backToTopBtn.classList.remove("visible"); }
+      });
+      backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+      const rawMarkdown = document.getElementById("source-markdown").textContent;
+      const articleContent = document.getElementById("article-content");
+
+      marked.setOptions({
+        gfm: true,
+        breaks: false,
+        highlight: function(code, lang) {
+          if (lang && hljs.getLanguage(lang)) {
+            try { return hljs.highlight(code, { language: lang }).value; } catch (__) {}
+          }
+          return hljs.highlightAuto(code).value;
+        }
+      });
+
+      articleContent.innerHTML = marked.parse(rawMarkdown);
+
+      articleContent.querySelectorAll("table").forEach(table => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "table-container";
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+      });
+
+      articleContent.querySelectorAll("pre code").forEach(codeBlock => {
+        const pre = codeBlock.parentElement;
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block-wrapper";
+        let lang = "code";
+        codeBlock.classList.forEach(cls => { if (cls.startsWith("language-")) lang = cls.replace("language-", ""); });
+
+        if (lang === "mermaid") {
+          const mc = document.createElement("div");
+          mc.className = "mermaid-container";
+          mc.innerHTML = `<div class="mermaid-title"><i class="fa-solid fa-diagram-project"></i> Architecture Diagram</div><div class="mermaid">${codeBlock.textContent}</div>`;
+          pre.parentNode.replaceChild(mc, pre);
+          return;
+        }
+
+        const header = document.createElement("div");
+        header.className = "code-block-header";
+        header.innerHTML = `
+          <span class="code-lang-tag"><i class="fa-solid fa-code"></i> ${lang.toUpperCase()}</span>
+          <button class="copy-btn"><i class="fa-regular fa-copy"></i> Copy</button>
+        `;
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(header);
+        wrapper.appendChild(pre);
+
+        const copyBtn = header.querySelector(".copy-btn");
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+            copyBtn.classList.add("copied");
+            copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            setTimeout(() => { copyBtn.classList.remove("copied"); copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy'; }, 2000);
+          });
+        });
+      });
+
+      enhanceQuizzesAndScenarios(articleContent);
+      generateTOC(articleContent);
+
+      if (window.mermaid) {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'dark',
+          themeVariables: {
+            darkMode: true,
+            background: '#151d2d',
+            primaryColor: '#6366f1',
+            primaryTextColor: '#ffffff',
+            primaryBorderColor: '#818cf8',
+            lineColor: '#06b6d4',
+            secondaryColor: '#1e293b'
+          }
+        });
+        mermaid.run();
+      }
+
+      const filterInput = document.getElementById("filter-input");
+      filterInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll("#toc-list .toc-item").forEach(item => {
+          item.style.display = item.textContent.toLowerCase().includes(query) ? "" : "none";
+        });
+      });
+
+      function generateTOC(root) {
+        const tocList = document.getElementById("toc-list");
+        tocList.innerHTML = "";
+        const headings = root.querySelectorAll("h1, h2");
+        headings.forEach((heading, index) => {
+          let text = heading.textContent.trim();
+          if (text.includes("Master Table of Contents") || text.includes("Definitive") || text.includes("Handbook")) return;
+          const id = heading.id || "sec-" + index;
+          heading.id = id;
+          const li = document.createElement("li");
+          li.className = "toc-item";
+          const isH1 = heading.tagName.toLowerCase() === "h1";
+          li.innerHTML = `<a href="#${id}" class="toc-link ${isH1 ? 'toc-h1' : 'toc-h2'}"><i class="${isH1 ? 'fa-solid fa-bookmark' : 'fa-regular fa-circle-dot'}"></i><span>${text}</span></a>`;
+          tocList.appendChild(li);
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const activeId = entry.target.id;
+              document.querySelectorAll(".toc-link").forEach(link => {
+                if (link.getAttribute("href") === "#" + activeId) link.classList.add("active");
+                else link.classList.remove("active");
+              });
+            }
+          });
+        }, { rootMargin: "-20% 0px -70% 0px" });
+        headings.forEach(h => observer.observe(h));
+      }
+
+      function enhanceQuizzesAndScenarios(root) {
+        const h4s = root.querySelectorAll("h4");
+        h4s.forEach(h4 => {
+          const text = h4.textContent;
+          if (text.includes("Scenario") || text.includes("Quiz Question")) {
+            const isScenario = text.includes("Scenario");
+            const card = document.createElement("div");
+            card.className = isScenario ? "scenario-card" : "quiz-card";
+
+            const badge = document.createElement("span");
+            badge.className = isScenario ? "scenario-badge" : "quiz-badge";
+            badge.innerHTML = isScenario 
+              ? '<i class="fa-solid fa-lightbulb"></i> Architectural Scenario' 
+              : '<i class="fa-solid fa-circle-question"></i> Knowledge Check';
+            card.appendChild(badge);
+
+            const title = document.createElement("div");
+            title.className = "quiz-question";
+            title.textContent = text;
+            card.appendChild(title);
+
+            const siblings = [];
+            let curr = h4.nextElementSibling;
+            while (curr && !['H1', 'H2', 'H3', 'H4', 'HR'].includes(curr.tagName)) {
+              siblings.push(curr);
+              curr = curr.nextElementSibling;
+            }
+
+            const contentDiv = document.createElement("div");
+            const solutionDiv = document.createElement("div");
+            solutionDiv.className = "quiz-solution";
+
+            let inSolution = false;
+            siblings.forEach(el => {
+              if (el.textContent.includes("Architectural Decision:") || 
+                  el.textContent.includes("Answer:") || 
+                  el.textContent.includes("Explanation:")) {
+                inSolution = true;
+              }
+              if (inSolution) solutionDiv.appendChild(el);
+              else contentDiv.appendChild(el);
+            });
+
+            card.appendChild(contentDiv);
+
+            if (solutionDiv.children.length > 0) {
+              const accWrapper = document.createElement("div");
+              accWrapper.className = "quiz-accordion";
+              const toggleBtn = document.createElement("button");
+              toggleBtn.className = "quiz-toggle-btn";
+              toggleBtn.innerHTML = '<i class="fa-solid fa-key"></i> Reveal Solution & Rationale';
+              toggleBtn.addEventListener("click", () => {
+                solutionDiv.classList.toggle("open");
+                toggleBtn.innerHTML = solutionDiv.classList.contains("open") 
+                  ? '<i class="fa-solid fa-chevron-up"></i> Hide Solution' 
+                  : '<i class="fa-solid fa-key"></i> Reveal Solution & Rationale';
+              });
+              accWrapper.appendChild(toggleBtn);
+              accWrapper.appendChild(solutionDiv);
+              card.appendChild(accWrapper);
+            }
+
+            h4.parentNode.replaceChild(card, h4);
+          }
+        });
+      }
+    });
+  </script>
+<!-- ================================================================= -->
+<!-- 4 U BY U — DOCKED INTERACTIVE RAG & WEB COPILOT WIDGET           -->
+<!-- ================================================================= -->
+<div id="handbook-copilot-container">
+<!-- Floating Trigger Launcher Button -->
+<button id="copilot-launcher-btn" onclick="toggleCopilot()" title="Ask Handbook AI Copilot">
+<div class="launcher-glow"></div>
+<i class="fa-solid fa-wand-magic-sparkles"></i>
+<span class="launcher-label">Ask Handbook AI</span>
+<span class="launcher-status-dot"></span>
+</button>
+<!-- Expandable Chat Panel -->
+<div class="copilot-drawer hidden" id="copilot-panel">
+<!-- Drawer Header -->
+<div class="copilot-header">
+<div class="copilot-title-group">
+<div class="copilot-avatar">
+<i class="fa-solid fa-brain"></i>
+</div>
+<div>
+<div class="copilot-title">Agentic AI Handbook Copilot</div>
+<div class="copilot-badges">
+<span class="badge-source handbook">🟢 97 HTML Chunks</span>
+<span class="badge-source web">🌐 Live Web Search</span>
+</div>
+</div>
+</div>
+<div class="copilot-controls">
+<button class="copilot-ctrl-btn" onclick="clearCopilotChat()" title="Clear Chat History">
+<i class="fa-solid fa-trash-can"></i>
+</button>
+<button class="copilot-ctrl-btn" onclick="toggleCopilot()" title="Minimize Assistant">
+<i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+</div>
+<!-- Preloaded Suggestive Questions Carousel -->
+<div class="copilot-suggested-section">
+<div class="suggested-header">
+<i class="fa-regular fa-lightbulb"></i> Preloaded Handbook Inquiries (100% Grounded in HTML)
+        </div>
+<div class="suggested-chips-scroll" id="suggested-chips-container">
+<button class="chip-btn" onclick="sendPresetQuestion(this.textContent)">StateGraph vs MessagesState</button>
+<button class="chip-btn" onclick="sendPresetQuestion(this.textContent)">Multi-Agent Supervisor Pattern</button>
+<button class="chip-btn" onclick="sendPresetQuestion(this.textContent)">Explain HITL interrupt_before</button>
+<button class="chip-btn" onclick="sendPresetQuestion(this.textContent)">Cyclic Self-Reflective Agent</button>
+<button class="chip-btn" onclick="sendPresetQuestion(this.textContent)">Tool Calling &amp; Conditional Edges</button>
+<button class="chip-btn" onclick="sendPresetQuestion(this.textContent)">ChromaDB Vector Retrieval</button>
+<button class="chip-btn" onclick="sendPresetQuestion(this.textContent)">Parallel Reducers &amp; operator.add</button>
+<button class="chip-btn" onclick="sendPresetQuestion(this.textContent)">3-Tier Memory Architecture</button>
+</div>
+</div>
+<!-- Chat Messages Container -->
+<div class="copilot-messages-box" id="copilot-messages">
+<div class="copilot-msg ai-msg">
+<div class="msg-bubble">
+<p><strong>👋 Welcome to the Agentic AI &amp; RAG Handbook Copilot!</strong></p>
+<p>I have indexed all 97 modules, architectures, and code snippets from this page using <strong>BeautifulSoup</strong>.</p>
+<p>Click any preloaded suggestive question above or type your own question below. If your inquiry is outside this handbook, I will seamlessly access real-time web search for you.</p>
+</div>
+</div>
+</div>
+<!-- Chat Input Area -->
+<form class="copilot-input-area" id="copilot-form" onsubmit="handleCopilotSubmit(event)">
+<div class="input-row">
+<input autocomplete="off" id="copilot-query-input" placeholder="Ask about state models, code, or anything..." type="text"/>
+<button class="send-btn" id="copilot-send-btn" title="Send Question" type="submit">
+<i class="fa-solid fa-paper-plane"></i>
+</button>
+</div>
+<div class="input-footer">
+<span>Press Enter to ask • Real-Time Streaming RAG</span>
+<a class="byok-link" href="#" onclick="promptForApiKey(event)">Custom API Key (BYOK)</a>
+</div>
+</form>
+</div>
+</div>
+<!-- COPILOT STYLES & INTERACTION SCRIPT -->
+<style>
+    #handbook-copilot-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    #copilot-launcher-btn {
+      position: relative; display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.18);
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      color: white; font-weight: 600; font-size: 0.92rem;
+      cursor: pointer; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #copilot-launcher-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 16px 32px -4px rgba(99, 102, 241, 0.65);
+    }
+    .launcher-status-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #10b981;
+      box-shadow: 0 0 8px #10b981; animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+
+    .copilot-drawer {
+      position: fixed; bottom: 84px; right: 24px; width: 450px; max-width: calc(100vw - 32px);
+      height: 640px; max-height: calc(100vh - 110px);
+      background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .copilot-drawer.hidden { display: none; opacity: 0; transform: translateY(20px); pointer-events: none; }
+
+    .copilot-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; background: rgba(30, 41, 59, 0.7);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .copilot-title-group { display: flex; align-items: center; gap: 12px; }
+    .copilot-avatar {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 1.1rem;
+    }
+    .copilot-title { font-size: 0.95rem; font-weight: 700; color: #f8fafc; }
+    .copilot-badges { display: flex; gap: 6px; margin-top: 2px; }
+    .badge-source {
+      font-size: 0.65rem; font-weight: 600; padding: 2px 6px; border-radius: 10px;
+    }
+    .badge-source.handbook { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-source.web { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .copilot-controls { display: flex; gap: 8px; }
+    .copilot-ctrl-btn {
+      background: transparent; border: none; color: #94a3b8; width: 28px; height: 28px;
+      border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .copilot-ctrl-btn:hover { background: rgba(255,255,255,0.08); color: #f8fafc; }
+
+    /* Suggested Questions Section */
+    .copilot-suggested-section {
+      padding: 10px 14px; background: rgba(15, 23, 42, 0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .suggested-header { font-size: 0.72rem; font-weight: 600; color: #94a3b8; margin-bottom: 6px; }
+    .suggested-chips-scroll {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
+      scrollbar-width: thin; scrollbar-color: #334155 transparent;
+    }
+    .chip-btn {
+      white-space: nowrap; font-size: 0.74rem; font-weight: 500;
+      padding: 4px 10px; border-radius: 12px; background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25); color: #c7d2fe;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .chip-btn:hover {
+      background: rgba(99, 102, 241, 0.3); color: white; border-color: #818cf8;
+      transform: translateY(-1px);
+    }
+
+    /* Messages container */
+    .copilot-messages-box {
+      flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .copilot-msg { display: flex; width: 100%; }
+    .copilot-msg.user-msg { justify-content: flex-end; }
+    .copilot-msg.user-msg .msg-bubble {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white; border-radius: 14px 14px 2px 14px;
+      max-width: 82%; padding: 10px 14px; font-size: 0.88rem; line-height: 1.5;
+    }
+    .copilot-msg.ai-msg { justify-content: flex-start; }
+    .copilot-msg.ai-msg .msg-bubble {
+      background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e2e8f0; border-radius: 14px 14px 14px 2px;
+      max-width: 95%; padding: 12px 16px; font-size: 0.88rem; line-height: 1.6;
+    }
+    .msg-bubble p { margin-bottom: 8px; }
+    .msg-bubble p:last-child { margin-bottom: 0; }
+    .msg-bubble pre {
+      background: #090d16; padding: 10px; border-radius: 6px; overflow-x: auto;
+      margin: 8px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+    }
+    .msg-bubble code { font-family: 'JetBrains Mono', monospace; background: rgba(255,255,255,0.08); padding: 2px 4px; border-radius: 4px; }
+    .msg-bubble blockquote {
+      border-left: 3px solid #6366f1; background: rgba(99, 102, 241, 0.08);
+      padding: 6px 12px; margin: 8px 0; border-radius: 0 4px 4px 0; font-size: 0.84rem;
+    }
+    .msg-bubble a.anchor-jump {
+      display: inline-block; padding: 2px 8px; border-radius: 6px;
+      background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3);
+      color: #38bdf8; text-decoration: none; font-size: 0.76rem; font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* Input area */
+    .copilot-input-area {
+      padding: 12px 16px; background: rgba(30, 41, 59, 0.7);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .input-row { display: flex; gap: 8px; align-items: center; }
+    #copilot-query-input {
+      flex: 1; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px; padding: 10px 14px; color: #f8fafc; font-size: 0.88rem; outline: none;
+    }
+    #copilot-query-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+    .send-btn {
+      width: 40px; height: 40px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s;
+    }
+    .send-btn:hover { transform: scale(1.05); }
+    .input-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 6px; font-size: 0.7rem; color: #64748b;
+    }
+    .byok-link { color: #818cf8; text-decoration: none; cursor: pointer; }
+    .byok-link:hover { text-decoration: underline; }
+  </style>
+<script>
+    let copilotApiKey = localStorage.getItem("4ubyu_copilot_key") || "";
+
+    function toggleCopilot() {
+      const panel = document.getElementById("copilot-panel");
+      panel.classList.toggle("hidden");
+      if (!panel.classList.contains("hidden")) {
+        document.getElementById("copilot-query-input").focus();
+      }
+    }
+
+    function clearCopilotChat() {
+      const msgBox = document.getElementById("copilot-messages");
+      msgBox.innerHTML = `
+        <div class="copilot-msg ai-msg">
+          <div class="msg-bubble">
+            <p><strong>Chat Cleared.</strong> How can I assist you with the handbook or agentic systems?</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function promptForApiKey(e) {
+      if (e) e.preventDefault();
+      const entered = prompt("Enter your free Groq (gsk_...) or Google Gemini (AIzaSy...) API Key (stored locally in browser):", copilotApiKey);
+      if (entered !== null) {
+        copilotApiKey = entered.trim();
+        localStorage.setItem("4ubyu_copilot_key", copilotApiKey);
+        alert(copilotApiKey ? "API Key saved locally for Copilot!" : "Reverted to built-in zero-cost tier.");
+      }
+    }
+
+    function sendPresetQuestion(q) {
+      document.getElementById("copilot-query-input").value = q;
+      document.getElementById("copilot-form").dispatchEvent(new Event("submit"));
+    }
+
+    function jumpToAnchor(anchorId) {
+      const target = document.getElementById(anchorId) || document.querySelector(`[name="${anchorId}"]`);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.style.outline = "2px solid #6366f1";
+        setTimeout(() => { target.style.outline = "none"; }, 2000);
+      } else {
+        window.location.hash = anchorId;
+      }
+    }
+
+    async function handleCopilotSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("copilot-query-input");
+      const query = input.value.trim();
+      if (!query) return;
+
+      input.value = "";
+      const msgBox = document.getElementById("copilot-messages");
+
+      // 1. Append User Message
+      const userMsgEl = document.createElement("div");
+      userMsgEl.className = "copilot-msg user-msg";
+      userMsgEl.innerHTML = `<div class="msg-bubble">${query}</div>`;
+      msgBox.appendChild(userMsgEl);
+      msgBox.scrollTop = msgBox.scrollHeight;
+
+      // 2. Append AI Placeholder
+      const aiMsgEl = document.createElement("div");
+      aiMsgEl.className = "copilot-msg ai-msg";
+      const bubble = document.createElement("div");
+      bubble.className = "msg-bubble";
+      bubble.innerHTML = "<em>Analyzing handbook chunks & formulating response...</em>";
+      aiMsgEl.appendChild(bubble);
+      msgBox.appendChild(aiMsgEl);
+      msgBox.scrollTop = msgBox.scrollHeight;
+
+      try {
+        const response = await fetch("/api/handbook/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: query,
+            api_key: copilotApiKey || null
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to contact Handbook Copilot server.");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let accumulatedMarkdown = "";
+        bubble.innerHTML = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          accumulatedMarkdown += decoder.decode(value, { stream: true });
+
+          // Format markdown if marked is loaded, or basic replacement
+          if (window.marked && window.marked.parse) {
+            bubble.innerHTML = window.marked.parse(accumulatedMarkdown);
+          } else {
+            bubble.innerHTML = accumulatedMarkdown.replace(/\n/g, "<br>");
+          }
+
+          // Linkify anchors [Jump to #anchor]
+          bubble.innerHTML = bubble.innerHTML.replace(/\[Jump to #(.*?)\]/g, (match, slug) => {
+            return `<a href="#${slug}" class="anchor-jump" onclick="jumpToAnchor('${slug}'); return false;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Jump to #${slug}</a>`;
+          });
+
+          // Linkify suggested follow-ups
+          bubble.querySelectorAll("li").forEach(li => {
+            const txt = li.textContent.trim();
+            if (txt.startsWith("[") && txt.endsWith("]")) {
+              const cleanQ = txt.slice(1, -1);
+              li.innerHTML = `<button class="chip-btn" style="margin:2px 0;" onclick="sendPresetQuestion('${cleanQ.replace(/'/g, "\\'")}')">💡 ${cleanQ}</button>`;
+            }
+          });
+
+          msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+      } catch (err) {
+        bubble.innerHTML = `<span style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${err.message}</span>`;
+      }
+    }
+
+    // Fetch dynamic questions from backend if available
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const resp = await fetch("/api/handbook/questions");
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.questions && data.questions.length > 0) {
+            const container = document.getElementById("suggested-chips-container");
+            if (container) {
+              container.innerHTML = "";
+              data.questions.forEach(q => {
+                const btn = document.createElement("button");
+                btn.className = "chip-btn";
+                btn.textContent = q;
+                btn.onclick = () => sendPresetQuestion(q);
+                container.appendChild(btn);
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Could not load backend questions:", e);
+      }
+    });
+  </script>
+</body>
+</html>
