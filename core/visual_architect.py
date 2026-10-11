@@ -15,78 +15,79 @@ from core.model_router import get_chat_model
 MERMAID_PATTERNS = {
     # ── Agentic AI & LangGraph Paradigms ─────────────────────────────
     "parallel": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef worker fill:#1e293b,stroke:#0ea5e9,stroke-width:2px,color:#f8fafc;
-    classDef reducer fill:#4f46e5,stroke:#818cf8,stroke-width:2px,color:#fff;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef worker fill:#f1f5f9,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef reducer fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#581c87;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    START(["START: Distributed Task"]):::startNode --> FanOut{"Fan-Out Dispatcher"}
+    START(["START: Distributed Task"]):::start --> FanOut{"Fan-Out Dispatcher"}
     FanOut -->|"Task A"| WorkerA["Worker Node A: Research Subagent"]:::worker
     FanOut -->|"Task B"| WorkerB["Worker Node B: Verification Subagent"]:::worker
     WorkerA --> Reducer["State Reducer: operator.add"]:::reducer
     WorkerB --> Reducer
     Reducer --> Consolidate["Consolidate Combined State"]:::worker
-    Consolidate --> END(["END: Deterministic Output"]):::endNode""",
+    Consolidate --> END(["END: Deterministic Output"]):::finish""",
 
     "conditional": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef decision fill:#d97706,stroke:#fbbf24,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    START(["START: Incoming Query"]):::startNode --> Router{"Conditional Edge Router"}:::decision
+    START(["START: Incoming Query"]):::start --> Router{"Conditional Edge Router"}:::decision
     Router -->|"Requires Retrieval"| VectorRAG["Hybrid Vector Store Retrieval"]:::proc
     Router -->|"Direct Reasoning"| DirectLLM["Direct Model Synthesis"]:::proc
     VectorRAG --> EvaluateDoc{"Relevance Grader"}:::decision
     EvaluateDoc -->|"Grounded"| GenResponse["Context-Aware Generation"]:::proc
     EvaluateDoc -->|"Missing Context"| WebFallback["Live Web Search Fallback"]:::proc
     WebFallback --> GenResponse
-    GenResponse --> END(["END: Validated Response"]):::endNode
+    GenResponse --> END(["END: Validated Response"]):::finish
     DirectLLM --> END""",
 
     "iterative": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef check fill:#ea580c,stroke:#fb923c,stroke-width:2px,color:#fff;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef check fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    START(["START: Draft Assignment"]):::startNode --> Generator["Author Agent Node"]:::proc
+    START(["START: Draft Assignment"]):::start --> Generator["Author Agent Node"]:::proc
     Generator --> Reviewer{"Evaluator-Optimizer Grader"}:::check
     Reviewer -->|"Critique & Refinements Needed"| Generator
-    Reviewer -->|"Quality Threshold Met"| END(["END: Approved Artifact"]):::endNode""",
+    Reviewer -->|"Quality Threshold Met"| END(["END: Approved Artifact"]):::finish""",
 
     "human": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef pause fill:#9333ea,stroke:#c084fc,stroke-width:2px,color:#fff;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef pause fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#581c87;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    START(["START: Workflow Initiation"]):::startNode --> Step1["Autonomous Processing Node"]:::proc
+    START(["START: Workflow Initiation"]):::start --> Step1["Autonomous Processing Node"]:::proc
     Step1 --> PersistCheck["Save State: MemorySaver Checkpointer"]:::proc
     PersistCheck --> Gate{"HITL Interruption Barrier"}:::pause
     Gate -->|"Awaiting Approval"| HumanReview["Human Reviewer: Inspect State"]:::pause
     HumanReview -->|"Feedback Provided"| Step1
     HumanReview -->|"Approved"| Resume["Resume Downstream Execution"]:::proc
-    Resume --> END(["END: Verified Completion"]):::endNode""",
+    Resume --> END(["END: Verified Completion"]):::finish""",
 
     "generative": """graph TD
-    classDef comp fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef agent fill:#6366f1,stroke:#818cf8,stroke-width:2px,color:#fff;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef comp fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#0f172a;
+    classDef agent fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#581c87;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    ArchitectureComparison{"Execution Paradigm"}
-    ArchitectureComparison -->|"Single-Turn Generative AI"| StatelessLLM["Stateless LLM Invocation"]:::comp
-    StatelessLLM --> StaticText["Static Text Output"]:::endNode
-    ArchitectureComparison -->|"Agentic Workflow"| AgenticLoop["Perception-Action Loop"]:::agent
+    UserObjective["User Objective"]:::start --> Paradigm{"Workflow Paradigm"}
+    Paradigm -->|"Single-Turn Generative AI"| StatelessLLM["Stateless LLM Invocation"]:::comp
+    StatelessLLM --> StaticText["Static Text Output"]:::finish
+    Paradigm -->|"Agentic Workflow"| AgenticLoop["Perception-Action Loop"]:::agent
     AgenticLoop --> Environment["Tool Calling & Real World Environment"]:::comp
     Environment --> MemoryState["Persistent State Reducer"]:::comp
     MemoryState --> AgenticLoop
-    MemoryState --> VerifiedResult["Autonomous Verified Outcome"]:::endNode""",
+    MemoryState --> VerifiedResult["Autonomous Verified Outcome"]:::finish""",
 
     "why_langgraph": """graph TD
-    classDef flaw fill:#be123c,stroke:#f43f5e,stroke-width:2px,color:#fff;
-    classDef feature fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef goal fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef flaw fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#991b1b;
+    classDef feature fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef goal fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
     LangChainChains["Traditional Chains / DAGs"]:::flaw -.->|"Limitation"| CannotLoop["No Cyclic Loops / Rigid Linear Execution"]:::flaw
     LangGraph["LangGraph StateGraph Engine"]:::feature --> CyclicSupport["Cyclic & Conditional Edge Support"]:::feature
@@ -96,24 +97,24 @@ MERMAID_PATTERNS = {
     BuiltinState --> ProductionApp
     ResilientPersistence --> ProductionApp""",
 
-    "sequential": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    "sequential": """graph LR
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    START(["START: Input Payload"]):::startNode --> NodeA["Node 1: Extract & Outline"]:::proc
-    NodeA --> NodeB["Node 2: Draft Generation"]:::proc
-    NodeB --> NodeC["Node 3: Polish & Validate"]:::proc
-    NodeC --> END(["END: Final Article"]):::endNode""",
+    START(["START"]):::start --> Ingest["State Ingestion & Schema Validation"]:::proc
+    Ingest --> Process["Sequential Processing Node"]:::proc
+    Process --> Transform["State Transformation & Formatting"]:::proc
+    Transform --> END(["END: Deterministic Return"]):::finish""",
 
     # ── Machine Learning & Data Science Paradigms ────────────────────
     "ml_workflow": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef check fill:#d97706,stroke:#fbbf24,stroke-width:2px,color:#fff;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef check fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    START(["START: Raw Dataset"]):::startNode --> EDA["Exploratory Data Analysis (EDA)"]:::proc
+    START(["START: Raw Dataset"]):::start --> EDA["Exploratory Data Analysis (EDA)"]:::proc
     EDA --> Cleaning["Data Cleaning & Missing Value Imputation"]:::proc
     Cleaning --> Preproc["Preprocessing (Encoding & Feature Scaling)"]:::proc
     Preproc --> FeatEng["Feature Engineering & Selection"]:::proc
@@ -121,19 +122,19 @@ MERMAID_PATTERNS = {
     Split --> Train["Model Training (Scikit-Learn Estimator)"]:::proc
     Train --> Eval{"Metric Evaluation & Residual Diagnostics"}:::check
     Eval -->|"Overfitting / Low Bias"| FeatEng
-    Eval -->|"Acceptable Performance"| Deploy["Production Inference & Model Export (.joblib)"]:::endNode""",
+    Eval -->|"Acceptable Performance"| Deploy["Production Inference & Model Export (.joblib)"]:::finish""",
 
     "ml_hierarchy": """graph TD
-    classDef ai fill:#6366f1,stroke:#818cf8,stroke-width:2px,color:#fff;
-    classDef ml fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef dl fill:#059669,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef ai fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef ml fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#581c87;
+    classDef dl fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
     AI["Artificial Intelligence (AI)<br/>Science of Intelligent Autonomous Agents"]:::ai --> ML["Machine Learning (ML)<br/>Statistical Learning & Pattern Induction"]:::ml
     ML --> DL["Deep Learning (DL)<br/>Multi-Layer Neural Representation Learning"]:::dl""",
 
     "trad_vs_ml": """graph LR
-    classDef trad fill:#be123c,stroke:#f43f5e,stroke-width:2px,color:#fff;
-    classDef ml fill:#059669,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef trad fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#991b1b;
+    classDef ml fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
     Data1["Input Data"] --> TradP["Traditional Programming<br/>(Hardcoded Logic)"]:::trad
     Rules1["Rules & Conditions"] --> TradP
@@ -144,9 +145,9 @@ MERMAID_PATTERNS = {
     MLEng --> Rules2["Learned Decision Boundary f(x)"]:::ml""",
 
     "ml_types": """graph TD
-    classDef root fill:#4f46e5,stroke:#818cf8,stroke-width:2px,color:#fff;
-    classDef type fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef task fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef root fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef type fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#581c87;
+    classDef task fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
 
     ML["Machine Learning Paradigms"]:::root --> Sup["Supervised Learning<br/>(Ground-Truth Labels)"]:::type
     ML --> Unsup["Unsupervised Learning<br/>(Latent Structure Discovery)"]:::type
@@ -158,12 +159,12 @@ MERMAID_PATTERNS = {
     Unsup --> DimRed["Dimensionality Reduction (PCA)"]:::task""",
 
     "eda_cleaning": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef decision fill:#d97706,stroke:#fbbf24,stroke-width:2px,color:#fff;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    RawData(["Raw Dataset"]):::startNode --> Inspect["Inspect df.info(), df.describe() & Null Matrix"]:::proc
+    RawData(["Raw Dataset"]):::start --> Inspect["Inspect df.info(), df.describe() & Null Matrix"]:::proc
     Inspect --> Missing{"Missing Values Detected?"}:::decision
     Missing -->|"Numerical Features"| ImputeNum["Median / Iterative Imputer"]:::proc
     Missing -->|"Categorical Features"| ImputeCat["Mode / Missing Category Flag"]:::proc
@@ -171,45 +172,45 @@ MERMAID_PATTERNS = {
     ImputeNum --> Outliers
     ImputeCat --> Outliers
     Outliers -->|"IQR / Z-Score Extremes"| Winsorize["Winsorization / Clipping"]:::proc
-    Outliers -->|"Normal Distributions"| CleanReady(["Clean Data Matrix Ready"]):::endNode
+    Outliers -->|"Normal Distributions"| CleanReady(["Clean Data Matrix Ready"]):::finish
     Winsorize --> CleanReady""",
 
     "preprocessing": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    CleanData(["Cleaned Dataset"]):::startNode --> SplitCols["Split Feature Types"]:::proc
+    CleanData(["Cleaned Dataset"]):::start --> SplitCols["Split Feature Types"]:::proc
     SplitCols -->|"Nominal High-Cardinality"| OHE["OneHotEncoder(handle_unknown='ignore')"]:::proc
     SplitCols -->|"Ordinal Ranked"| Ord["OrdinalEncoder()"]:::proc
     SplitCols -->|"Skewed Numerical"| Scale["StandardScaler() / RobustScaler()"]:::proc
     OHE --> ColumnTrans["ColumnTransformer Synthesis"]:::proc
     Ord --> ColumnTrans
     Scale --> ColumnTrans
-    ColumnTrans --> ModelPrep(["Transformed Feature Array X"]):::endNode""",
+    ColumnTrans --> ModelPrep(["Transformed Feature Array X"]):::finish""",
 
     "feature_selection": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    AllFeatures(["Full High-Dimensional Feature Space"]):::startNode --> Filter["Filter Method: Correlation Heatmap & VarianceThreshold"]:::proc
+    AllFeatures(["Full High-Dimensional Feature Space"]):::start --> Filter["Filter Method: Correlation Heatmap & VarianceThreshold"]:::proc
     Filter --> Statistical["Statistical Test: SelectKBest (ANOVA / Chi2 / f_classif)"]:::proc
     Statistical --> Embedded["Embedded Model Importance: RandomForest / Lasso L1"]:::proc
-    Embedded --> SelectedSubset(["Optimal Feature Subset (High Information Gain)"]):::endNode""",
+    Embedded --> SelectedSubset(["Optimal Feature Subset (High Information Gain)"]):::finish""",
 
     "ml_project": """graph TD
-    classDef startNode fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef proc fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef eval fill:#d97706,stroke:#fbbf24,stroke-width:2px,color:#fff;
-    classDef endNode fill:#10b981,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef eval fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
 
-    ProblemDef(["Problem Definition & Business Objective"]):::startNode --> DataIngest["Data Load & Stratified Train-Test Split"]:::proc
+    ProblemDef(["Problem Definition & Business Objective"]):::start --> DataIngest["Data Load & Stratified Train-Test Split"]:::proc
     DataIngest --> FeaturePipe["Preprocessing & Transformation Pipeline"]:::proc
     FeaturePipe --> ModelFit["Estimator Training & Baseline Validation"]:::proc
     ModelFit --> Tuning["Hyperparameter Optimization (GridSearchCV / Optuna)"]:::proc
     Tuning --> Diagnostics{"Validation & Confusion Matrix Diagnostics"}:::eval
-    Diagnostics -->|"Target Performance Verified"| FinalArtifact(["Export Model Pipeline Artifact (.joblib)"]):::endNode"""
+    Diagnostics -->|"Target Performance Verified"| FinalArtifact(["Export Model Pipeline Artifact (.joblib)"]):::finish"""
 }
 
 def sanitize_mermaid(code: str) -> str:
