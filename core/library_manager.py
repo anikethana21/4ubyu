@@ -12,15 +12,19 @@ from config import OUTPUT_DIR, MAX_PUBLIC_STORAGE_MB, MAX_PUBLIC_HANDBOOKS, APP_
 LIBRARY_FILE = OUTPUT_DIR / "library.json"
 
 def get_library_entries() -> List[Dict[str, Any]]:
-    """Returns list of all cataloged educational study guides."""
-    if not LIBRARY_FILE.exists():
-        return []
-    try:
-        with open(LIBRARY_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return sorted(data, key=lambda x: x.get("created_at", ""), reverse=True)
-    except Exception:
-        return []
+    """Returns list of all cataloged educational study guides with dual-path check."""
+    from config import BASE_DIR
+    paths = [LIBRARY_FILE, BASE_DIR / "output" / "library.json"]
+    for p in paths:
+        if p.exists():
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if data:
+                        return sorted(data, key=lambda x: x.get("created_at", ""), reverse=True)
+            except Exception:
+                pass
+    return []
 
 def calculate_storage_usage_mb() -> float:
     """Calculates total size of all output files in MB."""

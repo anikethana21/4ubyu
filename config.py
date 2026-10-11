@@ -1,9 +1,11 @@
 """
-4 U By U — Unified Configuration & Guardrails Engine
+4 U By U - Unified Configuration & Guardrails Engine
 Supports both Private (local) and Public (community BYOK) modes with strict zero-cost enforcement.
 """
 
 import os
+import shutil
+import tempfile
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -21,7 +23,6 @@ try:
     VECTOR_DB_DIR.mkdir(parents=True, exist_ok=True)
 except (OSError, PermissionError):
     # Serverless runtime (e.g. Vercel) fallback to /tmp if root is read-only
-    import tempfile
     TMP_DIR = Path(tempfile.gettempdir()) / "4ubyu"
     OUTPUT_DIR = TMP_DIR / "output"
     IMAGES_DIR = OUTPUT_DIR / "images"
@@ -29,6 +30,18 @@ except (OSError, PermissionError):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     VECTOR_DB_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Seed pre-packaged output files from codebase into serverless /tmp
+    pkg_output = BASE_DIR / "output"
+    if pkg_output.exists():
+        for item in pkg_output.glob("*"):
+            if item.is_file():
+                dest = OUTPUT_DIR / item.name
+                if not dest.exists():
+                    try:
+                        shutil.copy2(item, dest)
+                    except Exception:
+                        pass
 
 # Unified App Mode: "private" (local personal) vs "public" (BYOK-enforced)
 APP_MODE = os.getenv("APP_MODE", "private").lower()
