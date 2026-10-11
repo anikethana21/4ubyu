@@ -177,6 +177,58 @@
       </div>
     </section>
 
+  
+  <!-- PHASE 3: Human-in-the-Loop Review Modal -->
+  <div id="hitl-modal" class="hitl-modal-overlay hidden">
+    <div class="hitl-modal-card">
+      <div class="hitl-modal-header">
+        <div class="hitl-badge-row">
+          <span class="hitl-badge">Phase 3 • Human-in-the-Loop Checkpoint</span>
+          <span class="hitl-status-pill">Awaiting Your Review</span>
+        </div>
+        <h2 class="hitl-title">Curate & Approve Course Syllabus</h2>
+        <p class="hitl-subtitle">Our ingestion engine extracted the following chapters and timestamps. Review, toggle, or edit topic titles below before activating the multi-agent synthesis swarm.</p>
+      </div>
+
+      <div class="hitl-video-strip" id="hitl-video-strip">
+        <img id="hitl-video-thumb" src="" alt="Thumbnail" class="hitl-thumb">
+        <div class="hitl-video-details">
+          <h4 id="hitl-video-title" class="hitl-video-title"></h4>
+          <div class="hitl-video-meta">
+            <span id="hitl-video-channel" class="meta-tag"></span>
+            <span id="hitl-video-duration" class="meta-tag"></span>
+            <span id="hitl-video-count" class="meta-tag accent"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hitl-list-header">
+        <div class="hitl-select-all">
+          <input type="checkbox" id="hitl-select-all-cb" checked>
+          <label for="hitl-select-all-cb">Select All Chapters</label>
+        </div>
+        <button type="button" id="hitl-add-topic-btn" class="hitl-btn-sm">+ Add Custom Topic</button>
+      </div>
+
+      <div class="hitl-chapters-list" id="hitl-chapters-container">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="hitl-modal-footer">
+        <div class="hitl-selection-summary">
+          <span id="hitl-selected-count">0 of 0</span> topics approved for synthesis
+        </div>
+        <div class="hitl-footer-actions">
+          <button type="button" id="hitl-cancel-btn" class="hitl-btn-secondary">Cancel</button>
+          <button type="button" id="hitl-approve-btn" class="hitl-btn-primary">
+            <span>Approve Syllabus & Synthesize Notes</span>
+            <span class="hitl-btn-arrow">→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </main>
 
   <footer class="landing-footer">

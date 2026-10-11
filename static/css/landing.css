@@ -476,3 +476,322 @@ body.landing-body {
 .hidden {
   display: none !important;
 }
+
+
+/* ========================================================================= */
+/* PHASE 3 HUMAN-IN-THE-LOOP (HITL) REVIEW MODAL                             */
+/* ========================================================================= */
+.hitl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 18, 0.85);
+  backdrop-filter: blur(16px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.hitl-modal-card {
+  background: #0f172a;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.1);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 760px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: hitlFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes hitlFadeIn {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.hitl-modal-header {
+  padding: 1.5rem 1.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hitl-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.hitl-badge {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hitl-status-pill {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.hitl-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 0.4rem;
+}
+
+.hitl-subtitle {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.hitl-video-strip {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.75rem;
+  background: rgba(30, 41, 59, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  align-items: center;
+}
+
+.hitl-thumb {
+  width: 100px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hitl-video-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.hitl-video-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0 0.35rem;
+}
+
+.hitl-video-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.meta-tag {
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  color: #cbd5e1;
+}
+
+.meta-tag.accent {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.hitl-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.75rem;
+  background: rgba(15, 23, 42, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hitl-select-all {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.hitl-btn-sm {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hitl-btn-sm:hover {
+  background: rgba(56, 189, 248, 0.2);
+}
+
+.hitl-chapters-list {
+  padding: 1rem 1.75rem;
+  overflow-y: auto;
+  max-height: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.hitl-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.hitl-item:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(30, 41, 59, 0.85);
+}
+
+.hitl-item.excluded {
+  opacity: 0.45;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.hitl-item-cb {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: #38bdf8;
+}
+
+.hitl-item-idx {
+  font-size: 0.8rem;
+  color: #64748b;
+  min-width: 20px;
+  font-weight: 600;
+}
+
+.hitl-item-ts {
+  font-size: 0.75rem;
+  font-family: monospace;
+  background: rgba(14, 165, 233, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  min-width: 55px;
+  text-align: center;
+}
+
+.hitl-item-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #f1f5f9;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.hitl-item-input:focus {
+  outline: none;
+  background: rgba(15, 23, 42, 0.8);
+  border-color: #38bdf8;
+}
+
+.hitl-item-del {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: color 0.15s ease;
+}
+
+.hitl-item-del:hover {
+  color: #ef4444;
+}
+
+.hitl-modal-footer {
+  padding: 1.25rem 1.75rem;
+  background: rgba(15, 23, 42, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hitl-selection-summary {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+#hitl-selected-count {
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.hitl-footer-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.hitl-btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hitl-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hitl-btn-primary {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  border: 1px solid #38bdf8;
+  color: #fff;
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+  transition: all 0.15s ease;
+}
+
+.hitl-btn-primary:hover {
+  background: linear-gradient(135deg, #0369a1, #1d4ed8);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.6);
+  transform: translateY(-1px);
+}

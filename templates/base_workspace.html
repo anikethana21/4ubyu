@@ -1075,10 +1075,10 @@ input#notes-search::placeholder {
 }
 
 .mermaid-box {
-  background: #ffffff !important;
-  border: none !important;
-  border-radius: 6px !important;
-  padding: 0.25rem !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  border-radius: 8px !important;
+  padding: 0.75rem !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
@@ -1086,10 +1086,11 @@ input#notes-search::placeholder {
   height: 100% !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
 }
 
 .mermaid-box svg {
-  background: #ffffff !important;
+  background: transparent !important;
   max-width: 100% !important;
   max-height: 265px !important;
   width: auto !important;
@@ -1598,25 +1599,25 @@ input#notes-search::placeholder {
         if (window.mermaid) {
           mermaid.initialize({
             startOnLoad: true,
-            theme: 'neutral',
+            theme: 'dark',
             securityLevel: 'loose',
             flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
             themeVariables: {
-              darkMode: false,
-              background: '#ffffff',
-              mainBkg: '#ffffff',
-              primaryColor: '#f8fafc',
-              primaryTextColor: '#0f172a',
-              primaryBorderColor: '#cbd5e1',
-              lineColor: '#0f766e',
-              secondaryColor: '#f1f5f9',
-              tertiaryColor: '#ffffff',
+              darkMode: true,
+              background: '#0f172a',
+              mainBkg: '#1e293b',
+              primaryColor: '#0284c7',
+              primaryTextColor: '#f8fafc',
+              primaryBorderColor: '#38bdf8',
+              lineColor: '#38bdf8',
+              secondaryColor: '#334155',
+              tertiaryColor: '#0f172a',
               fontSize: '14px',
-              fontFamily: "'Roboto', sans-serif",
-              nodeBorder: '#64748b',
-              clusterBkg: '#f8fafc',
-              clusterBorder: '#cbd5e1',
-              edgeLabelBackground: '#ffffff'
+              fontFamily: "'Inter', sans-serif",
+              nodeBorder: '#0ea5e9',
+              clusterBkg: '#0f172a',
+              clusterBorder: '#38bdf8',
+              edgeLabelBackground: '#1e293b'
             }
           });
         }

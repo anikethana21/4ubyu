@@ -1,11 +1,10 @@
-from core.handbook_rag import stream_handbook_chat_response, get_suggestive_questions
 """
 4 U By U — FastAPI Web Application & Streaming Server
 Serves the Landing Page, Study Library Dashboard, Generation API, and SSE Streaming Chat.
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,7 +13,8 @@ from pydantic import BaseModel
 from config import BASE_DIR, OUTPUT_DIR, APP_MODE
 from core.library_manager import get_library_entries, remove_library_entry, check_capacity_limits
 from phase8_chatbot import ask_rag_stream
-from main import run_master_notes_pipeline
+from main import run_master_notes_pipeline, inspect_video_for_hitl
+from core.handbook_rag import stream_handbook_chat_response, get_suggestive_questions
 
 app = FastAPI(title="4 U By U — Educational Workspace Generator")
 
@@ -31,6 +31,22 @@ templates = Jinja2Templates(directory=str(templates_dir))
 # REQUEST SCHEMAS
 # ═══════════════════════════════════════════════════════════════════
 
+class InspectRequest(BaseModel):
+    youtube_url: str
+    api_key: Optional[str] = None
+    model_name: Optional[str] = None
+
+class SynthesizeRequest(BaseModel):
+    youtube_url: str
+    video_id: str
+    approved_chapters: List[Dict[str, Any]]
+    api_key: Optional[str] = None
+    model_name: Optional[str] = None
+    eraser_api_key: Optional[str] = None
+    color_palette: str = "dark_academic"
+    visual_preference: str = "auto"
+    output_format: str = "html"
+
 class GenerateRequest(BaseModel):
     youtube_url: str
     api_key: Optional[str] = None
@@ -45,6 +61,7 @@ class ChatRequest(BaseModel):
     question: str
     api_key: Optional[str] = None
     model_name: Optional[str] = None
+
 class HandbookChatRequest(BaseModel):
     question: str
     api_key: Optional[str] = None
@@ -69,10 +86,58 @@ async def landing_page(request: Request):
         }
     )
 
+@app.post("/api/pipeline/inspect")
+async def hitl_inspect(req: InspectRequest):
+    """Phase 1 & 2: Ingests video and halts at Phase 3 Human-in-the-Loop review."""
+    allowed, msg = check_capacity_limits()
+    if not allowed:
+        raise HTTPException(status_code=429, detail=msg)
+
+    try:
+        data = await inspect_video_for_hitl(
+            youtube_url=req.youtube_url,
+            api_key=req.api_key,
+            model_name=req.model_name
+        )
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/pipeline/synthesize")
+async def hitl_synthesize(req: SynthesizeRequest):
+    """Phase 4-8: Synthesizes rich notes based on the human-approved syllabus."""
+    allowed, msg = check_capacity_limits()
+    if not allowed:
+        raise HTTPException(status_code=429, detail=msg)
+
+    try:
+        res = await run_master_notes_pipeline(
+            youtube_url=req.youtube_url,
+            api_key=req.api_key,
+            model_name=req.model_name,
+            eraser_api_key=req.eraser_api_key,
+            color_palette=req.color_palette,
+            visual_preference=req.visual_preference,
+            output_format=req.output_format,
+            approved_chapters=req.approved_chapters
+        )
+        video_id = res["video_id"]
+        meta = res.get("video_metadata", {})
+        return {
+            "status": "success",
+            "video_id": video_id,
+            "title": meta.get("title", f"Notes for {video_id}"),
+            "channel": meta.get("channel", "YouTube"),
+            "duration": meta.get("duration_str", "00:00"),
+            "chapters_count": len(res.get("chapter_contents", [])),
+            "workspace_url": f"/output/notes_{video_id}.html"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/generate")
 async def generate_notes(req: GenerateRequest):
-    """Executes the master pipeline and saves the interactive handbook."""
-    # Check circuit-breaker capacity in public mode
+    """Executes the master pipeline directly (auto-approved fallback)."""
     allowed, msg = check_capacity_limits()
     if not allowed:
         raise HTTPException(status_code=429, detail=msg)
@@ -113,7 +178,6 @@ async def chat_with_notes(req: ChatRequest):
 
     return StreamingResponse(event_generator(), media_type="text/plain")
 
-
 @app.api_route("/handbook", methods=["GET", "HEAD"], response_class=HTMLResponse)
 @app.api_route("/agentic_ai_interactive_handbook.html", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def serve_interactive_handbook():
@@ -147,15 +211,12 @@ async def handbook_interactive_chat(req: HandbookChatRequest):
 
     return StreamingResponse(event_generator(), media_type="text/plain")
 
-
-
 @app.get("/api/workspace/{video_id}/questions")
 async def get_workspace_questions(video_id: str):
     """Returns preloaded suggestive questions extracted from the HTML notes."""
     from phase8_chatbot import get_workspace_suggestive_questions
     questions = get_workspace_suggestive_questions(video_id)
     return {"questions": questions}
-
 
 @app.delete("/api/library/{video_id}")
 async def delete_handbook(video_id: str):

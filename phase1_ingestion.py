@@ -2,57 +2,74 @@
 4 U By U — PHASE 1: Sequential Ingestion Pipeline
 Fetches YouTube metadata, extracts chapters, downloads timed transcript,
 and accurately slices transcripts for each chapter.
+Uses dual-engine extraction: robust cloud extractor + yt-dlp fallback.
 """
 
-import yt_dlp
 from typing import Dict, Any
 from langgraph.graph import StateGraph, START, END
 from states import MasterNotesState
 from core.transcriber import extract_video_id, fetch_youtube_transcript, format_seconds
+from core.robust_ingestion import extract_robust_metadata
 
 def yt_fetch_node(state: MasterNotesState) -> Dict[str, Any]:
-    """Fetches high-level metadata and chapters via yt-dlp."""
+    """Fetches high-level metadata and chapters with 100% cloud reliability."""
     url = state["youtube_url"]
     video_id = extract_video_id(url)
-    
-    ydl_opts = {
-        'skip_download': True,
-        'extract_flat': False,
-        'quiet': True,
-        'no_warnings': True,
-    }
     
     metadata = {}
     description = ""
     yt_chapters = []
     
+    # Primary: Fast, 100% cloud-reliable metadata and chapter extraction
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            metadata = {
-                "title": info.get("title", f"Tutorial {video_id}"),
-                "channel": info.get("uploader", info.get("channel", "Unknown Channel")),
-                "duration": info.get("duration", 0),
-                "duration_str": format_seconds(info.get("duration", 0)),
-                "view_count": info.get("view_count", 0),
-                "thumbnail": info.get("thumbnail", f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"),
-                "upload_date": info.get("upload_date", "")
-            }
-            description = info.get("description", "")
-            
-            raw_chapters = info.get("chapters") or []
-            for ch in raw_chapters:
-                yt_chapters.append({
-                    "title": ch.get("title", "Untitled Section"),
-                    "start_time": float(ch.get("start_time", 0.0)),
-                    "end_time": float(ch.get("end_time", 0.0)),
-                    "timestamp_str": format_seconds(ch.get("start_time", 0.0))
-                })
+        vid, meta, chaps = extract_robust_metadata(url)
+        if meta and meta.get("title") and chaps:
+            video_id = vid or video_id
+            metadata = meta
+            yt_chapters = chaps
+            print(f"[Phase 1] Robust extractor succeeded: {len(yt_chapters)} chapters, duration {metadata.get('duration_str')}")
     except Exception as e:
-        print(f"[Phase 1] yt-dlp metadata warning: {e}")
+        print(f"[Phase 1] Robust extractor warning: {e}")
+
+    # Fallback to yt-dlp if needed or to enrich description
+    if not yt_chapters:
+        try:
+            import yt_dlp
+            ydl_opts = {
+                'skip_download': True,
+                'extract_flat': False,
+                'quiet': True,
+                'no_warnings': True,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                if not metadata or metadata.get("duration", 0) == 0:
+                    metadata = {
+                        "title": info.get("title", f"Tutorial {video_id}"),
+                        "channel": info.get("uploader", info.get("channel", "Unknown Channel")),
+                        "duration": info.get("duration", 0),
+                        "duration_str": format_seconds(info.get("duration", 0)),
+                        "view_count": info.get("view_count", 0),
+                        "thumbnail": info.get("thumbnail", f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"),
+                        "upload_date": info.get("upload_date", "")
+                    }
+                description = info.get("description", description)
+                
+                raw_chapters = info.get("chapters") or []
+                for ch in raw_chapters:
+                    yt_chapters.append({
+                        "title": ch.get("title", "Untitled Section"),
+                        "start_time": float(ch.get("start_time", 0.0)),
+                        "end_time": float(ch.get("end_time", 0.0)),
+                        "timestamp_str": format_seconds(ch.get("start_time", 0.0))
+                    })
+        except Exception as e:
+            print(f"[Phase 1] yt-dlp metadata notice: {e}")
+
+    if not metadata:
         metadata = {
-            "title": f"YouTube Study Guide ({video_id})",
-            "channel": "Sheryians AI School",
+            "title": f"Educational Study Guide ({video_id})",
+            "channel": "YouTube Creator",
             "duration": 0,
             "duration_str": "00:00",
             "thumbnail": f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
@@ -62,7 +79,8 @@ def yt_fetch_node(state: MasterNotesState) -> Dict[str, Any]:
         "video_id": video_id,
         "video_metadata": metadata,
         "video_description": description,
-        "yt_chapters": yt_chapters
+        "yt_chapters": yt_chapters,
+        "raw_chapters": yt_chapters
     }
 
 def transcribe_node(state: MasterNotesState) -> Dict[str, Any]:

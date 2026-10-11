@@ -1,7 +1,7 @@
 """
 4 U By U - PHASE 4: Recursive Chapter Structuring
 Grounds sub-section generation directly in the video's transcript excerpts.
-Generates authentic, course-specific headings (e.g., Blog Generator, operator.add Reducers, MemorySaver Checkpointers).
+Generates authentic, course-specific headings for both Machine Learning and Agentic AI courses.
 """
 
 import re
@@ -20,7 +20,70 @@ def format_seconds(seconds: int) -> str:
         return f"{h:02d}:{m:02d}:{s:02d}"
     return f"{m:02d}:{s:02d}"
 
-SHERYIANS_COURSE_MAP = {
+COURSE_TOPIC_MAP = {
+    # Machine Learning Curriculum
+    "what is machine learning": [
+        "Core Philosophy of Machine Learning & Statistical Induction",
+        "Parametric vs Non-Parametric Modeling & The Learning Hypothesis"
+    ],
+    "applications": [
+        "Industrial Use Cases: Recommender Engines & Predictive Analytics",
+        "Autonomous Systems, Computer Vision & Healthcare Diagnostics"
+    ],
+    "traditional programming": [
+        "Rule-Based Determinism vs Data-Driven Paradigm Shift",
+        "Mathematical Representation: Finding the Mapping Function f(x)"
+    ],
+    "difference b/w ai,ml,dl": [
+        "Taxonomic Hierarchy: Artificial Intelligence vs Machine Learning vs Deep Learning",
+        "Feature Representation: Manual Engineering vs Deep Latent Extraction"
+    ],
+    "types of machine learning": [
+        "Supervised vs Unsupervised vs Reinforcement Learning Paradigms",
+        "Regression vs Classification: Mathematical Formulation & Cost Functions"
+    ],
+    "steps for making a machine learning model": [
+        "The Complete ML Engineering Lifecycle: From Problem Framing to Metric Selection",
+        "Data Pipeline Architecture: Ingestion, Validation, Split & Generalization"
+    ],
+    "eda": [
+        "Exploratory Data Analysis: Statistical Summaries, Quantiles & Skewness",
+        "Visual Diagnostics: Univariate Histograms, Correlation Matrices & Heatmaps"
+    ],
+    "data cleaning": [
+        "Handling Incomplete Data: Missing Value Imputation Strategies",
+        "Outlier Detection & Remediation: IQR Bounds, Z-Scores & Winsorization"
+    ],
+    "data preprocessing": [
+        "Categorical Feature Encoding: OneHotEncoder vs OrdinalEncoder",
+        "Feature Scaling & Transformation: StandardScaler, RobustScaler & Normalization"
+    ],
+    "feature engineering": [
+        "Creating High-Signal Features: Interaction Terms & Domain Transformations",
+        "Binning Strategies, Logarithmic Transformations & Datetime Decompositions"
+    ],
+    "feature selection": [
+        "Filter Methods: Pearson Correlation & Variance Thresholding",
+        "Wrapper & Embedded Methods: SelectKBest (ANOVA/Chi2) & Lasso L1 Penalty"
+    ],
+    "project 1": [
+        "End-to-End Supervised ML Pipeline: Problem Formulation & EDA",
+        "Scikit-Learn Pipeline Assembly, Estimator Fitting & Validation"
+    ],
+    "project 2": [
+        "Advanced ML Pipeline: Feature Preprocessing & Model Selection",
+        "Hyperparameter Optimization (GridSearchCV) & Residual Diagnostics"
+    ],
+    "content": [
+        "Course Roadmap, Technology Stack & Learning Objectives",
+        "Environment Setup: Jupyter Notebooks, Scikit-Learn & Essential Libraries"
+    ],
+    "outro": [
+        "Key Course Learnings Summary & Production Best Practices",
+        "Next Steps: Advanced Algorithms, Neural Networks & Model Deployment"
+    ],
+
+    # Agentic AI & LangGraph Curriculum
     "introduction": [
         "Course Overview & The Shift to Agentic AI",
         "The 5 Core Workflow Paradigms in LangGraph"
@@ -57,14 +120,14 @@ SHERYIANS_COURSE_MAP = {
 
 def derive_technical_sections(chapter_title: str) -> List[str]:
     c_lower = chapter_title.lower()
-    for key, sections in SHERYIANS_COURSE_MAP.items():
+    for key, sections in COURSE_TOPIC_MAP.items():
         if key in c_lower:
             return sections
     
     clean_t = re.sub(r"^\d+[\.\:\s\-]*", "", chapter_title).strip()
     return [
-        f"{clean_t}: Core Architectural Concepts",
-        f"{clean_t}: Hands-On Implementation & Patterns"
+        f"{clean_t}: Core Foundations & Architecture",
+        f"{clean_t}: Implementation Patterns & Code Walkthrough"
     ]
 
 def structure_synthesis_node(state: MasterNotesState) -> Dict[str, Any]:
@@ -72,11 +135,16 @@ def structure_synthesis_node(state: MasterNotesState) -> Dict[str, Any]:
     raw_chapters = state.get("raw_chapters") or state.get("yt_chapters") or []
     timed_transcript = state.get("timed_transcript", [])
     video_meta = state.get("video_metadata", {})
-    video_title = video_meta.get("title") or state.get("video_title", "Agentic AI Course")
+    video_title = video_meta.get("title") or state.get("video_title", "Technical Course Notes")
     
     api_key = state.get("api_key")
     selected_model = state.get("model_name")
-    llm = get_chat_model(api_key=api_key, model_name=selected_model, temperature=0.1)
+    llm = None
+    if api_key:
+        try:
+            llm = get_chat_model(api_key=api_key, model_name=selected_model, temperature=0.1)
+        except Exception:
+            llm = None
 
     chapters = []
     for idx, ch in enumerate(raw_chapters, 1):
@@ -92,16 +160,14 @@ def structure_synthesis_node(state: MasterNotesState) -> Dict[str, Any]:
             transcript = " ".join([seg.get("text", "") for seg in timed_transcript if start_sec <= seg.get("start", 0) < end_sec])
 
         section_names = []
-        if transcript and len(transcript) > 100:
+        if llm and transcript and len(transcript) > 100:
             try:
                 prompt = PromptTemplate.from_template(
-                    """You are a Lead AI Curriculum Architect documenting a lecture from Sheryians AI School on: "{chapter_title}".
-The instructor teaches in conversational Hindi/Hinglish:
+                    """You are a Lead AI Curriculum Architect documenting a lecture on: "{chapter_title}".
+Lecture Excerpt:
 \"\"\"{transcript}\"\"\"
 
-Generate exactly 2 distinct, highly practical, technical sub-section titles in English describing what the instructor actually demonstrates and codes (e.g. "Sequential Workflow Fundamentals & StateGraph Basics", "Hands-On Blog Post Generator with TypedDict").
-Do NOT use academic ontology jargon. Focus strictly on LangGraph and the instructor's code.
-
+Generate exactly 2 distinct, highly practical, technical sub-section titles in English describing what the instructor demonstrates.
 Output strictly as a JSON list of 2 strings:
 ["First Practical Subtopic", "Second Implementation Subtopic"]"""
                 )
@@ -128,7 +194,7 @@ Output strictly as a JSON list of 2 strings:
             chunk_size = len(transcript) // total_secs if transcript else 0
             t_start = (s_idx - 1) * chunk_size
             t_end = s_idx * chunk_size if s_idx < total_secs else len(transcript)
-            t_offset = start_sec + int((s_idx - 1) * max(45, (end_sec - start_sec) // total_secs))
+            t_offset = start_sec + int((s_idx - 1) * max(30, (end_sec - start_sec) // total_secs))
 
             sections.append({
                 "section_id": f"{ch_id}_s{s_idx:02d}",
@@ -147,7 +213,7 @@ Output strictly as a JSON list of 2 strings:
             "title": ch_title,
             "timestamp_str": ts_str,
             "timestamp_seconds": start_sec,
-            "overview": f"Comprehensive architectural breakdown of {ch_title} from the Sheryians AI School masterclass.",
+            "overview": f"Comprehensive architectural breakdown of {ch_title}.",
             "chapter_summary": f"In {ch_title}, key concepts and implementation techniques are systematically explained and demonstrated.",
             "sections": sections
         })

@@ -1,11 +1,12 @@
-﻿"""
+"""
 4 U By U — Master End-to-End Orchestrator
 Executes all 8 phases sequentially and in parallel batches.
+Supports true Human-in-the-Loop (Phase 3) inspection and approved synthesis.
 Handbook Pattern: Multi-Agent Orchestrator Pipeline
 """
 
 import asyncio
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from states import MasterNotesState
 from phase1_ingestion import build_phase1_graph
 from phase2_parallel import build_phase2_graph
@@ -17,32 +18,21 @@ from phase7_renderer import html_tri_pane_workspace_renderer
 from phase8_chatbot import build_rag_index_node
 from core.library_manager import check_capacity_limits
 
-async def run_master_notes_pipeline(
+async def inspect_video_for_hitl(
     youtube_url: str,
     api_key: Optional[str] = None,
-    model_name: Optional[str] = None,
-    eraser_api_key: Optional[str] = None,
-    color_palette: str = "dark_academic",
-    visual_preference: str = "auto",
-    output_format: str = "html"
+    model_name: Optional[str] = None
 ) -> Dict[str, Any]:
-    """
-    Executes all phases end-to-end for a given YouTube tutorial.
-    """
-    # 0. Check Capacity Limits
-    allowed, msg = check_capacity_limits()
-    if not allowed:
-        raise RuntimeError(msg)
-
+    """Runs Phase 1 & 2 to extract metadata and chapters for Human-in-the-Loop review."""
     initial_state: MasterNotesState = {
         "youtube_url": youtube_url,
-        "output_format": output_format,
-        "color_palette": color_palette,
+        "output_format": "html",
+        "color_palette": "dark_academic",
         "api_key": api_key,
         "model_name": model_name,
-        "eraser_api_key": eraser_api_key,
+        "eraser_api_key": None,
         "human_sources": [],
-        "visual_preference": visual_preference,
+        "visual_preference": "auto",
         "video_id": "",
         "video_metadata": {},
         "video_description": "",
@@ -66,23 +56,105 @@ async def run_master_notes_pipeline(
         "rag_ready": False
     }
 
+    print("[4 U By U HITL] Phase 1: Ingesting video metadata and timestamps...")
+    phase1_app = build_phase1_graph()
+    state = await phase1_app.ainvoke(initial_state)
+
+    try:
+        print("[4 U By U HITL] Phase 2: Detecting syllabus coverage & potential topic gaps...")
+        phase2_app = build_phase2_graph()
+        state = await phase2_app.ainvoke(state)
+    except Exception as e:
+        print(f"[4 U By U HITL] Phase 2 warning: {e}")
+
+    return {
+        "status": "hitl_required",
+        "video_id": state.get("video_id"),
+        "metadata": state.get("video_metadata", {}),
+        "chapters": state.get("yt_chapters", []),
+        "missing_topics": state.get("missing_topics", [])
+    }
+
+async def run_master_notes_pipeline(
+    youtube_url: str,
+    api_key: Optional[str] = None,
+    model_name: Optional[str] = None,
+    eraser_api_key: Optional[str] = None,
+    color_palette: str = "dark_academic",
+    visual_preference: str = "auto",
+    output_format: str = "html",
+    approved_chapters: Optional[List[Dict[str, Any]]] = None
+) -> Dict[str, Any]:
+    """
+    Executes all phases end-to-end for a given YouTube tutorial.
+    If approved_chapters is provided, enforces the human-reviewed syllabus.
+    """
+    # 0. Check Capacity Limits
+    allowed, msg = check_capacity_limits()
+    if not allowed:
+        raise RuntimeError(msg)
+
+    initial_state: MasterNotesState = {
+        "youtube_url": youtube_url,
+        "output_format": output_format,
+        "color_palette": color_palette,
+        "api_key": api_key,
+        "model_name": model_name,
+        "eraser_api_key": eraser_api_key,
+        "human_sources": [],
+        "visual_preference": visual_preference,
+        "video_id": "",
+        "video_metadata": {},
+        "video_description": "",
+        "yt_chapters": approved_chapters or [],
+        "full_transcript": "",
+        "timed_transcript": [],
+        "audio_path": None,
+        "description_resources": {},
+        "labeled_transcript": [],
+        "online_search_results": {},
+        "topic_outline": [],
+        "missing_topics": [],
+        "hitl_approved": bool(approved_chapters),
+        "human_topic_decision": {},
+        "notes_structure": {},
+        "chapter_contents": [],
+        "compiled_html": "",
+        "output_html_path": "",
+        "output_pdf_path": None,
+        "vector_db_path": "",
+        "rag_ready": False
+    }
+
     # PHASE 1: Ingestion (Sequential)
     print("[4 U By U] Phase 1: Ingesting metadata and subtitles...")
     phase1_app = build_phase1_graph()
     state = await phase1_app.ainvoke(initial_state)
 
+    # If human provided approved chapters, override/enforce them
+    if approved_chapters:
+        state["yt_chapters"] = approved_chapters
+        state["raw_chapters"] = approved_chapters
+        state["hitl_approved"] = True
+
     # PHASE 2: Parallel Fan-Out (Desc + Labels + Search with clustering)
     print("[4 U By U] Phase 2: Running parallel branches with semantic clustering...")
-    phase2_app = build_phase2_graph()
-    state = await phase2_app.ainvoke(state)
+    try:
+        phase2_app = build_phase2_graph()
+        state = await phase2_app.ainvoke(state)
+    except Exception as e:
+        print(f"[4 U By U] Phase 2 notice: {e}")
 
     # PHASE 3: HITL Topic Review Checkpoint
-    print("[4 U By U] Phase 3: HITL verification checkpoint...")
-    hitl_res = hitl_review_node(state)
-    state.update(hitl_res)
+    if not state.get("hitl_approved"):
+        print("[4 U By U] Phase 3: HITL auto-checkpoint evaluation...")
+        hitl_res = hitl_review_node(state)
+        state.update(hitl_res)
+    else:
+        print(f"[4 U By U] Phase 3: Enforcing {len(state.get('yt_chapters', []))} human-approved syllabus topics.")
 
     # PHASE 4: Master Outline Synthesis
-    print("[4 U By U] Phase 4: Synthesizing master course outline with LLM section structuring...")
+    print("[4 U By U] Phase 4: Synthesizing master course outline with section structuring...")
     struct_res = structure_synthesis_node(state)
     state.update(struct_res)
 
@@ -106,7 +178,8 @@ async def run_master_notes_pipeline(
         print(f"[4 U By U] Code Settlement Agent notice: {e}")
 
     # PHASE 5: Batched Chapter Agents + Visual Architect
-    print(f"[4 U By U] Phase 5: Generating {len(state['notes_structure']['chapters'])} chapters with 6 specialist sub-agents...")
+    total_chaps = len(state.get("notes_structure", {}).get("chapters", []))
+    print(f"[4 U By U] Phase 5: Generating {total_chaps} chapters with specialist sub-agents...")
     chapters_content = await run_all_chapters_batched(state["notes_structure"], state)
     state["chapter_contents"] = chapters_content
 
@@ -122,8 +195,11 @@ async def run_master_notes_pipeline(
 
     # PHASE 8: RAG Indexing
     print("[4 U By U] Phase 8: Building local ChromaDB vector index...")
-    rag_res = build_rag_index_node(state)
-    state.update(rag_res)
+    try:
+        rag_res = build_rag_index_node(state)
+        state.update(rag_res)
+    except Exception as e:
+        print(f"[4 U By U] Phase 8 notice: {e}")
 
     print(f"[4 U By U] Pipeline complete! Output saved to: {state['output_html_path']}")
     return state

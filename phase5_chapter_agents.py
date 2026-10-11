@@ -17,6 +17,138 @@ from core.model_router import get_chat_model
 from core.visual_architect import visual_architect_agent_node
 
 FALLBACK_CODE_SNIPPETS = {
+    "ml_eda": '''import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load dataset and inspect structural metadata
+df = pd.read_csv("dataset.csv")
+
+print("--- Dataset Shape & Info ---")
+print(f"Rows: {df.shape[0]}, Features: {df.shape[1]}")
+print(df.info())
+
+print("\n--- Numerical Feature Distributions ---")
+print(df.describe().T)
+
+print("\n--- Missing Value Count per Feature ---")
+missing_series = df.isnull().sum()
+print(missing_series[missing_series > 0])
+
+# Inspect correlation matrix for numerical attributes
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+corr_matrix = df[numeric_cols].corr()
+print("\n--- Top Correlated Pairs ---")
+print(corr_matrix.unstack().sort_values(ascending=False).drop_duplicates().head(10))''',
+
+    "ml_cleaning": '''import pandas as pd
+import numpy as np
+from sklearn.impute import SimpleImputer
+
+df = pd.read_csv("raw_data.csv")
+
+# 1. Eliminate duplicate observations
+initial_len = len(df)
+df.drop_duplicates(inplace=True)
+print(f"Removed {initial_len - len(df)} duplicate records.")
+
+# 2. Impute missing values
+num_imputer = SimpleImputer(strategy="median")
+cat_imputer = SimpleImputer(strategy="most_frequent")
+
+num_cols = df.select_dtypes(include=[np.number]).columns
+cat_cols = df.select_dtypes(include=["object", "category"]).columns
+
+df[num_cols] = num_imputer.fit_transform(df[num_cols])
+df[cat_cols] = cat_imputer.fit_transform(df[cat_cols])
+
+# 3. Detect and cap outliers using IQR Bounds
+for col in num_cols:
+    q1 = df[col].quantile(0.25)
+    q3 = df[col].quantile(0.75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    df[col] = np.clip(df[col], lower_bound, upper_bound)
+
+print("Data cleaning complete. Remaining nulls:", df.isnull().sum().sum())''',
+
+    "ml_preprocessing": '''import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+
+df = pd.read_csv("cleaned_data.csv")
+X = df.drop(columns=["target"])
+y = df["target"]
+
+num_features = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+cat_features = X.select_dtypes(include=["object", "category"]).columns.tolist()
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", StandardScaler(), num_features),
+        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_features)
+    ]
+)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train_proc = preprocessor.fit_transform(X_train)
+X_test_proc = preprocessor.transform(X_test)
+print(f"Transformed training feature matrix: {X_train_proc.shape}")''',
+
+    "ml_feature_selection": '''import pandas as pd
+import numpy as np
+from sklearn.feature_selection import SelectKBest, f_classif, VarianceThreshold
+from sklearn.ensemble import RandomForestClassifier
+
+# 1. Remove constant features
+var_thresh = VarianceThreshold(threshold=0.01)
+X_var = var_thresh.fit_transform(X_train)
+
+# 2. Univariate Selection (Top K Features)
+selector = SelectKBest(score_func=f_classif, k=min(10, X_train.shape[1]))
+X_selected = selector.fit_transform(X_train, y_train)
+
+# 3. Tree-Based Feature Importance Ranking
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_train, y_train)
+print("Top Feature Importances:", sorted(zip(rf.feature_importances_, feature_names), reverse=True)[:10])''',
+
+    "ml_project": '''import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+
+df = pd.read_csv("dataset.csv")
+X = df.drop(columns=["target"])
+y = df["target"]
+
+num_cols = X.select_dtypes(include=["number"]).columns.tolist()
+cat_cols = X.select_dtypes(include=["object"]).columns.tolist()
+
+preprocessor = ColumnTransformer([
+    ("num", StandardScaler(), num_cols),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols)
+])
+
+pipeline = Pipeline([
+    ("prep", preprocessor),
+    ("model", RandomForestClassifier(n_estimators=150, max_depth=10, random_state=42))
+])
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scores = cross_val_score(pipeline, X_train, y_train, cv=5)
+print(f"5-Fold CV Accuracy: {scores.mean():.4f} +/- {scores.std():.4f}")
+
+pipeline.fit(X_train, y_train)
+y_pred = pipeline.predict(X_test)
+print(classification_report(y_test, y_pred))''',
+
     "sequential": '''from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
 
@@ -189,13 +321,23 @@ app = builder.compile(checkpointer=memory, interrupt_before=["pay"])'''
 
 def get_code_for_topic(title: str, chapter_title: str) -> str:
     combined = (title + " " + chapter_title).lower()
-    if "parallel" in combined or "reducer" in combined:
+    if "cleaning" in combined or "missing" in combined:
+        return FALLBACK_CODE_SNIPPETS["ml_cleaning"]
+    elif "eda" in combined or "exploratory" in combined:
+        return FALLBACK_CODE_SNIPPETS["ml_eda"]
+    elif "preprocessing" in combined or "scaling" in combined or "encoding" in combined:
+        return FALLBACK_CODE_SNIPPETS["ml_preprocessing"]
+    elif "feature selection" in combined or "selection" in combined or "feature engineering" in combined:
+        return FALLBACK_CODE_SNIPPETS["ml_feature_selection"]
+    elif "project" in combined or "machine learning" in combined or "supervised" in combined or "model" in combined:
+        return FALLBACK_CODE_SNIPPETS["ml_project"]
+    elif "parallel" in combined or "reducer" in combined:
         return FALLBACK_CODE_SNIPPETS["parallel"]
     elif "conditional" in combined or "rag" in combined or "router" in combined:
         return FALLBACK_CODE_SNIPPETS["conditional"]
     elif "human" in combined or "hitl" in combined:
         return FALLBACK_CODE_SNIPPETS["human"]
-    elif "iterative" in combined or "project" in combined:
+    elif "iterative" in combined:
         return FALLBACK_CODE_SNIPPETS["iterative"]
     return FALLBACK_CODE_SNIPPETS["sequential"]
 
@@ -247,8 +389,20 @@ ANALOGY:
         if ana_m:
             analogy = ana_m.group(1).strip()
 
+    c_low = (title + " " + chapter_title).lower()
+    is_ml = any(k in c_low for k in ["eda", "clean", "preprocess", "feature", "learning", "model", "project", "data", "programming vs", "ai,ml,dl"])
+
     if not explanation or "✦ [4 U By U" in explanation:
-        explanation = f"In this lecture segment on {title}, the instructor from Sheryians AI School breaks down how state transitions and nodes interact within LangGraph. Rather than relying on simple linear prompt chains, LangGraph organizes tasks into a state machine where discrete nodes receive a shared TypedDict state, execute their logic, and return updates across graph edges."
+        if is_ml:
+            explanation = f"In this lecture on {title}, the instructor from Sheryians AI School systematically covers essential machine learning foundations and data science workflows. They demonstrate how mathematical and statistical principles translate into clean Python code, walking through data exploration, feature preparation, model evaluation, and avoiding common pitfalls like data leakage."
+        else:
+            explanation = f"In this lecture segment on {title}, the instructor from Sheryians AI School breaks down how state transitions and nodes interact within LangGraph. Rather than relying on simple linear prompt chains, LangGraph organizes tasks into a state machine where discrete nodes receive a shared TypedDict state, execute their logic, and return updates across graph edges."
+
+    if not analogy or "✦ [4 U By U" in analogy:
+        if is_ml:
+            analogy = f"Think of {title} like refining raw minerals into aerospace-grade alloys: raw dataset inputs must be surveyed for flaws (EDA), purified of contaminants (Cleaning), calibrated to uniform standards (Preprocessing), and combined into high-performance structures before assembling the final spacecraft (The ML Model)."
+        else:
+            analogy = f"Think of {title} like a collaborative kitchen line: each station processes their specific task using the shared order ticket (the state), updates the ticket with completed items, and passes it to the next designated station without losing context."
 
     if not analogy or "✦ [4 U By U" in analogy:
         analogy = f"Think of {title} like a collaborative kitchen line: each station processes their specific task using the shared order ticket (the state), updates the ticket with completed items, and passes it to the next designated station without losing context."
