@@ -166,7 +166,8 @@ async def run_master_notes_pipeline(
         if repos:
             repo_url = repos[0]
             print(f"[4 U By U] Procuring ground-truth code from {repo_url}...")
-            code_files = fetch_github_code_files(repo_url, local_fallback_dir=r"C:\Users\anike\Desktop\Agentic-AI\langgraph\Agentic-AI-youtube")
+            local_fallback = r"C:\Users\anike\Desktop\Agentic-AI\langgraph\Agentic-AI-youtube" if ("langgraph" in repo_url.lower() or "agentic" in repo_url.lower()) else None
+            code_files = fetch_github_code_files(repo_url, local_fallback_dir=local_fallback)
             if code_files and "notes_structure" in state and "chapters" in state["notes_structure"]:
                 state["notes_structure"]["chapters"] = settle_procured_code(
                     state["notes_structure"]["chapters"],

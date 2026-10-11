@@ -1,12 +1,12 @@
 """
-4 U By U - PHASE 4: Recursive Chapter Structuring
-Grounds sub-section generation directly in the video's transcript excerpts.
-Generates authentic, course-specific headings for both Machine Learning and Agentic AI courses.
+4 U By U - PHASE 4: Grounded Chapter Structuring
+Grounds section generation strictly in the authentic video domain and real lecture timestamps.
+Eliminates synthetic offsets and cross-course topic contamination.
 """
 
 import re
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 
@@ -14,128 +14,86 @@ from states import MasterNotesState
 from core.model_router import get_chat_model
 
 def format_seconds(seconds: int) -> str:
-    m, s = divmod(seconds, 60)
+    m, s = divmod(int(seconds), 60)
     h, m = divmod(m, 60)
     if h > 0:
         return f"{h:02d}:{m:02d}:{s:02d}"
     return f"{m:02d}:{s:02d}"
 
-COURSE_TOPIC_MAP = {
-    # Machine Learning Curriculum
-    "what is machine learning": [
-        "Core Philosophy of Machine Learning & Statistical Induction",
-        "Parametric vs Non-Parametric Modeling & The Learning Hypothesis"
-    ],
-    "applications": [
-        "Industrial Use Cases: Recommender Engines & Predictive Analytics",
-        "Autonomous Systems, Computer Vision & Healthcare Diagnostics"
-    ],
-    "traditional programming": [
-        "Rule-Based Determinism vs Data-Driven Paradigm Shift",
-        "Mathematical Representation: Finding the Mapping Function f(x)"
-    ],
-    "difference b/w ai,ml,dl": [
-        "Taxonomic Hierarchy: Artificial Intelligence vs Machine Learning vs Deep Learning",
-        "Feature Representation: Manual Engineering vs Deep Latent Extraction"
-    ],
-    "types of machine learning": [
-        "Supervised vs Unsupervised vs Reinforcement Learning Paradigms",
-        "Regression vs Classification: Mathematical Formulation & Cost Functions"
-    ],
-    "steps for making a machine learning model": [
-        "The Complete ML Engineering Lifecycle: From Problem Framing to Metric Selection",
-        "Data Pipeline Architecture: Ingestion, Validation, Split & Generalization"
-    ],
-    "eda": [
-        "Exploratory Data Analysis: Statistical Summaries, Quantiles & Skewness",
-        "Visual Diagnostics: Univariate Histograms, Correlation Matrices & Heatmaps"
-    ],
-    "data cleaning": [
-        "Handling Incomplete Data: Missing Value Imputation Strategies",
-        "Outlier Detection & Remediation: IQR Bounds, Z-Scores & Winsorization"
-    ],
-    "data preprocessing": [
-        "Categorical Feature Encoding: OneHotEncoder vs OrdinalEncoder",
-        "Feature Scaling & Transformation: StandardScaler, RobustScaler & Normalization"
-    ],
-    "feature engineering": [
-        "Creating High-Signal Features: Interaction Terms & Domain Transformations",
-        "Binning Strategies, Logarithmic Transformations & Datetime Decompositions"
-    ],
-    "feature selection": [
-        "Filter Methods: Pearson Correlation & Variance Thresholding",
-        "Wrapper & Embedded Methods: SelectKBest (ANOVA/Chi2) & Lasso L1 Penalty"
-    ],
-    "project 1": [
-        "End-to-End Supervised ML Pipeline: Problem Formulation & EDA",
-        "Scikit-Learn Pipeline Assembly, Estimator Fitting & Validation"
-    ],
-    "project 2": [
-        "Advanced ML Pipeline: Feature Preprocessing & Model Selection",
-        "Hyperparameter Optimization (GridSearchCV) & Residual Diagnostics"
-    ],
-    "content": [
-        "Course Roadmap, Technology Stack & Learning Objectives",
-        "Environment Setup: Jupyter Notebooks, Scikit-Learn & Essential Libraries"
-    ],
-    "outro": [
-        "Key Course Learnings Summary & Production Best Practices",
-        "Next Steps: Advanced Algorithms, Neural Networks & Model Deployment"
-    ],
+def detect_course_domain(video_title: str, video_desc: str = "", chapters_text: str = "") -> str:
+    """Accurately detects whether the lecture is Machine Learning, Agentic AI, or General Tech."""
+    combined = f"{video_title} {video_desc} {chapters_text}".lower()
+    
+    if any(k in combined for k in ["langgraph", "langchain", "agentic", "multi-agent", "ai agent", "stategraph", "memorysaver"]):
+        return "agentic_ai"
+    elif any(k in combined for k in ["machine learning", "deep learning", "data science", "scikit-learn", "sklearn", "pandas", "numpy", "classification", "regression", "eda", "sheryians", "pankaj"]):
+        return "machine_learning"
+    return "general_tech"
 
-    # Agentic AI & LangGraph Curriculum
-    "introduction": [
-        "Course Overview & The Shift to Agentic AI",
-        "The 5 Core Workflow Paradigms in LangGraph"
-    ],
-    "generative ai vs agentic": [
-        "Single-Prompt LLMs vs Autonomous Action Loops",
-        "Stateful Perception-Action Decision Cycles"
-    ],
-    "why langgraph": [
-        "Limitations of Linear Chains (LCEL) & DAGs",
-        "Cyclic Computation, State Machines & Workflow Orchestration"
-    ],
-    "sequential workflow": [
-        "Sequential Workflow Fundamentals & StateGraph Basics",
-        "Hands-On Implementation: Blog Post Generator with TypedDict"
-    ],
-    "parallel workflow": [
-        "Concurrent Fan-Out Execution & State Overwrite Conflicts",
-        "State Reducers with operator.add & Annotated Types"
-    ],
-    "conditional workflow": [
-        "Dynamic Routing with add_conditional_edges",
-        "Agentic RAG Retrieval & Tool Calling Architecture"
-    ],
-    "iterative workflow": [
-        "Cyclic Self-Correction & Evaluator-Optimizer Feedback Loops",
-        "Building the Multi-Agent Course Project Step-by-Step"
-    ],
-    "human in the loop": [
-        "State Persistence via MemorySaver Checkpointing",
-        "Execution Interruption & Human Approval Gates"
-    ]
+ML_TOPIC_SYNTHESIS = {
+    "introduction": "Course Welcome, Prerequisites & Machine Learning Foundations",
+    "content": "Curriculum Roadmap, Tools & Development Environment Setup",
+    "roadmap": "Curriculum Roadmap, Tools & Development Environment Setup",
+    "what is machine learning": "Core Philosophy of Machine Learning & Statistical Induction",
+    "applications": "Real-World Industrial Applications: Recommenders, Vision & Analytics",
+    "traditional programming": "Rule-Based Determinism vs Data-Driven Paradigm Shift",
+    "difference b/w ai,ml,dl": "Taxonomic Hierarchy: Artificial Intelligence vs Machine Learning vs Deep Learning",
+    "types of machine learning": "Taxonomy of ML: Supervised, Unsupervised & Reinforcement Learning",
+    "steps for making a machine learning model": "The Complete Machine Learning Engineering Lifecycle",
+    "eda": "Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics",
+    "data cleaning": "Data Cleaning: Missing Value Imputation & Outlier Remediation",
+    "data preprocessing": "Data Preprocessing: Categorical Feature Encoding & Feature Scaling",
+    "feature engineering": "Feature Engineering: Interaction Features & Domain Transformations",
+    "feature selection": "Feature Selection: Filter, Wrapper & Embedded Methods",
+    "project 1": "End-to-End Supervised ML Pipeline: Ingestion to Validation",
+    "project 2": "Advanced Real-World ML Pipeline: Hyperparameter Tuning & Evaluation",
+    "outro": "Course Summary, Key Takeaways & Production Best Practices"
 }
 
-def derive_technical_sections(chapter_title: str) -> List[str]:
+AGENTIC_TOPIC_SYNTHESIS = {
+    "introduction": "Course Overview & The Shift to Agentic AI Architectures",
+    "generative ai vs agentic": "Single-Prompt LLMs vs Autonomous Action Loops",
+    "why langgraph": "Cyclic Computation, State Machines & Workflow Orchestration",
+    "sequential workflow": "Sequential Workflow Fundamentals & StateGraph Basics",
+    "parallel workflow": "Concurrent Fan-Out Execution & State Reducer Patterns",
+    "conditional workflow": "Dynamic Routing & Tool Calling Architectures",
+    "iterative workflow": "Cyclic Self-Correction & Evaluator-Optimizer Feedback Loops",
+    "human in the loop": "State Persistence via MemorySaver Checkpointing & Human Review"
+}
+
+def derive_grounded_section_title(chapter_title: str, domain: str, video_title: str) -> str:
+    """Derives a rich, domain-grounded section title without foreign topic leakage."""
     c_lower = chapter_title.lower()
-    for key, sections in COURSE_TOPIC_MAP.items():
-        if key in c_lower:
-            return sections
     
-    clean_t = re.sub(r"^\d+[\.\:\s\-]*", "", chapter_title).strip()
-    return [
-        f"{clean_t}: Core Foundations & Architecture",
-        f"{clean_t}: Implementation Patterns & Code Walkthrough"
-    ]
+    if domain == "machine_learning":
+        for key, title in ML_TOPIC_SYNTHESIS.items():
+            if key in c_lower:
+                return title
+        clean_t = re.sub(r"^\d+[\.\:\s\-]*", "", chapter_title).strip()
+        return f"{clean_t}: Core Foundations & Practical Implementation"
+        
+    elif domain == "agentic_ai":
+        for key, title in AGENTIC_TOPIC_SYNTHESIS.items():
+            if key in c_lower:
+                return title
+        clean_t = re.sub(r"^\d+[\.\:\s\-]*", "", chapter_title).strip()
+        return f"{clean_t}: Agentic Architecture & Workflow Implementation"
+        
+    else:
+        clean_t = re.sub(r"^\d+[\.\:\s\-]*", "", chapter_title).strip()
+        return f"{clean_t}: Concepts & Practical Walkthrough"
 
 def structure_synthesis_node(state: MasterNotesState) -> Dict[str, Any]:
-    print("[Phase 4] Structuring chapters into high-precision technical sections based on real lecture audio...")
+    print("[Phase 4] Structuring chapters with 100% video-grounded topics and synchronized timestamps...")
     raw_chapters = state.get("raw_chapters") or state.get("yt_chapters") or []
     timed_transcript = state.get("timed_transcript", [])
     video_meta = state.get("video_metadata", {})
     video_title = video_meta.get("title") or state.get("video_title", "Technical Course Notes")
+    video_desc = state.get("video_description", "")
+    
+    chapters_text = " ".join([ch.get("title") or ch.get("chapter_title", "") for ch in raw_chapters])
+    domain = detect_course_domain(video_title, video_desc, chapters_text)
+    print(f"[Phase 4] Detected course domain: '{domain}' for course '{video_title}'")
     
     api_key = state.get("api_key")
     selected_model = state.get("model_name")
@@ -150,61 +108,56 @@ def structure_synthesis_node(state: MasterNotesState) -> Dict[str, Any]:
     for idx, ch in enumerate(raw_chapters, 1):
         ch_id = f"ch_{idx:02d}"
         ch_title = ch.get("title") or ch.get("chapter_title", f"Chapter {idx}")
-        ts_str = ch.get("timestamp_str", "00:00")
         start_sec = int(ch.get("start_time", ch.get("start_seconds", 0)))
         end_sec = int(ch.get("end_time", start_sec + 300))
+        ts_str = ch.get("timestamp_str") or format_seconds(start_sec)
         
-        # Ensure chapter has its real transcript slice
+        # Attach transcript slice for this chapter
         transcript = ch.get("transcript", "")
         if not transcript and timed_transcript:
             transcript = " ".join([seg.get("text", "") for seg in timed_transcript if start_sec <= seg.get("start", 0) < end_sec])
 
-        section_names = []
-        if llm and transcript and len(transcript) > 100:
+        # Synthesize grounded section title
+        section_title = derive_grounded_section_title(ch_title, domain, video_title)
+        
+        # If LLM is available and transcript is substantial, allow contextual refinement strictly in-domain
+        if llm and transcript and len(transcript) > 150:
             try:
-                prompt = PromptTemplate.from_template(
-                    """You are a Lead AI Curriculum Architect documenting a lecture on: "{chapter_title}".
-Lecture Excerpt:
-\"\"\"{transcript}\"\"\"
-
-Generate exactly 2 distinct, highly practical, technical sub-section titles in English describing what the instructor demonstrates.
-Output strictly as a JSON list of 2 strings:
-["First Practical Subtopic", "Second Implementation Subtopic"]"""
+                prompt_str = (
+                    'You are a Lead Curriculum Architect documenting a lecture on: "' + ch_title + '".\n'
+                    'Course: "' + video_title + '" (Subject Domain: ' + domain + ')\n'
+                    'Lecture Excerpt:\n'
+                    '---\n{transcript}\n---\n\n'
+                    'Generate exactly 1 high-grade, professional technical title for this topic in English describing what the instructor demonstrates.\n'
+                    'STRICT RULE: Focus 100% on what is actually taught in this lecture segment. Do NOT introduce external frameworks (e.g. do not mention LangGraph or agentic frameworks if this is Machine Learning).\n'
+                    'Output strictly the title string:'
                 )
+                prompt = PromptTemplate.from_template(prompt_str)
                 chain = prompt | llm | StrOutputParser()
-                res_text = chain.invoke({
-                    "chapter_title": ch_title,
-                    "transcript": transcript[:2500]
+                candidate = chain.invoke({
+                    "transcript": transcript[:2000]
                 }).strip()
+                candidate = candidate.strip("\"'`").split("\n")[0].strip()
                 
-                match = re.search(r"\[.*\]", res_text, re.DOTALL)
-                if match:
-                    parsed = json.loads(match.group(0))
-                    if isinstance(parsed, list) and len(parsed) >= 2:
-                        section_names = [str(s).strip() for s in parsed if str(s).strip()]
+                # Reject candidate if foreign domain keywords leak
+                if domain == "machine_learning" and any(bad in candidate.lower() for bad in ["langgraph", "agentic", "agent"]):
+                    print(f"[Phase 4] Rejected leaked foreign title for {ch_title}: {candidate}")
+                elif len(candidate) > 5:
+                    section_title = candidate
             except Exception as e:
                 print(f"[Phase 4] LLM structuring notice for {ch_title}: {e}")
 
-        if not section_names or len(section_names) < 2:
-            section_names = derive_technical_sections(ch_title)
-
-        sections = []
-        total_secs = len(section_names)
-        for s_idx, s_name in enumerate(section_names, 1):
-            chunk_size = len(transcript) // total_secs if transcript else 0
-            t_start = (s_idx - 1) * chunk_size
-            t_end = s_idx * chunk_size if s_idx < total_secs else len(transcript)
-            t_offset = start_sec + int((s_idx - 1) * max(30, (end_sec - start_sec) // total_secs))
-
-            sections.append({
-                "section_id": f"{ch_id}_s{s_idx:02d}",
-                "section_title": s_name,
-                "section_order": s_idx,
-                "chapter_id": ch_id,
-                "time_reference": format_seconds(t_offset),
-                "timestamp_seconds": t_offset,
-                "transcript_slice": transcript[t_start:t_end] if transcript else ""
-            })
+        # Build section object strictly anchored to the authentic chapter start time
+        sections = [{
+            "section_id": f"{ch_id}_s01",
+            "section_title": section_title,
+            "section_order": 1,
+            "chapter_id": ch_id,
+            "time_reference": ts_str,
+            "timestamp_seconds": start_sec,
+            "transcript_slice": transcript,
+            "domain": domain
+        }]
 
         chapters.append({
             "chapter_id": ch_id,
@@ -215,13 +168,15 @@ Output strictly as a JSON list of 2 strings:
             "timestamp_seconds": start_sec,
             "overview": f"Comprehensive architectural breakdown of {ch_title}.",
             "chapter_summary": f"In {ch_title}, key concepts and implementation techniques are systematically explained and demonstrated.",
-            "sections": sections
+            "sections": sections,
+            "domain": domain
         })
 
     master_outline = {
         "course_title": video_title,
         "total_chapters": len(chapters),
-        "chapters": chapters
+        "chapters": chapters,
+        "domain": domain
     }
 
     return {"notes_structure": master_outline}
