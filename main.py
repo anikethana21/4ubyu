@@ -160,6 +160,7 @@ async def run_master_notes_pipeline(
 
     # PHASE 4.5: Grounded Code Procurement & Temporal Settlement Agent
     print("[4 U By U] Phase 4.5: Grounding code from repository & calculating section settlement...")
+    code_files = {}
     try:
         from core.code_settlement_agent import extract_github_repos, fetch_github_code_files, settle_procured_code
         repos = extract_github_repos(state.get("video_description", ""))
@@ -177,6 +178,7 @@ async def run_master_notes_pipeline(
                 print(f"[4 U By U] Successfully settled ground-truth repository code across {len(state['notes_structure']['chapters'])} chapters.")
     except Exception as e:
         print(f"[4 U By U] Code Settlement Agent notice: {e}")
+    state["github_files"] = code_files
 
     # PHASE 5: Batched Chapter Agents + Visual Architect
     total_chaps = len(state.get("notes_structure", {}).get("chapters", []))

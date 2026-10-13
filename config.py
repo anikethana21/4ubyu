@@ -52,7 +52,7 @@ MAX_PUBLIC_HANDBOOKS = int(os.getenv("MAX_PUBLIC_HANDBOOKS", "150"))
 ENFORCE_PUBLIC_BYOK = os.getenv("ENFORCE_PUBLIC_BYOK", "true").lower() == "true"
 
 # Free LLM Defaults
-DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 

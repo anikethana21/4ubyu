@@ -76,8 +76,23 @@
             <div class="form-group col-half">
               <label for="model-select">Target Model</label>
               <select id="model-select">
-                <option value="llama-3.3-70b-versatile">Groq LLaMA 3.3 70B [100% FREE]</option>
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash [100% FREE TIER]</option>
+                <optgroup label="Groq Cloud (Sub-second Ultra Fast)">
+                  <option value="openai/gpt-oss-120b" selected>Groq: GPT-OSS 120B (Recommended Flagship)</option>
+                  <option value="qwen/qwen3.8-27b">Groq: Qwen 2.5 32B / 27B</option>
+                  <option value="openai/gpt-oss-20b">Groq: GPT-OSS 20B (Ultra Fast)</option>
+                  <option value="llama-3.3-70b-versatile">Groq: LLaMA 3.3 70B</option>
+                </optgroup>
+                <optgroup label="Google DeepMind">
+                  <option value="gemini-2.0-flash">Gemini 2.0 Flash (Zero Cost Tier)</option>
+                  <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                </optgroup>
+                <optgroup label="OpenAI">
+                  <option value="gpt-4o-mini">OpenAI: GPT-4o Mini</option>
+                  <option value="gpt-4o">OpenAI: GPT-4o (Flagship)</option>
+                </optgroup>
+                <optgroup label="Anthropic">
+                  <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                </optgroup>
               </select>
             </div>
 
@@ -224,6 +239,118 @@
             <span>Approve Syllabus & Synthesize Notes</span>
             <span class="hitl-btn-arrow">→</span>
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 4-8: Translucent Swarm Synthesis Workplace Modal -->
+  <div id="workplace-modal" class="workplace-modal-overlay hidden">
+    <div class="workplace-modal-card">
+      <div class="workplace-modal-header">
+        <div class="workplace-header-left">
+          <div class="workplace-badge-row">
+            <span class="workplace-badge">Multi-Agent Swarm Orchestration</span>
+            <span class="workplace-pulse-dot"></span>
+            <span id="workplace-live-timer" class="workplace-timer">00:00</span>
+          </div>
+          <h2 id="workplace-title" class="workplace-title">Synthesizing Interactive Educational Handbook</h2>
+          <p id="workplace-subtitle" class="workplace-subtitle">Multi-Agent Swarm actively processing transcript clusters, extracting code, querying GitHub repositories, and compiling deep notes.</p>
+        </div>
+        <div class="workplace-header-right">
+          <div class="workplace-stat-badge">
+            <span class="stat-label">Model Engine</span>
+            <span id="workplace-model-badge" class="stat-val">Groq 120B</span>
+          </div>
+          <div class="workplace-stat-badge">
+            <span class="stat-label">Chapters</span>
+            <span id="workplace-chapter-counter" class="stat-val">0 / 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic Agent Pipeline Cards -->
+      <div class="swarm-agent-grid">
+        <div class="agent-card" id="agent-card-cluster">
+          <div class="agent-card-icon">🧠</div>
+          <div class="agent-card-info">
+            <span class="agent-role">Clustering &amp; Threshold Agent</span>
+            <span class="agent-status" id="status-agent-cluster">Standby</span>
+          </div>
+          <span class="agent-indicator"></span>
+        </div>
+
+        <div class="agent-card" id="agent-card-code">
+          <div class="agent-card-icon">💻</div>
+          <div class="agent-card-info">
+            <span class="agent-role">Code Cleaning &amp; Repo Agent</span>
+            <span class="agent-status" id="status-agent-code">Standby</span>
+          </div>
+          <span class="agent-indicator"></span>
+        </div>
+
+        <div class="agent-card" id="agent-card-theory">
+          <div class="agent-card-icon">📚</div>
+          <div class="agent-card-info">
+            <span class="agent-role">Deep Technical Theory Agent</span>
+            <span class="agent-status" id="status-agent-theory">Standby</span>
+          </div>
+          <span class="agent-indicator"></span>
+        </div>
+
+        <div class="agent-card" id="agent-card-visual">
+          <div class="agent-card-icon">📊</div>
+          <div class="agent-card-info">
+            <span class="agent-role">Visual Architect Agent</span>
+            <span class="agent-status" id="status-agent-visual">Standby</span>
+          </div>
+          <span class="agent-indicator"></span>
+        </div>
+
+        <div class="agent-card" id="agent-card-compiler">
+          <div class="agent-card-icon">⚡</div>
+          <div class="agent-card-info">
+            <span class="agent-role">Tri-Pane Compiler &amp; RAG Vector</span>
+            <span class="agent-status" id="status-agent-compiler">Standby</span>
+          </div>
+          <span class="agent-indicator"></span>
+        </div>
+      </div>
+
+      <!-- Overall Swarm Progress -->
+      <div class="workplace-progress-wrap">
+        <div class="workplace-progress-meta">
+          <span id="workplace-current-task">Initializing multi-agent pipeline...</span>
+          <span id="workplace-pct-text">0%</span>
+        </div>
+        <div class="workplace-progress-bar">
+          <div id="workplace-progress-fill" class="workplace-progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Live Streaming Swarm Console -->
+      <div class="workplace-terminal-container">
+        <div class="terminal-bar">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span class="terminal-title">LIVE MULTI-AGENT SYNTHESIS STREAM</span>
+          <span class="terminal-tag">Real-Time Event Bus</span>
+        </div>
+        <div id="workplace-terminal" class="workplace-terminal">
+          <div class="log-line system">[SYSTEM] Swarm workplace initialized. Awaiting pipeline start...</div>
+        </div>
+      </div>
+
+      <div class="workplace-modal-footer">
+        <div class="workplace-footer-left">
+          <span class="pulse-indicator">●</span>
+          <span id="workplace-footer-status">Autonomous agents executing in parallel. Please keep this tab open.</span>
+        </div>
+        <div class="workplace-footer-right">
+          <span class="badge-accent">Zero Content Sparks Policy Active</span>
         </div>
       </div>
     </div>

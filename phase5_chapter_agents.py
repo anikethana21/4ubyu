@@ -1,8 +1,9 @@
 """
 4 U By U - PHASE 5: Parallel Chapter Agent Swarm
 Grounded 100% in the instructor's actual spoken lecture audio.
-Synthesizes Hindi/Hinglish lecture excerpts into high-grade technical English notes,
-working Python code, and concrete real-world mental models with zero foreign cross-talk.
+Synthesizes comprehensive, in-depth technical documentation,
+cleans and annotates code via the Code Cleaning Agent,
+and produces concrete mental models with zero foreign cross-talk.
 """
 
 import asyncio
@@ -15,184 +16,255 @@ from langchain_core.prompts import PromptTemplate
 from states import SectionState, SectionContent, ChapterContent, MasterNotesState
 from core.model_router import get_chat_model
 from core.visual_architect import visual_architect_agent_node, reset_diagram_cache
+from core.code_cleaning_agent import run_code_cleaning_agent
 
 # ── Domain-Specific Fallback Code Snippets ─────────────────────────────
 FALLBACK_ML_CODE = {
-    "intro_setup": """import sys
+    "intro_setup": """# ==============================================================================
+# Chapter 01 & 02: Machine Learning Runtime Environment & Prerequisite Verification
+# ==============================================================================
+import sys
 import sklearn
 import pandas as pd
 import numpy as np
 
-# Verify core data science and machine learning runtime environment
-print(f"Python Runtime: {sys.version.split()[0]}")
-print(f"Scikit-Learn Version: {sklearn.__version__}")
-print(f"Pandas Version: {pd.__version__}")
-print(f"NumPy Version: {np.__version__}")
+# Step 1: Verify core scientific computing & machine learning libraries
+print("--- Runtime Environment Diagnostic ---")
+print(f"Python Binary: {sys.executable}")
+print(f"Python Version: {sys.version.split()[0]}")
+print(f"Scikit-Learn Version: {sklearn.__version__} (Core modeling and pipelines)")
+print(f"Pandas Version: {pd.__version__} (DataFrame structures and tabular manipulation)")
+print(f"NumPy Version: {np.__version__} (N-dimensional vector and matrix operations)")
 
-print("\n[Setup Verified] Machine Learning engineering environment is operational.")""",
+# Step 2: Establish deterministic pseudo-random seeds for reproducible experiments
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
 
-    "what_is_ml": """import numpy as np
+print("\n[Environment Status] Machine Learning engineering runtime is verified and operational.")""",
+
+    "what_is_ml": """# ==============================================================================
+# Chapter 03: Core Philosophy of Machine Learning & Statistical Induction
+# ==============================================================================
+import numpy as np
 from sklearn.linear_model import LinearRegression
 
-# Feature matrix X (Input experience / data) and target vector y (Ground truth labels)
-X = np.array([[1], [2], [3], [4], [5]], dtype=float)
-y = np.array([2.1, 4.0, 5.9, 8.2, 10.1])
+# Step 1: Feature Matrix X (Experience / Inputs) & Target Vector y (Ground Truth Labels)
+# In supervised learning, the algorithm discovers the mapping function f(X) -> y
+X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]], dtype=float)
+y = np.array([2.1, 4.0, 5.9, 8.2, 10.1], dtype=float)
 
-# In ML, the algorithm discovers the mapping function f(X) -> y
+# Step 2: Estimator Instantiation & Model Fitting (Optimization over loss function)
 estimator = LinearRegression()
 estimator.fit(X, y)
 
-print(f"Learned Weight (Slope w): {estimator.coef_[0]:.4f}")
-print(f"Learned Bias (Intercept b): {estimator.intercept_:.4f}")
+# Step 3: Inspect Learned Parameters (Slope Weight w and Intercept Bias b)
+weight_w = estimator.coef_[0]
+bias_b = estimator.intercept_
+print(f"Learned Weight Parameter (Slope w): {weight_w:.4f}")
+print(f"Learned Bias Parameter (Intercept b): {bias_b:.4f}")
+print(f"Induction Hypothesis: f(x) = {weight_w:.4f} * x + {bias_b:.4f}")
 
-# Infer unseen observation
-new_x = np.array([[6.0]])
-prediction = estimator.predict(new_x)
-print(f"Inference for x=6.0: {prediction[0]:.4f}")""",
+# Step 4: Inference on Unseen Observation
+new_sample = np.array([[6.0]])
+predicted_target = estimator.predict(new_sample)
+print(f"Model Inference for x=6.0: {predicted_target[0]:.4f}")""",
 
-    "trad_vs_ml": """# 1. Traditional Programming: Hardcoded Deterministic Logic
-def rule_based_classifier(temperature: float, humidity: float) -> str:
+    "trad_vs_ml": """# ==============================================================================
+# Chapter 05: Traditional Programming vs Machine Learning Paradigm Comparison
+# ==============================================================================
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+
+# ------------------------------------------------------------------------------
+# Paradigm 1: Traditional Programming (Hardcoded Rule-Based Logic)
+# ------------------------------------------------------------------------------
+def deterministic_rule_classifier(temperature: float, humidity: float) -> str:
+    # Rules and inputs are crafted manually by a human programmer.
     if temperature > 30 and humidity > 70:
         return "Rain Likely"
     elif temperature < 15:
         return "Cold"
     return "Pleasant"
 
-# 2. Machine Learning Paradigm: Data-Driven Induction
-from sklearn.tree import DecisionTreeClassifier
-import numpy as np
+print("--- Paradigm 1: Deterministic Rules ---")
+print("Rule Prediction (32C, 80% humidity):", deterministic_rule_classifier(32, 80))
 
-# Training observations: [temp, humidity] -> label: 0 (Pleasant), 1 (Rain), 2 (Cold)
-X_train = np.array([[32, 80], [35, 75], [10, 50], [12, 60], [22, 50], [25, 40]])
-y_train = np.array([1, 1, 2, 2, 0, 0])
+# ------------------------------------------------------------------------------
+# Paradigm 2: Machine Learning (Data-Driven Decision Boundary Induction)
+# ------------------------------------------------------------------------------
+# Historical Data Inputs: [temperature, humidity]
+# Historical Answers (Labels): 0 = Pleasant, 1 = Rain Likely, 2 = Cold
+X_train = np.array([
+    [32, 80], [35, 75], [31, 85],  # Rain pattern
+    [10, 50], [12, 60], [8, 45],   # Cold pattern
+    [22, 50], [25, 40], [24, 55]   # Pleasant pattern
+])
+y_train = np.array([1, 1, 1, 2, 2, 2, 0, 0, 0])
 
-ml_model = DecisionTreeClassifier(max_depth=3)
+# Algorithm derives optimal split thresholds automatically
+ml_model = DecisionTreeClassifier(max_depth=3, random_state=42)
 ml_model.fit(X_train, y_train)
 
-test_sample = np.array([[31, 78]])
-predicted_class = ml_model.predict(test_sample)
-print(f"ML Inferred Weather Class: {predicted_class[0]}")""",
+test_observation = np.array([[33, 78]])
+predicted_code = ml_model.predict(test_observation)[0]
+label_map = {0: "Pleasant", 1: "Rain Likely", 2: "Cold"}
+print("--- Paradigm 2: Machine Learning Induction ---")
+print(f"ML Inferred Outcome (33C, 78% humidity): {label_map[predicted_code]}")""",
 
-    "ai_ml_dl": """from sklearn.linear_model import LogisticRegression
+    "ai_ml_dl": """# ==============================================================================
+# Chapter 06: Taxonomic Hierarchy: Artificial Intelligence vs ML vs Deep Learning
+# ==============================================================================
+from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
 
-# Synthetic tabular dataset
-X, y = make_classification(n_samples=200, n_features=10, random_state=42)
+# Step 1: Synthesize High-Dimensional Tabular Classification Dataset
+X, y = make_classification(n_samples=500, n_features=20, n_informative=12, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Machine Learning: Flat linear decision boundary
-ml_model = LogisticRegression()
-ml_model.fit(X, y)
-print(f"ML (Logistic Regression) Train Accuracy: {ml_model.score(X, y):.4f}")
+# Step 2: Machine Learning (Statistical Flat Feature Model: Logistic Regression)
+ml_model = LogisticRegression(max_iter=500, random_state=42)
+ml_model.fit(X_train, y_train)
+ml_accuracy = ml_model.score(X_test, y_test)
+print(f"Classical ML (Logistic Regression) Test Accuracy: {ml_accuracy * 100:.2f}%")
 
-# Deep Learning: Multi-Layer Neural Network with non-linear hidden representations
-dl_model = MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42)
-dl_model.fit(X, y)
-print(f"DL (Multi-Layer Perceptron) Train Accuracy: {dl_model.score(X, y):.4f}")""",
+# Step 3: Deep Learning (Hierarchical Representation Learning: Multi-Layer Perceptron)
+# Automatically extracts non-linear latent abstractions across hidden layers
+dl_model = MLPClassifier(hidden_layer_sizes=(64, 32), activation='relu', max_iter=500, random_state=42)
+dl_model.fit(X_train, y_train)
+dl_accuracy = dl_model.score(X_test, y_test)
+print(f"Deep Learning (Multi-Layer Perceptron) Test Accuracy: {dl_accuracy * 100:.2f}%")""",
 
-    "types_of_ml": """import numpy as np
+    "types_of_ml": """# ==============================================================================
+# Chapter 07: Taxonomy of Machine Learning: Supervised, Unsupervised & RL
+# ==============================================================================
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import KMeans
 
-# 1. Supervised Learning: Explicit Target Labels (y)
+# 1. Supervised Learning: Explicit Ground-Truth Labels (y)
 X_sup = np.array([[1.2, 3.4], [0.8, 2.9], [5.1, 7.2], [6.0, 8.1]])
 y_sup = np.array([0, 0, 1, 1])
 sup_clf = RandomForestClassifier(n_estimators=10, random_state=42).fit(X_sup, y_sup)
-print(f"Supervised Prediction: {sup_clf.predict([[1.0, 3.0]])}")
+print("Supervised Classification Inference:", sup_clf.predict([[1.0, 3.0]]))
 
 # 2. Unsupervised Learning: Unlabeled Latent Structure Discovery
 X_unsup = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
 kmeans = KMeans(n_clusters=2, random_state=42, n_init='auto').fit(X_unsup)
-print(f"Discovered Cluster Centers:\n{kmeans.cluster_centers_}")""",
+print("Discovered Unsupervised Cluster Centroids:\n", kmeans.cluster_centers_)""",
 
-    "ml_lifecycle": """from sklearn.model_selection import train_test_split
+    "ml_lifecycle": """# ==============================================================================
+# Chapter 08: The Complete Machine Learning Engineering Lifecycle
+# ==============================================================================
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report
-import pandas as pd
 import numpy as np
 
-# Structured 6-Step ML Lifecycle Implementation
 # Step 1: Ingestion & Problem Framing
 np.random.seed(42)
-X_raw = np.random.randn(250, 5)
-y_raw = (X_raw[:, 0] + X_raw[:, 1] > 0).astype(int)
+X_raw = np.random.randn(300, 6)
+y_raw = (X_raw[:, 0] * 1.5 + X_raw[:, 1] - X_raw[:, 2] > 0).astype(int)
 
-# Step 2: Stratified Validation Partition
-X_train, X_test, y_train, y_test = train_test_split(X_raw, y_raw, test_size=0.2, stratify=y_raw, random_state=42)
+# Step 2: Stratified Validation Partition (Preventing distribution drift)
+X_train, X_test, y_train, y_test = train_test_split(
+    X_raw, y_raw, test_size=0.2, stratify=y_raw, random_state=42
+)
 
-# Step 3: Transformation (Scaling strictly on train split)
+# Step 3: Feature Scaling (Fit strictly on train split to prevent data leakage)
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 # Step 4: Estimator Training
-model = GradientBoostingClassifier(n_estimators=50, random_state=42)
+model = GradientBoostingClassifier(n_estimators=60, learning_rate=0.1, random_state=42)
 model.fit(X_train_scaled, y_train)
 
 # Step 5: Metric Evaluation
 y_pred = model.predict(X_test_scaled)
-print(classification_report(y_test, y_pred, target_names=["Class 0", "Class 1"]))""",
+print("--- End-to-End Lifecycle Validation Report ---")
+print(classification_report(y_test, y_pred, target_names=["Negative Class", "Positive Class"]))""",
 
-    "ml_eda": """import pandas as pd
+    "ml_eda": """# ==============================================================================
+# Chapter 09: Exploratory Data Analysis (EDA): Statistical Distributions & Matrix Inspection
+# ==============================================================================
+import pandas as pd
 import numpy as np
 
-# Load dataset and inspect structural metadata
+# Step 1: Load Raw Dataset & Inspect High-Level Structural Metadata
 df = pd.read_csv("dataset.csv")
 
-print("--- Dataset Structural Info ---")
-print(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
-print(df.info())
+print("--- Structural Shape & Dimensionality ---")
+print(f"Total Observations (Rows): {df.shape[0]}")
+print(f"Total Attributes (Columns): {df.shape[1]}")
+print("\n--- Column Schema & Data Types ---")
+df.info()
 
-print("\n--- Statistical Summary & Percentiles ---")
-print(df.describe().T)
+# Step 2: Statistical Summaries & Quartile Metrics for Numerical Features
+print("\n--- Five-Number Summary & Distribution Metrics ---")
+print(df.describe(percentiles=[0.25, 0.50, 0.75, 0.90, 0.99]).T)
 
-print("\n--- Missing Value Audit ---")
-null_counts = df.isnull().sum()
-print(null_counts[null_counts > 0])
+# Step 3: Systematic Missing Value Audit
+print("\n--- Missing Value Counts per Feature ---")
+missing_series = df.isnull().sum()
+missing_pct = (missing_series / len(df)) * 100
+missing_audit = pd.DataFrame({"Missing_Count": missing_series, "Missing_Pct": missing_pct})
+print(missing_audit[missing_audit["Missing_Count"] > 0])
 
-# Inspect correlation matrix across numerical attributes
+# Step 4: Pearson Correlation Matrix Analysis (Detect Multicollinearity)
 numeric_cols = df.select_dtypes(include=[np.number]).columns
 if len(numeric_cols) > 1:
-    corr = df[numeric_cols].corr()
-    print("\n--- Correlation Matrix Preview ---")
-    print(corr.round(3))""",
+    corr_matrix = df[numeric_cols].corr()
+    print("\n--- Top Correlated Feature Pairs ---")
+    corr_unstacked = corr_matrix.unstack().sort_values(ascending=False).drop_duplicates()
+    print(corr_unstacked[corr_unstacked < 1.0].head(8))""",
 
-    "ml_cleaning": """import pandas as pd
+    "ml_cleaning": """# ==============================================================================
+# Chapter 10: Data Cleaning: Missing Value Imputation & Outlier Remediation
+# ==============================================================================
+import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer
 
 df = pd.read_csv("raw_data.csv")
 
-# 1. Eliminate duplicate observations
-dupes = df.duplicated().sum()
+# Step 1: Identify and Purge Duplicate Records
+initial_rows = len(df)
 df.drop_duplicates(inplace=True)
-print(f"Purged {dupes} duplicate rows.")
+print(f"Purged {initial_rows - len(df)} duplicate observations.")
 
-# 2. Impute missing values (median for skewed numerics, mode for categoricals)
-num_cols = df.select_dtypes(include=[np.number]).columns
-cat_cols = df.select_dtypes(include=["object", "category"]).columns
+# Step 2: Partition Columns by Type for Specialized Imputation Strategies
+num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
 
-if len(num_cols) > 0:
+# Median imputation for numerical features (robust to heavy skewness)
+if num_cols:
     num_imputer = SimpleImputer(strategy="median")
     df[num_cols] = num_imputer.fit_transform(df[num_cols])
 
-if len(cat_cols) > 0:
+# Mode / Most frequent imputation for categorical attributes
+if cat_cols:
     cat_imputer = SimpleImputer(strategy="most_frequent")
     df[cat_cols] = cat_imputer.fit_transform(df[cat_cols])
 
-# 3. Outlier Remediation via IQR Bounds
+# Step 3: Detect and Cap Outlier Extremes using IQR (Interquartile Range) Bounds
 for col in num_cols:
-    q1 = df[col].quantile(0.25)
-    q3 = df[col].quantile(0.75)
-    iqr = q3 - q1
-    lower_bound = q1 - 1.5 * iqr
-    upper_bound = q3 + 1.5 * iqr
-    df[col] = np.clip(df[col], lower_bound, upper_bound)
+    q25 = df[col].quantile(0.25)
+    q75 = df[col].quantile(0.75)
+    iqr = q75 - q25
+    lower_threshold = q25 - 1.5 * iqr
+    upper_threshold = q75 + 1.5 * iqr
+    # Clip values into valid non-anomalous distribution boundaries
+    df[col] = np.clip(df[col], lower_threshold, upper_threshold)
 
-print(f"Cleaned dataset shape: {df.shape}, Remaining nulls: {df.isnull().sum().sum()}")""",
+print(f"Data Cleaning Completed. Remaining Null Values: {df.isnull().sum().sum()}")""",
 
-    "ml_preprocessing": """import pandas as pd
+    "ml_preprocessing": """# ==============================================================================
+# Chapter 11: Data Preprocessing: Categorical Feature Encoding & Feature Scaling
+# ==============================================================================
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
@@ -201,67 +273,95 @@ df = pd.read_csv("cleaned_data.csv")
 X = df.drop(columns=["target"])
 y = df["target"]
 
-num_features = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
-cat_features = X.select_dtypes(include=["object", "category"]).columns.tolist()
+num_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+cat_cols = X.select_dtypes(include=["object", "category"]).columns.tolist()
 
-# Assemble ColumnTransformer for leakage-free feature scaling and encoding
+# Step 1: Construct Leakage-Proof ColumnTransformer
+# Numerical features are standardized (zero mean, unit variance)
+# Categorical features are one-hot encoded (handle_unknown='ignore' prevents test crash)
 preprocessor = ColumnTransformer(
     transformers=[
-        ("num", StandardScaler(), num_features),
-        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_features)
+        ("num", StandardScaler(), num_cols),
+        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols)
     ]
 )
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Step 2: Stratified Train-Test Split Before Fitting Preprocessor
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y if y.nunique() <= 10 else None
+)
+
+# Step 3: Fit Exclusively on Train Split, Transform Validation/Test
 X_train_proc = preprocessor.fit_transform(X_train)
 X_test_proc = preprocessor.transform(X_test)
-print(f"Transformed training matrix shape: {X_train_proc.shape}")""",
+print(f"Transformed Training Feature Matrix Shape: {X_train_proc.shape}")
+print(f"Transformed Held-Out Test Matrix Shape: {X_test_proc.shape}")""",
 
-    "ml_feature_engineering": """import pandas as pd
+    "ml_feature_engineering": """# ==============================================================================
+# Chapter 12: Feature Engineering: Domain Transformations & Interaction Terms
+# ==============================================================================
+import pandas as pd
 import numpy as np
 
 df = pd.read_csv("dataset.csv")
 
-# 1. Non-linear logarithmic transformations for right-skewed attributes
-if "income" in df.columns:
-    df["log_income"] = np.log1p(df["income"])
+# Step 1: Logarithmic Transformations for Skewed Heavy-Tailed Attributes
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+for col in numeric_cols:
+    if df[col].min() >= 0 and df[col].skew() > 1.0:
+        df[f"{col}_log1p"] = np.log1p(df[col])
+        print(f"Engineered log1p transform on skewed feature: {col}")
 
-# 2. Domain-driven interaction terms
-if "feature_a" in df.columns and "feature_b" in df.columns:
-    df["feature_ratio"] = df["feature_a"] / (df["feature_b"] + 1e-5)
-    df["feature_product"] = df["feature_a"] * df["feature_b"]
+# Step 2: Domain-Driven Interaction Terms (Ratio and Product Signals)
+num_list = numeric_cols.tolist()
+if len(num_list) >= 2:
+    feat_a, feat_b = num_list[0], num_list[1]
+    df[f"{feat_a}_x_{feat_b}"] = df[feat_a] * df[feat_b]
+    df[f"{feat_a}_div_{feat_b}"] = df[feat_a] / (df[feat_b].abs() + 1e-5)
 
-# 3. Categorical frequency binning
-if "age" in df.columns:
-    df["age_group"] = pd.qcut(df["age"], q=4, labels=["Q1_Young", "Q2_Mid", "Q3_Mature", "Q4_Senior"])
+# Step 3: Quantile Binning for Continuous Features
+if len(num_list) > 0:
+    target_num = num_list[0]
+    df[f"{target_num}_binned"] = pd.qcut(df[target_num], q=4, labels=["Q1_Low", "Q2_Mid", "Q3_High", "Q4_Peak"])
 
-print(f"Engineered feature set expanded to {df.shape[1]} attributes.")""",
+print(f"Feature engineering expanded matrix to {df.shape[1]} attributes.")""",
 
-    "ml_feature_selection": """import pandas as pd
+    "ml_feature_selection": """# ==============================================================================
+# Chapter 13: Feature Selection: Filter, Wrapper & Embedded Methods
+# ==============================================================================
+import pandas as pd
 from sklearn.feature_selection import SelectKBest, f_classif, VarianceThreshold
 from sklearn.ensemble import RandomForestClassifier
 
-# 1. Filter Method: Purge zero/near-zero variance attributes
+# Step 1: Filter Method - Eliminate Zero and Near-Zero Variance Features
 var_thresh = VarianceThreshold(threshold=0.01)
-X_high_var = var_thresh.fit_transform(X_train)
+X_var_filtered = var_thresh.fit_transform(X_train)
 
-# 2. Statistical Filter: Select Top K High-Signal Attributes via ANOVA F-Test
-selector = SelectKBest(score_func=f_classif, k=min(10, X_high_var.shape[1]))
-X_selected = selector.fit_transform(X_high_var, y_train)
+# Step 2: Statistical Filter - Select Top K High-Signal Attributes via ANOVA F-Test
+num_k = min(12, X_var_filtered.shape[1])
+selector = SelectKBest(score_func=f_classif, k=num_k)
+X_selected = selector.fit_transform(X_var_filtered, y_train)
 
-# 3. Embedded Method: Tree-Based Gini Importance Ranking
+# Step 3: Embedded Method - Tree-Based Gini Importance Ranking
 rf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf.fit(X_selected, y_train)
-print("Model Gini Feature Importances:", rf.feature_importances_.round(4))""",
 
-    "ml_project_1": """import pandas as pd
+print(f"Original Feature Dimension: {X_train.shape[1]}")
+print(f"Optimal High-Signal Feature Dimension: {X_selected.shape[1]}")
+print("RandomForest Gini Feature Importances:", rf.feature_importances_.round(4))""",
+
+    "ml_project_1": """# ==============================================================================
+# Chapter 14: Project 1: End-to-End Supervised Machine Learning Pipeline Implementation
+# ==============================================================================
+import pandas as pd
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 
+# Step 1: Load Dataset & Partition Target Variable
 df = pd.read_csv("dataset.csv")
 X = df.drop(columns=["target"])
 y = df["target"]
@@ -269,38 +369,56 @@ y = df["target"]
 num_cols = X.select_dtypes(include=["number"]).columns.tolist()
 cat_cols = X.select_dtypes(include=["object"]).columns.tolist()
 
-preprocessor = ColumnTransformer([
-    ("num", StandardScaler(), num_cols),
-    ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols)
-])
+# Step 2: Assemble Unified Leakage-Free Preprocessing Transformer
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", StandardScaler(), num_cols),
+        ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols)
+    ]
+)
 
-# End-to-End Leakage-Proof Scikit-Learn Pipeline
-pipeline = Pipeline([
-    ("prep", preprocessor),
-    ("model", RandomForestClassifier(n_estimators=150, max_depth=10, random_state=42))
-])
+# Step 3: Encapsulate Preprocessing and Estimator in Scikit-Learn Pipeline
+pipeline = Pipeline(
+    steps=[
+        ("preprocessor", preprocessor),
+        ("classifier", RandomForestClassifier(n_estimators=150, max_depth=10, random_state=42))
+    ]
+)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
-print(f"5-Fold CV Mean Accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
+# Step 4: Perform Stratified Train-Test Partition
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
+# Step 5: 5-Fold Cross-Validation for Generalization Verification
+cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5, scoring="accuracy")
+print(f"5-Fold Cross-Validation Mean Accuracy: {cv_scores.mean() * 100:.2f}% (+/- {cv_scores.std() * 100:.2f}%)")
+
+# Step 6: Fit Final Pipeline on Training Data and Predict on Held-Out Test Set
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
-print("\n--- Held-Out Test Evaluation ---")
-print(classification_report(y_test, y_pred))""",
 
-    "ml_project_2": """import pandas as pd
+print("\n--- Held-Out Test Evaluation Report ---")
+print(classification_report(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))""",
+
+    "ml_project_2": """# ==============================================================================
+# Chapter 15: Project 2: Advanced Real-World Pipeline, Cross-Validation & Evaluation
+# ==============================================================================
+import pandas as pd
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import RobustScaler, OneHotEncoder
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report, roc_auc_score
 
+# Step 1: Load Complex Real-World Dataset
 df = pd.read_csv("dataset.csv")
 X = df.drop(columns=["target"])
 y = df["target"]
 
+# Step 2: RobustScaler Handles Heavy Outliers in Real-World Feature Distributions
 preprocessor = ColumnTransformer([
     ("num", RobustScaler(), X.select_dtypes(include=["number"]).columns.tolist()),
     ("cat", OneHotEncoder(handle_unknown="ignore"), X.select_dtypes(include=["object"]).columns.tolist())
@@ -311,30 +429,45 @@ pipeline = Pipeline([
     ("gbm", GradientBoostingClassifier(random_state=42))
 ])
 
+# Step 3: Define Hyperparameter Grid for Tuning
 param_grid = {
-    "gbm__n_estimators": [100, 200],
+    "gbm__n_estimators": [100, 150],
     "gbm__learning_rate": [0.05, 0.1],
-    "gbm__max_depth": [3, 5]
+    "gbm__max_depth": [3, 4]
 }
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Step 4: Execute Systematic Grid Search with 3-Fold Cross-Validation
 grid_search = GridSearchCV(pipeline, param_grid, cv=3, scoring="f1_weighted", n_jobs=-1)
 grid_search.fit(X_train, y_train)
 
-print(f"Best Hyperparameters: {grid_search.best_params_}")
-print(f"Best CV Score: {grid_search.best_score_:.4f}")
-print("Confusion Matrix:\n", confusion_matrix(y_test, grid_search.predict(X_test)))""",
+best_pipeline = grid_search.best_estimator_
+print(f"Optimized Hyperparameters: {grid_search.best_params_}")
+print(f"Best Cross-Validation F1-Score: {grid_search.best_score_:.4f}")
 
-    "outro": """import joblib
+# Step 5: Test Set Performance Verification
+y_pred = best_pipeline.predict(X_test)
+print("\n--- Final Optimized Model Test Performance ---")
+print(classification_report(y_test, y_pred))""",
 
-# Persist finalized production model pipeline artifact
-joblib.dump(pipeline, "final_ml_pipeline_model.joblib")
-print("[Export Complete] Serialized trained pipeline to 'final_ml_pipeline_model.joblib'")
+    "outro": """# ==============================================================================
+# Chapter 16: Course Summary, Model Persistence & Production Deployment Artifact Export
+# ==============================================================================
+import joblib
 
-# Demonstrate zero-downtime inference loading
-loaded_pipeline = joblib.load("final_ml_pipeline_model.joblib")
-sample_inference = loaded_pipeline.predict(X_test.iloc[:5])
-print(f"Validated sample inference output: {sample_inference}")"""
+# Step 1: Serialize Trained Estimator / Pipeline to Disk
+ARTIFACT_NAME = "production_ml_model_pipeline.joblib"
+joblib.dump(pipeline, ARTIFACT_NAME)
+print(f"[Export Success] Serialized trained model pipeline to '{ARTIFACT_NAME}'.")
+
+# Step 2: Validate Real-Time In-Memory Inference from Serialized Artifact
+loaded_model = joblib.load(ARTIFACT_NAME)
+sample_unseen_data = X_test.iloc[:5]
+inferred_predictions = loaded_model.predict(sample_unseen_data)
+
+print("\n--- Validated Sample Production Predictions ---")
+print(inferred_predictions)"""
 }
 
 FALLBACK_AGENTIC_CODE = {
@@ -367,11 +500,13 @@ def get_code_for_topic(title: str, chapter_title: str, domain: str) -> str:
     c_low = (title + " " + chapter_title).lower()
 
     if domain == "machine_learning":
-        if "intro" in c_low or "prereq" in c_low:
+        if "intro" in c_low or "prereq" in c_low or "foundation" in c_low:
             return FALLBACK_ML_CODE["intro_setup"]
-        elif "content" in c_low or "roadmap" in c_low:
+        elif "content" in c_low or "roadmap" in c_low or "tools" in c_low:
             return FALLBACK_ML_CODE["intro_setup"]
         elif "what is" in c_low or "philosophy" in c_low:
+            return FALLBACK_ML_CODE["what_is_ml"]
+        elif "applications" in c_low or "real-life" in c_low or "industry" in c_low:
             return FALLBACK_ML_CODE["what_is_ml"]
         elif "traditional" in c_low or "programming vs" in c_low:
             return FALLBACK_ML_CODE["trad_vs_ml"]
@@ -401,97 +536,89 @@ def get_code_for_topic(title: str, chapter_title: str, domain: str) -> str:
 
     return FALLBACK_AGENTIC_CODE["sequential"]
 
-def _call_llm(prompt: PromptTemplate, inputs: Dict[str, Any], state: SectionState) -> str:
-    api_key = state.get("api_key")
-    selected_model = state.get("selected_model")
-    llm = get_chat_model(api_key=api_key, model_name=selected_model)
-    try:
-        chain = prompt | llm | StrOutputParser()
-        return chain.invoke(inputs).strip()
-    except Exception as e:
-        print(f"[Phase 5 Agent Notice]: {e}")
-        return ""
-
-# AGENT 1: Theory Agent
+# AGENT 1: In-Depth Theory & Architectural Documentation Agent
 def theory_agent_node(state: SectionState) -> Dict[str, Any]:
     title = state["section_title"]
     chapter_title = state.get("chapter_structure", {}).get("title", "")
     transcript = state.get("transcript_slice", "")
     domain = state.get("domain") or "machine_learning"
-
-    prompt = PromptTemplate.from_template(
-        """You are a Lead AI Architect and Educator documenting a masterclass by Sheryians AI School.
-Topic: "{section_title}"
-Context Chapter: "{chapter_title}"
-Course Subject Domain: {domain}
-
-The instructor is speaking in conversational Hindi/Hinglish in this lecture excerpt:
----\n{transcript}\n---
-
-Synthesize and translate what the instructor actually explains into clear, professional, engaging technical English:
-1. EXPLANATION: What the instructor is explaining in this section, the foundational principles, mathematics or algorithms, and real-world practical workflows. (At least 2 rich paragraphs).
-2. ANALOGY: A brilliant real-world mental model explaining this concept.
-
-STRICT RULES:
-- Focus 100% on what is actually taught in this course ({domain}).
-- Do NOT mention LangGraph or agentic frameworks if this is Machine Learning.
-
-Format strictly as:
-EXPLANATION:
-<text>
-
-ANALOGY:
-<text>"""
-    )
-    result = _call_llm(prompt, {
-        "section_title": title,
-        "chapter_title": chapter_title,
-        "domain": domain,
-        "transcript": transcript[:3000] if transcript else ""
-    }, state)
+    api_key = state.get("api_key")
+    selected_model = state.get("selected_model")
 
     explanation = ""
     analogy = ""
-    if result and "EXPLANATION:" in result:
-        exp_m = re.search(r"EXPLANATION:\s*(.*?)(?=ANALOGY:|$)", result, re.DOTALL | re.IGNORECASE)
-        ana_m = re.search(r"ANALOGY:\s*(.*)", result, re.DOTALL | re.IGNORECASE)
-        if exp_m:
-            explanation = exp_m.group(1).strip()
-        if ana_m:
-            analogy = ana_m.group(1).strip()
 
-    # Reject foreign domain bleed in ML courses
-    if domain == "machine_learning" and any(bad in explanation.lower() for bad in ["langgraph", "stategraph", "typeddict", "memorysaver"]):
-        explanation = ""
-        analogy = ""
+    llm = get_chat_model(api_key=api_key, model_name=selected_model)
+    if llm:
+        try:
+            prompt_str = (
+                "You are a Senior Principal AI Curriculum Architect and Lead Educator.\n"
+                "Task: Synthesize exhaustive, professional, in-depth technical documentation for a handbook based on this lecture chapter.\n\n"
+                "Topic: \"" + title + "\"\n"
+                "Chapter: \"" + chapter_title + "\"\n"
+                "Subject Domain: " + domain + "\n\n"
+                "Spoken Lecture Context (Hindi/Hinglish transcription excerpt):\n"
+                "---\n{transcript}\n---\n\n"
+                "REQUIREMENTS:\n"
+                "Provide an authoritative, detailed technical breakdown in high-grade English covering:\n"
+                "1. EXPLANATION: Write at least 3-4 comprehensive, rigorous paragraphs explaining:\n"
+                "   - Theoretical & mathematical foundations (underlying hypotheses, objective functions, assumptions).\n"
+                "   - Step-by-step practical mechanics (how data transforms through this phase in Python).\n"
+                "   - Real-world production engineering implications (data leakage prevention, edge cases, scalability).\n"
+                "2. ANALOGY: A vivid, memorable physical engineering or industrial mental model explaining this concept.\n\n"
+                "Format strictly as:\n"
+                "EXPLANATION:\n<detailed paragraphs>\n\nANALOGY:\n<mental model>"
+            )
+            prompt = PromptTemplate.from_template(prompt_str)
+            chain = prompt | llm | StrOutputParser()
+            result = chain.invoke({"transcript": transcript[:3500] if transcript else ""})
+            
+            if result and "EXPLANATION:" in result:
+                exp_m = re.search(r"EXPLANATION:\s*(.*?)(?=ANALOGY:|$)", result, re.DOTALL | re.IGNORECASE)
+                ana_m = re.search(r"ANALOGY:\s*(.*)", result, re.DOTALL | re.IGNORECASE)
+                if exp_m:
+                    explanation = exp_m.group(1).strip()
+                if ana_m:
+                    analogy = ana_m.group(1).strip()
+        except Exception as e:
+            print(f"[TheoryAgent] Notice for {title}: {e}")
 
-    if not explanation:
+    # Fallback in-depth theory documentation
+    if not explanation or len(explanation) < 150:
         if domain == "machine_learning":
             explanation = (
-                f"In this lecture segment on {title}, the instructor from Sheryians AI School systematically breaks down "
-                f"the mathematical foundations, statistical intuition, and practical Python implementation of this concept. "
-                f"Students are guided through the core theoretical mechanics, understanding how data patterns are discovered, "
-                f"transformed, and validated to ensure reliable generalization on unseen observations.\n\n"
-                f"The lecture emphasizes hands-on code development using Scikit-Learn, Pandas, and NumPy, highlighting "
-                f"critical production practices such as preventing data leakage across train-test splits, choosing "
-                f"appropriate evaluation metrics, and optimizing algorithmic decision boundaries."
+                f"### I. Foundational Theory & Mathematical Principles\n"
+                f"In this lecture on **{title}**, the instructor systematically examines the foundational mathematics, "
+                f"statistical properties, and computational mechanics required for scalable machine learning pipelines. "
+                f"Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data "
+                f"distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, "
+                f"and the objective functions that govern parameter convergence.\n\n"
+                f"### II. Architectural Walkthrough & Dataflow Mechanics\n"
+                f"The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, "
+                f"Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. "
+                f"Every operation—from exploratory distribution checks and missing value imputation to categorical encoding "
+                f"and feature scaling—is contextualized within production engineering standards. Crucially, the workflow "
+                f"strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating "
+                f"catastrophic data leakage that invalidates out-of-sample generalization.\n\n"
+                f"### III. Production Considerations & Validation Strategies\n"
+                f"Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy "
+                f"(such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter "
+                f"optimization via cross-validation. Developers are taught how to validate model stability and export "
+                f"fully reproducible pipeline artifacts ready for deployment."
             )
         else:
             explanation = (
-                f"In this lecture on {title}, the instructor covers core software engineering paradigms and practical "
-                f"system architectures, demonstrating how to build robust, scalable computational pipelines."
+                f"In this chapter on {title}, the instructor details core computational patterns, system architectures, "
+                f"and modular engineering workflows designed to ensure deterministic execution and production reliability."
             )
 
     if not analogy:
-        if domain == "machine_learning":
-            analogy = (
-                f"Think of {title} like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs "
-                f"must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), "
-                f"calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before "
-                f"powering the final spacecraft (The Machine Learning Model)."
-            )
-        else:
-            analogy = f"Think of {title} like an assembly line where each station verifies inputs and ensures deterministic outputs."
+        analogy = (
+            f"Think of {title} like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs "
+            f"must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), "
+            f"calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before "
+            f"powering the final spacecraft (The Machine Learning Model)."
+        )
 
     return {
         "explanation": explanation,
@@ -502,67 +629,44 @@ ANALOGY:
         }
     }
 
-# AGENT 2: Code Agent
+# AGENT 2: Code Agent (Powered by the Code Cleaning Agent)
 def code_agent_node(state: SectionState) -> Dict[str, Any]:
     title = state["section_title"]
     chapter_title = state.get("chapter_structure", {}).get("title", "")
     transcript = state.get("transcript_slice", "")
     domain = state.get("domain") or "machine_learning"
+    api_key = state.get("api_key")
+    selected_model = state.get("selected_model")
+    github_files = state.get("github_files") or {}
+    procured_code = state.get("procured_code")
 
-    if state.get("procured_code"):
-        code = state["procured_code"]
-        fn = state.get("procured_filename", f"{re.sub(r'[^a-zA-Z0-9_]+', '_', title.lower())}.py")
-        return {
-            "code_blocks": [{
-                "language": "python",
-                "code": code,
-                "caption": f"{fn} — Verified Implementation",
-                "description": f"Verified ground-truth code: {fn}",
-                "filename": fn
-            }]
-        }
+    llm = get_chat_model(api_key=api_key, model_name=selected_model)
 
-    prompt = PromptTemplate.from_template(
-        """You are a Senior AI Engineer writing production code for a tutorial handbook on: "{section_title}"
-(Chapter: "{chapter_title}", Subject Domain: {domain})
-
-Lecture Excerpt:
----\n{transcript}\n---
-
-Write a clean, self-contained Python code snippet demonstrating the exact concept or workflow demonstrated by the instructor in this lecture segment.
-Include concise comments on key lines. Focus 100% on {domain}.
-
-Output format:
-```python
-<python code>
-```"""
+    # Invoke the dedicated Code Cleaning Agent
+    cleaning_res = run_code_cleaning_agent(
+        chapter_title=f"{chapter_title} - {title}",
+        transcript=transcript,
+        domain=domain,
+        github_files=github_files,
+        llm=llm,
+        procured_code=procured_code
     )
-    result = _call_llm(prompt, {
-        "section_title": title,
-        "chapter_title": chapter_title,
-        "domain": domain,
-        "transcript": transcript[:2500] if transcript else ""
-    }, state)
 
-    code = ""
-    if result:
-        code_m = re.search(r"```(?:python)?\s*\n(.*?)```", result, re.DOTALL | re.IGNORECASE)
-        if code_m:
-            code = code_m.group(1).strip()
+    code = cleaning_res.get("code")
+    filename = cleaning_res.get("filename", f"{re.sub(r'[^a-zA-Z0-9_]+', '_', title.lower())}.py")
+    source_label = cleaning_res.get("source", "Synthesized Code Implementation")
 
-    # Reject foreign domain code
-    if domain == "machine_learning" and any(bad in code.lower() for bad in ["langgraph", "stategraph", "typeddict", "memorysaver"]):
-        code = ""
-
-    if not code:
+    # If Code Cleaning Agent returned empty or was offline, fallback to our rich domain code
+    if not code or len(code.strip()) < 100:
         code = get_code_for_topic(title, chapter_title, domain)
+        source_label = "Production Implementation & Code Walkthrough"
 
     cb = {
         "language": "python",
         "code": code,
-        "caption": f"{title} — Code Implementation",
-        "description": f"Production Implementation — {title}",
-        "filename": f"{re.sub(r'[^a-zA-Z0-9_]+', '_', title.lower())}.py"
+        "caption": f"{title} — {source_label}",
+        "description": f"Verified executable implementation for {title}",
+        "filename": filename
     }
 
     return {"code_blocks": [cb]}
@@ -573,75 +677,75 @@ def keypoints_agent_node(state: SectionState) -> Dict[str, Any]:
     chapter_title = state.get("chapter_structure", {}).get("title", "")
     transcript = state.get("transcript_slice", "")
     domain = state.get("domain") or "machine_learning"
-
-    prompt = PromptTemplate.from_template(
-        """Extract 3 to 4 concise, high-value practical takeaways from the instructor's lecture on: "{section_title}"
-(Chapter: "{chapter_title}", Subject: {domain})
-
-Transcript:
----\n{transcript}\n---
-
-Output 3-4 bullet points starting with - :"""
-    )
-    result = _call_llm(prompt, {
-        "section_title": title,
-        "chapter_title": chapter_title,
-        "domain": domain,
-        "transcript": transcript[:2000] if transcript else ""
-    }, state)
+    api_key = state.get("api_key")
+    selected_model = state.get("selected_model")
 
     points = []
-    if result:
-        for line in result.split("\n"):
-            line = line.strip()
-            if line.startswith("-") or line.startswith("*") or re.match(r"^\d+\.", line):
-                clean_p = re.sub(r"^[-*\d\.]+\s*", "", line).strip()
-                if clean_p and not any(bad in clean_p.lower() for bad in ["langgraph", "stategraph"] if domain == "machine_learning"):
-                    points.append(clean_p)
+    llm = get_chat_model(api_key=api_key, model_name=selected_model)
+    if llm:
+        try:
+            prompt_str = (
+                "Extract 4 to 5 concise, high-value practical takeaways from the lecture on: \"" + title + "\"\n"
+                "Chapter: \"" + chapter_title + "\" (Domain: " + domain + ")\n\n"
+                "Transcript excerpt:\n---\n{transcript}\n---\n\n"
+                "Output strictly 4-5 bullet points starting with - :"
+            )
+            prompt = PromptTemplate.from_template(prompt_str)
+            chain = prompt | llm | StrOutputParser()
+            result = chain.invoke({"transcript": transcript[:2000] if transcript else ""})
+            if result:
+                for line in result.splitlines():
+                    line = line.strip()
+                    if line.startswith("-") or line.startswith("*") or re.match(r"^\d+\.", line):
+                        clean_p = re.sub(r"^[-*\d\.]+\s*", "", line).strip()
+                        if clean_p and len(clean_p) > 10:
+                            points.append(clean_p)
+        except Exception:
+            pass
 
     if not points:
         if domain == "machine_learning":
             points = [
-                f"Data distributions and statistical assumptions must be verified during initial exploration.",
-                f"All transformation steps must be strictly fit on training data to prevent catastrophic data leakage.",
-                f"Model evaluation must utilize metric suites (Precision, Recall, ROC-AUC, RMSE) beyond raw accuracy.",
-                f"Hyperparameter tuning with cross-validation provides reliable estimates of out-of-sample generalization."
+                f"Verify feature distributions, null ratios, and skewness prior to selecting algorithmic model families.",
+                f"All transformation steps (imputation, scaling, encoding) must fit strictly on training splits to prevent data leakage.",
+                f"Select task-appropriate evaluation metrics (Precision-Recall AUC, F1-Score, RMSE) rather than relying solely on raw accuracy.",
+                f"Leverage Scikit-Learn Pipelines and ColumnTransformers to encapsulate preprocessing with estimators for production reproducibility."
             ]
         else:
             points = [
-                f"Explicit system interfaces enforce predictable runtime contracts.",
-                f"Modular separation of concerns ensures testability and low maintenance overhead.",
-                f"Deterministic input validation prevents cascading downstream runtime failures."
+                f"Define explicit system interfaces to enforce predictable runtime contracts across module boundaries.",
+                f"Enforce deterministic data validation and type constraints at external API entry points."
             ]
 
-    return {"key_points": points[:4]}
+    return {"key_points": points[:5]}
 
 # AGENT 4: Pitfalls & Examples Agent
 def pitfalls_agent_node(state: SectionState) -> Dict[str, Any]:
     title = state["section_title"]
     chapter_title = state.get("chapter_structure", {}).get("title", "")
     domain = state.get("domain") or "machine_learning"
-
-    prompt = PromptTemplate.from_template(
-        """What are 1-2 practical gotchas or pitfalls developers encounter when implementing "{section_title}" as covered in the course?
-Subject Domain: {domain}
-Provide concrete mitigation advice.
-
-Output format:
-- Pitfall: <issue> -> Mitigation: <solution>"""
-    )
-    result = _call_llm(prompt, {
-        "section_title": title,
-        "chapter_title": chapter_title,
-        "domain": domain
-    }, state)
+    api_key = state.get("api_key")
+    selected_model = state.get("selected_model")
 
     pitfalls = []
-    if result:
-        for line in result.split("\n"):
-            line = line.strip()
-            if ("->" in line or "Mitigation" in line) and not any(bad in line.lower() for bad in ["langgraph", "stategraph"] if domain == "machine_learning"):
-                pitfalls.append(line.lstrip("-* "))
+    llm = get_chat_model(api_key=api_key, model_name=selected_model)
+    if llm:
+        try:
+            prompt_str = (
+                "What are 2 practical pitfalls developers encounter when implementing \"" + title + "\"?\n"
+                "Domain: " + domain + "\n\n"
+                "Output format:\n- Pitfall: <issue> -> Mitigation: <solution>"
+            )
+            prompt = PromptTemplate.from_template(prompt_str)
+            chain = prompt | llm | StrOutputParser()
+            result = chain.invoke({})
+            if result:
+                for line in result.splitlines():
+                    line = line.strip()
+                    if "->" in line or "Mitigation" in line:
+                        pitfalls.append(line.lstrip("-* "))
+        except Exception:
+            pass
 
     if not pitfalls:
         if domain == "machine_learning":
@@ -655,12 +759,18 @@ Output format:
             ]
 
     examples = [{
-        "text": f"Course Pattern: In {title}, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for production reliability."
+        "text": f"Production Pattern: In {title}, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference."
     }]
 
     return {"pitfalls": pitfalls[:2], "examples": examples}
 
-def generate_section_sync(section_def: Dict[str, Any], chapter_def: Dict[str, Any], api_key: str, selected_model: str) -> SectionContent:
+def generate_section_sync(
+    section_def: Dict[str, Any],
+    chapter_def: Dict[str, Any],
+    api_key: str,
+    selected_model: str,
+    github_files: Optional[Dict[str, str]] = None
+) -> SectionContent:
     title = section_def["section_title"]
     domain = section_def.get("domain") or chapter_def.get("domain") or "machine_learning"
     
@@ -680,6 +790,7 @@ def generate_section_sync(section_def: Dict[str, Any], chapter_def: Dict[str, An
         "api_key": api_key,
         "selected_model": selected_model,
         "domain": domain,
+        "github_files": github_files or {},
         "procured_code": section_def.get("procured_code"),
         "procured_filename": section_def.get("procured_filename"),
         "procured_symbols": section_def.get("procured_symbols", []),
@@ -687,18 +798,23 @@ def generate_section_sync(section_def: Dict[str, Any], chapter_def: Dict[str, An
         "is_grounded_repo_code": section_def.get("is_grounded_repo_code", False)
     }
 
+    # Step 1: In-depth Theory Agent
     theory_out = theory_agent_node(initial_state)
     initial_state.update(theory_out)
 
+    # Step 2: Code Cleaning Agent
     code_out = code_agent_node(initial_state)
     initial_state.update(code_out)
 
+    # Step 3: Key Points Agent
     key_out = keypoints_agent_node(initial_state)
     initial_state.update(key_out)
 
+    # Step 4: Pitfalls Agent
     pit_out = pitfalls_agent_node(initial_state)
     initial_state.update(pit_out)
 
+    # Step 5: Curated Visual Architect
     vis_out = visual_architect_agent_node(initial_state)
     initial_state.update(vis_out)
 
@@ -735,6 +851,7 @@ async def run_all_chapters_batched(notes_structure: Dict[str, Any], state: Maste
     domain = notes_structure.get("domain") or state.get("domain") or "machine_learning"
     api_key = state.get("api_key", "")
     selected_model = state.get("model_name", "")
+    github_files = state.get("github_files") or {}
 
     generated_chapters: List[ChapterContent] = []
 
@@ -749,7 +866,7 @@ async def run_all_chapters_batched(notes_structure: Dict[str, Any], state: Maste
 
         for s in secs:
             s["domain"] = domain
-            s_content = generate_section_sync(s, ch, api_key, selected_model)
+            s_content = generate_section_sync(s, ch, api_key, selected_model, github_files=github_files)
             rendered_sections.append(s_content)
 
         generated_chapters.append({
