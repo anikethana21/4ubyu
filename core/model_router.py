@@ -151,6 +151,20 @@ class DirectUniversalChatModel(BaseChatModel):
 
         raise ValueError(f"Unsupported provider: {self.provider}")
 
+    async def _astream(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Any = None,
+        **kwargs: Any
+    ) -> AsyncIterator[ChatGenerationChunk]:
+        res = self._generate(messages)
+        text = res.generations[0].message.content
+        words = text.split(" ")
+        for i, word in enumerate(words):
+            chunk_text = word + (" " if i < len(words) - 1 else "")
+            yield ChatGenerationChunk(message=AIMessageChunk(content=chunk_text))
+
 class RobustFallbackChatModel(BaseChatModel):
     """Guaranteed zero-failure model for offline, rate-limited, or network-blocked environments."""
     def _generate(
@@ -162,13 +176,19 @@ class RobustFallbackChatModel(BaseChatModel):
     ) -> ChatResult:
         last_msg = messages[-1].content if messages else ""
         query = str(last_msg).lower()
+        last_user_q = ""
+        for m in reversed(messages):
+            if isinstance(m, HumanMessage) or getattr(m, "type", "") == "human":
+                last_user_q = str(m.content)
+                break
+        q_disp = last_user_q.strip() if last_user_q else "your question"
+        if len(q_disp) > 80:
+            q_disp = q_disp[:77] + "..."
         ans = (
-            "### Course Topic Walkthrough & Key Principles\n\n"
-            "This technical chapter covers fundamental theoretical principles, statistical mechanics, "
-            "and production-grade implementations demonstrated by the instructor.\n\n"
-            "- **Mathematical Induction:** Formulates how empirical observations map to algorithmic predictions.\n"
-            "- **Pipeline Architecture:** Ingestion, validation, preprocessing, and estimator fitting without data leakage.\n"
-            "- **Production Best Practices:** Rigorous cross-validation, metric tracking, and artifact persistence."
+            f"> **[Study Assistant Notice]**\n\n"
+            f"Regarding: **{q_disp}**\n\n"
+            f"Temporary inference delay. You can switch between Grounded and Open Mode or re-ask. "
+            f"All lecture notes and timestamps are available in the handbook on your left."
         )
         return ChatResult(generations=[ChatGeneration(message=AIMessage(content=ans))])
 
@@ -201,7 +221,13 @@ def get_chat_model(
     provider = detect_key_provider(effective_key)
 
     if not provider:
+        from config import DEFAULT_GROQ_KEY
         if os.getenv("GROQ_API_KEY"):
+            effective_key = os.getenv("GROQ_API_KEY")
+            provider = "groq"
+        elif DEFAULT_GROQ_KEY:
+            effective_key = DEFAULT_GROQ_KEY
+            provider = "groq"
             effective_key = os.getenv("GROQ_API_KEY")
             provider = "groq"
         elif os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):

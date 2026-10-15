@@ -1,9 +1,9 @@
-/* ═══════════════════════════════════════════════════════════════════ */
-/* 4 U By U — Theme: Slate & Teal Palette (Gagalin Typography)         */
-/* Desk: #1e242c | Paper Sheets: #ffffff | Header: #222831             */
-/* Accent: #76ABAE | Bot Card: #242c37                                 */
-/* Strict Contrast: Light bg -> Dark text | Dark bg -> Light text      */
-/* ═══════════════════════════════════════════════════════════════════ */
+/* ========================================================================= */
+/* 4 U By U ? OFFICIAL BRAND THEME: EMERALD OBSIDIAN & 3D METALLIC GOLD      */
+/* Designed directly from the official 4U BY U / FOR YOU BY YOU 3D Emblem    */
+/* Canvas: #060B08 | Deep Emerald: #09130E | Header: #0D1A14                */
+/* Jewel Emerald: #10B981 / #059669 | Metallic Gold Trim: #D4AF37 / #F59E0B  */
+/* ========================================================================= */
 
 @font-face {
   font-family: 'Gagalin';
@@ -15,23 +15,27 @@
 }
 
 :root, [data-theme="dark_academic"] {
-  --theme-bg: #1e242c;
-  --theme-pane-bg: #1e242c;
-  --theme-header-bg: #222831;
+  --theme-bg: #060b08;
+  --theme-pane-bg: #09130e;
+  --theme-header-bg: #0d1a14;
   --theme-card-bg: #ffffff;
   --theme-toc-bg: #ffffff;
-  --theme-border: #384352;
-  --theme-text: #eeeeee;
-  --theme-muted: #9ba5b1;
-  --theme-accent: #76ABAE;
-  --theme-accent-hover: #5d999d;
-  --theme-accent-glow: rgba(118, 171, 174, 0.25);
-  --theme-code-bg: #181c22;
+  --theme-border: #183325;
+  --theme-border-gold: rgba(212, 175, 55, 0.4);
+  --theme-text: #f1f5f9;
+  --theme-muted: #86efac;
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-accent-glow: rgba(16, 185, 129, 0.35);
+  --theme-gold: #d4af37;
+  --theme-gold-light: #fbbf24;
+  --theme-gold-glow: rgba(212, 175, 55, 0.35);
+  --theme-code-bg: #0a1410;
 
   --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: 'Gagalin', 'Gagalin-Regular', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'Roboto Mono', 'JetBrains Mono', monospace;
 
   --splitter-size: 6px;
-  --splitter-hover: #76ABAE;
+  --splitter-hover: #10b981;
 }

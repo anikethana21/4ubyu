@@ -59,6 +59,7 @@ class GenerateRequest(BaseModel):
 class ChatRequest(BaseModel):
     video_id: str
     question: str
+    mode: Optional[str] = "grounded"
     api_key: Optional[str] = None
     model_name: Optional[str] = None
 
@@ -173,7 +174,13 @@ async def chat_with_notes(req: ChatRequest):
         raise HTTPException(status_code=400, detail="Missing video_id or question.")
 
     async def event_generator():
-        async for chunk in ask_rag_stream(req.video_id, req.question, req.api_key, req.model_name):
+        async for chunk in ask_rag_stream(
+            video_id=req.video_id,
+            question=req.question,
+            mode=req.mode or "grounded",
+            api_key=req.api_key,
+            model_name=req.model_name
+        ):
             yield chunk
 
     return StreamingResponse(event_generator(), media_type="text/plain")
@@ -210,6 +217,31 @@ async def handbook_interactive_chat(req: HandbookChatRequest):
             yield chunk
 
     return StreamingResponse(event_generator(), media_type="text/plain")
+
+@app.get("/api/workspace/{video_id}/topics")
+async def get_workspace_search_topics(video_id: str):
+    """Returns indexed chapters, sections, and topics for the AI-suggestive search bar."""
+    from phase8_chatbot import get_in_memory_html_chunks
+    docs = get_in_memory_html_chunks(video_id)
+    topics = []
+    seen = set()
+    for d in docs:
+        sec = d.metadata.get("section_title")
+        ch = d.metadata.get("chapter_title")
+        ts = d.metadata.get("timestamp_str", "00:00")
+        sec_id = d.metadata.get("section_id", "")
+        sec_sec = d.metadata.get("timestamp_seconds", 0)
+        if sec and sec not in seen:
+            seen.add(sec)
+            topics.append({
+                "title": sec,
+                "chapter": ch,
+                "timestamp_str": ts,
+                "timestamp_sec": sec_sec,
+                "section_id": sec_id,
+                "type": "section"
+            })
+    return {"topics": topics}
 
 @app.get("/api/workspace/{video_id}/questions")
 async def get_workspace_questions(video_id: str):

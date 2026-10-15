@@ -1,3 +1,26 @@
+// Dual Mode State (Grounded vs Open)
+window.currentChatMode = localStorage.getItem("4ubyu_chat_mode") || "grounded";
+
+window.setChatMode = function(mode) {
+  window.currentChatMode = mode;
+  localStorage.setItem("4ubyu_chat_mode", mode);
+  const groundedBtn = document.getElementById("mode-grounded-btn");
+  const openBtn = document.getElementById("mode-open-btn");
+  const chatInput = document.getElementById("chat-query");
+  
+  if (groundedBtn && openBtn) {
+    if (mode === "grounded") {
+      groundedBtn.classList.add("active");
+      openBtn.classList.remove("active");
+      if (chatInput) chatInput.placeholder = "Ask about lecture notes, code, or timestamps...";
+    } else {
+      openBtn.classList.add("active");
+      groundedBtn.classList.remove("active");
+      if (chatInput) chatInput.placeholder = "Ask open AI questions, compare libraries, system design...";
+    }
+  }
+};
+
 // 4 U By U - Docked RAG Chat Assistant Client
 // Connects to /api/chat with token streaming, full Markdown parsing, timestamp seeking,
 // interactive suggestions rendered as clean chips, zero emojis, and zero horizontal scrollbars.
@@ -8,6 +31,11 @@ document.addEventListener("DOMContentLoaded", function() {
   const msgList = document.getElementById("chat-messages");
 
   if (!chatForm || !chatInput || !msgList) return;
+  // Restore saved chat mode
+  if (window.setChatMode) {
+    window.setChatMode(window.currentChatMode || "grounded");
+  }
+
 
   const frameEl = document.getElementById("yt-player-frame");
   const videoId = frameEl ? (frameEl.dataset.videoId || "") : "";
@@ -53,7 +81,8 @@ document.addEventListener("DOMContentLoaded", function() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           video_id: videoId,
-          question: query
+          question: query,
+          mode: window.currentChatMode || "grounded"
         })
       });
 

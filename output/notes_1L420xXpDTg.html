@@ -418,6 +418,263 @@
     font-size: 0.95rem !important;
   }
 
+/* ========================================================================= */
+  /* OFFICIAL 4U BY U BRAND: 3D EMERALD GREEN & METALLIC GOLD THEME STYLING   */
+  /* ========================================================================= */
+  .brand-logo-img {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 9px !important;
+    object-fit: cover !important;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4), 0 0 4px rgba(212, 175, 55, 0.6) !important;
+    border: 1.5px solid rgba(212, 175, 55, 0.6) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .brand-name {
+    font-weight: 800 !important;
+    font-size: 1.15rem !important;
+    background: linear-gradient(135deg, #fde68a 0%, #d4af37 50%, #f59e0b 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    letter-spacing: -0.3px !important;
+  }
+
+  .brand-tagline {
+    font-size: 0.6rem !important;
+    letter-spacing: 2px !important;
+    color: #10b981 !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+  }
+
+  /* Dual-Mode Chat Toggle */
+  .chat-mode-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: rgba(6, 78, 59, 0.5) !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+    border-radius: 999px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    margin-left: 8px !important;
+  }
+
+  .mode-toggle-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    border: none !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    line-height: 1.2 !important;
+  }
+
+  .mode-toggle-btn:hover {
+    color: #f1f5f9 !important;
+  }
+
+  .mode-toggle-btn.active#mode-grounded-btn {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
+    border: 1px solid #10b981 !important;
+  }
+
+  .mode-toggle-btn.active#mode-open-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #060b08 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.45) !important;
+    border: 1px solid #fbbf24 !important;
+  }
+
+  /* AI Search Input & Autocomplete Dropdown */
+  .search-input-wrapper {
+    position: relative !important;
+  }
+
+  .search-clear-btn {
+    background: none !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    padding: 0 6px !important;
+    line-height: 1 !important;
+    transition: color 0.15s ease !important;
+  }
+
+  .search-clear-btn:hover {
+    color: #f1f5f9 !important;
+  }
+
+  .search-suggestions-dropdown {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #09130e !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(16, 185, 129, 0.2) !important;
+    z-index: 1000 !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    backdrop-filter: blur(12px) !important;
+  }
+
+  .suggestions-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.2) !important;
+    font-size: 11px !important;
+    color: #10b981 !important;
+    font-weight: 600 !important;
+  }
+
+  .suggestions-hint {
+    color: #94a3b8 !important;
+    font-size: 10px !important;
+    font-weight: 400 !important;
+  }
+
+  .suggestion-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+    cursor: pointer !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .suggestion-item:last-child {
+    border-bottom: none !important;
+  }
+
+  .suggestion-item:hover, .suggestion-item.active {
+    background: rgba(16, 185, 129, 0.15) !important;
+  }
+
+  .suggestion-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .suggestion-badge {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .badge-chapter {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  }
+
+  .badge-section {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  }
+
+  .badge-code {
+    background: rgba(139, 92, 246, 0.2) !important;
+    color: #c084fc !important;
+    border: 1px solid rgba(139, 92, 246, 0.4) !important;
+  }
+
+  .badge-ai {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(16, 185, 129, 0.3)) !important;
+    color: #fde68a !important;
+    border: 1px solid #fbbf24 !important;
+  }
+
+  .suggestion-texts {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+  }
+
+  .suggestion-title {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: #f8fafc !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .suggestion-ch {
+    font-size: 10px !important;
+    color: #86efac !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .suggestion-right {
+    flex-shrink: 0 !important;
+    margin-left: 8px !important;
+  }
+
+  .suggestion-ts {
+    font-size: 10px !important;
+    font-family: 'Roboto Mono', monospace !important;
+    color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.12) !important;
+    padding: 2px 5px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(245, 158, 11, 0.25) !important;
+  }
+
+  .suggestion-key {
+    font-size: 10px !important;
+    color: #94a3b8 !important;
+  }
+
+  .match-mark {
+    background: rgba(16, 185, 129, 0.35) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 2px !important;
+    padding: 0 1px !important;
+  }
+
+  .suggestion-ai-ask {
+    background: rgba(16, 185, 129, 0.05) !important;
+    border-top: 1px solid rgba(16, 185, 129, 0.2) !important;
+  }
+
+  /* Pulse animation on section jump */
+  @keyframes pulseHighlight {
+    0% { outline: 3px solid #10b981; box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
+    50% { outline: 3px solid #fbbf24; box-shadow: 0 0 35px rgba(245, 158, 11, 0.7); }
+    100% { outline: 1px solid rgba(16, 185, 129, 0.2); box-shadow: none; }
+  }
+
+  .highlight-pulse {
+    animation: pulseHighlight 2.5s ease-out !important;
+    border-color: #10b981 !important;
+  }
 </style>
 
 <style id="theme-slate-teal-master">
@@ -1324,10 +1581,10 @@ input#notes-search::placeholder {
 <header class="handbook-header">
 <div class="header-top">
   <div class="workspace-brand-area">
-    <div class="brand-symbol">4U</div>
+    <img src="/static/images/logo.png" alt="4U BY U Official Logo" class="brand-logo-img">
     <div class="brand-text">
-      <span class="brand-name">4 U By U</span>
-      <span class="brand-tagline">For You, By You</span>
+      <span class="brand-name">4U BY U</span>
+      <span class="brand-tagline">FOR YOU BY YOU</span>
     </div>
   </div>
   <a class="btn-back-home" href="/" title="Return to Study Library">
@@ -1342,9 +1599,18 @@ input#notes-search::placeholder {
           <span>8 Chapters</span>
 </div>
 <div class="handbook-controls minimal-toolbar">
-  <div class="search-input-wrapper">
+  <div class="search-input-wrapper" id="search-input-wrapper">
     <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-    <input id="notes-search" onkeyup="filterHandbook()" placeholder="Search concepts or code..." type="text"/>
+    <input id="notes-search" oninput="handleSearchInput(this.value)" onfocus="handleSearchFocus()" placeholder="Search concepts, topics, or code..." type="text" autocomplete="off"/>
+    <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearHandbookSearch()" style="display: none;" title="Clear Search">&times;</button>
+    <!-- AI Topic Suggestions Dropdown -->
+    <div class="search-suggestions-dropdown" id="search-suggestions-dropdown" style="display: none;">
+      <div class="suggestions-header">
+        <span class="suggestions-title">?? AI Suggested Topics</span>
+        <span class="suggestions-hint">Click to jump or ask</span>
+      </div>
+      <div class="suggestions-list" id="suggestions-list"></div>
+    </div>
   </div>
   <div class="toolbar-actions">
     <span id="current-playback-time" class="time-pill" title="Live Video Playback Time">00:00</span>
@@ -2757,7 +3023,15 @@ print("
   <div class="chat-nav-brand">
     <span class="chat-status-dot"></span>
     <span class="chat-nav-title">Study Assistant</span>
-    <span class="chat-nav-pill">Grounded</span>
+    <!-- DUAL-MODE INTERACTIVE TOGGLE: GROUNDED VS OPEN -->
+    <div class="chat-mode-toggle" id="chat-mode-toggle" role="group" aria-label="Study Assistant Mode">
+      <button type="button" class="mode-toggle-btn active" id="mode-grounded-btn" onclick="setChatMode('grounded')" title="Strictly ground answers in current video notes & timestamps">
+        <span class="mode-icon">??</span> Grounded
+      </button>
+      <button type="button" class="mode-toggle-btn" id="mode-open-btn" onclick="setChatMode('open')" title="Switch to open AI mode for broader CS concepts, frameworks, and coding">
+        <span class="mode-icon">?</span> Open
+      </button>
+    </div>
   </div>
   <div class="chat-nav-actions">
     <button type="button" class="chat-nav-clear" onclick="clearChatMessages()" title="Clear chat messages">Clear</button>

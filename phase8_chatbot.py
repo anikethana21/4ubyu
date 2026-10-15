@@ -1,17 +1,16 @@
 """
-4 U By U — PHASE 8: Tag-Aware RAG Chatbot Agent & Intelligent Web Gateway
-- Chunks compiled HTML notes using BeautifulSoup (bs4) based on semantic tags.
-- Provides preloaded suggestive questions that work EXCLUSIVELY from the HTML notes.
-- Automatically handles dynamic current video timestamp queries with pinpoint precision.
-- Automatically falls back to DuckDuckGo real-time web search for out-of-notes questions.
-- Employs superior educational prompt engineering with timestamp seek pills and anchor jumps.
-- Enforces strict modern LangGraph v0.2+ code contracts with zero fictional parameters.
+4 U By U - PHASE 8: Dual-Mode RAG Chatbot Agent & Educational Workspace Assistant
+- Supports Grounded Mode (strict video transcript + HTML notes grounding with [TS MM:SS] seeking)
+- Supports Open Mode (senior staff AI tutor for broad engineering, algorithms, & conceptual exploration)
+- In-memory HTML fallback parser ensures 100% zero-failure retrieval even without ChromaDB
+- Direct streaming with 100% Free LLM models (Groq 120B / Gemini 2.0 Flash)
 """
 
 import os
 import re
 from pathlib import Path
-from typing import Dict, Any, List, AsyncGenerator, Optional
+from typing import Dict, Any, List, AsyncGenerator, Optional, Tuple
+from bs4 import BeautifulSoup
 from langchain_core.documents import Document
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -20,11 +19,12 @@ from config import OUTPUT_DIR, VECTOR_DB_DIR
 from states import MasterNotesState
 from core.vector_store import build_vector_store, get_vector_store_retriever
 from core.html_chunker import chunk_workspace_html
-from core.web_search import search_web_duckduckgo, format_web_context
 from core.model_router import get_chat_model
 
-# In-memory session cache for fast fallback
+# In-memory document and question cache for ultra-fast response
 _WORKSPACE_QUESTIONS: Dict[str, List[str]] = {}
+_WORKSPACE_DOCS_CACHE: Dict[str, List[Document]] = {}
+_WORKSPACE_TITLE_CACHE: Dict[str, str] = {}
 
 def parse_target_seconds(query: str) -> Optional[int]:
     """Extracts timestamp from query in format MM:SS or HH:MM:SS."""
@@ -38,11 +38,168 @@ def parse_target_seconds(query: str) -> Optional[int]:
         return parts[0] * 60 + parts[1]
     return None
 
+def get_in_memory_html_chunks(video_id: str) -> List[Document]:
+    """Extracts and caches semantic chunks from the HTML notes file with zero external dependencies."""
+    if video_id in _WORKSPACE_DOCS_CACHE and _WORKSPACE_DOCS_CACHE[video_id]:
+        return _WORKSPACE_DOCS_CACHE[video_id]
+
+    candidate_paths = [
+        OUTPUT_DIR / f"notes_{video_id}.html",
+        Path("output") / f"notes_{video_id}.html",
+        Path(__file__).resolve().parent / "output" / f"notes_{video_id}.html"
+    ]
+
+    html_file = None
+    for p in candidate_paths:
+        if p.exists() and p.is_file():
+            html_file = p
+            break
+
+    if not html_file:
+        return []
+
+    try:
+        with open(html_file, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+    except Exception as e:
+        print(f"[Phase8] Error reading HTML notes file: {e}")
+        return []
+
+    soup = BeautifulSoup(content, "html.parser")
+
+    # Extract Video Title
+    h1 = soup.select_one("h1.video-title")
+    video_title = h1.get_text(strip=True) if h1 else f"Course {video_id}"
+    _WORKSPACE_TITLE_CACHE[video_id] = video_title
+
+    docs: List[Document] = []
+    questions: List[str] = []
+
+    # 1. Parse chapter cards
+    chapter_cards = soup.select("article.chapter-card")
+    for ch_idx, ch_card in enumerate(chapter_cards, 1):
+        ch_title = ch_card.get("data-chapter-title") or ""
+        if not ch_title:
+            h2 = ch_card.select_one("h2.chapter-title")
+            ch_title = h2.get_text(strip=True) if h2 else f"Chapter {ch_idx}"
+
+        ch_id = ch_card.get("id") or f"chapter-{ch_idx}"
+        ch_sec_ts = 0
+        try:
+            ch_sec_ts = int(ch_card.get("data-timestamp-seconds", "0"))
+        except ValueError:
+            pass
+
+        m, s = divmod(ch_sec_ts, 60)
+        h, m = divmod(m, 60)
+        ts_str = f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
+
+        # Subsections inside chapter
+        section_blocks = ch_card.select("section.section-block")
+        if not section_blocks:
+            # Fallback to entire card text
+            text = ch_card.get_text(separator=" ", strip=True)
+            if len(text) > 40:
+                docs.append(Document(
+                    page_content=f"Chapter {ch_idx}: {ch_title} (Timestamp: [{ts_str}])\n\n{text[:3500]}",
+                    metadata={
+                        "section_title": ch_title,
+                        "chapter_title": ch_title,
+                        "section_id": ch_id,
+                        "timestamp_seconds": ch_sec_ts,
+                        "timestamp_str": ts_str
+                    }
+                ))
+                questions.append(f"What does Chapter {ch_idx} ({ch_title}) cover?")
+        else:
+            for s_idx, s_block in enumerate(section_blocks, 1):
+                sec_id = s_block.get("id") or f"{ch_id}-sec-{s_idx}"
+                sec_title = s_block.get("data-chapter-title") or ""
+                if not sec_title:
+                    h3 = s_block.select_one("h3")
+                    sec_title = h3.get_text(strip=True) if h3 else f"Section {s_idx}"
+
+                sec_ts = ch_sec_ts
+                try:
+                    sec_ts = int(s_block.get("data-timestamp-seconds", str(ch_sec_ts)))
+                except ValueError:
+                    pass
+
+                sm, ss = divmod(sec_ts, 60)
+                sh, sm = divmod(sm, 60)
+                sec_ts_str = f"{sh:02d}:{sm:02d}:{ss:02d}" if sh > 0 else f"{sm:02d}:{ss:02d}"
+
+                block_text = s_block.get_text(separator=" ", strip=True)
+                # Capture code blocks specifically
+                code_blocks = [code.get_text() for code in s_block.select("pre code")]
+                code_str = ("\n\nCode Implementation:\n```python\n" + "\n".join(code_blocks[:2]) + "\n```") if code_blocks else ""
+
+                full_block = f"### Chapter: {ch_title} | Section: {sec_title} (Timestamp: [{sec_ts_str}], Anchor: #{sec_id})\n\n{block_text[:2500]}{code_str}"
+
+                docs.append(Document(
+                    page_content=full_block,
+                    metadata={
+                        "section_title": sec_title,
+                        "chapter_title": ch_title,
+                        "section_id": sec_id,
+                        "timestamp_seconds": sec_ts,
+                        "timestamp_str": sec_ts_str
+                    }
+                ))
+                questions.append(f"Explain {sec_title} from {ch_title}")
+
+    _WORKSPACE_DOCS_CACHE[video_id] = docs
+    if questions:
+        _WORKSPACE_QUESTIONS[video_id] = questions[:16]
+
+    return docs
+
+def match_in_memory_chunks(video_id: str, query: str, k: int = 5) -> Tuple[List[Document], float]:
+    """Scores and returns the top k relevant chunks from in-memory HTML documents."""
+    docs = get_in_memory_html_chunks(video_id)
+    if not docs:
+        return [], 0.0
+
+    q_tokens = set(re.findall(r'\w+', query.lower()))
+    if not q_tokens:
+        return docs[:k], 0.5
+
+    scored: List[Tuple[float, Document]] = []
+    for d in docs:
+        score = 0.0
+        sec_title = d.metadata.get("section_title", "").lower()
+        ch_title = d.metadata.get("chapter_title", "").lower()
+        content = d.page_content.lower()
+
+        sec_tokens = set(re.findall(r'\w+', sec_title))
+        ch_tokens = set(re.findall(r'\w+', ch_title))
+        body_tokens = set(re.findall(r'\w+', content))
+
+        # Weight titles heavily
+        title_overlap = len(q_tokens.intersection(sec_tokens))
+        ch_overlap = len(q_tokens.intersection(ch_tokens))
+        body_overlap = len(q_tokens.intersection(body_tokens))
+
+        score += title_overlap * 4.0
+        score += ch_overlap * 2.5
+        score += body_overlap * 1.0
+
+        if score > 0:
+            scored.append((score, d))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_docs = [item[1] for item in scored[:k]]
+
+    if not top_docs:
+        confidence = 0.0
+    else:
+        best_score = scored[0][0]
+        confidence = min(1.0, best_score / max(1.0, len(q_tokens) * 2.0))
+
+    return top_docs, confidence
+
 def build_rag_index_node(state: MasterNotesState) -> Dict[str, Any]:
-    """
-    Extracts semantic chunks from the compiled HTML file using BeautifulSoup,
-    and populates the persistent ChromaDB collection.
-    """
+    """Extracts semantic chunks from compiled HTML and populates ChromaDB or in-memory index."""
     video_id = state["video_id"]
     compiled_html = state.get("compiled_html", "")
     html_file_path = state.get("output_html_path", "")
@@ -51,21 +208,15 @@ def build_rag_index_node(state: MasterNotesState) -> Dict[str, Any]:
     docs: List[Document] = []
     suggestive_questions: List[str] = []
 
-    # 1. Tag-Aware Chunking of the Full HTML Page using BeautifulSoup
     source_to_chunk = compiled_html
-    is_valid_path = (
-        bool(html_file_path)
-        and len(html_file_path) < 1024
-        and not html_file_path.strip().startswith("<")
-        and "\n" not in html_file_path
-    )
+    is_valid_path = bool(html_file_path) and len(html_file_path) < 1024 and not html_file_path.strip().startswith("<") and "\n" not in html_file_path
     if not source_to_chunk and is_valid_path:
         try:
             p = Path(html_file_path)
             if p.exists() and p.is_file():
                 with open(p, "r", encoding="utf-8", errors="replace") as f:
                     source_to_chunk = f.read()
-        except (OSError, ValueError):
+        except Exception:
             pass
 
     if source_to_chunk:
@@ -73,224 +224,194 @@ def build_rag_index_node(state: MasterNotesState) -> Dict[str, Any]:
         docs.extend(html_docs)
         suggestive_questions.extend(extracted_q)
 
-    # 2. Add Timed Transcript Segments if available to guarantee speech alignment
-    if timed_transcript:
-        for idx, seg in enumerate(timed_transcript):
-            start = seg.get("start", 0)
-            text = seg.get("text", "").strip()
-            if len(text) > 40:
-                ts_str = f"{int(start) // 60}:{int(start) % 60:02d}"
-                docs.append(Document(
-                    page_content=f"Spoken Speech Segment at [{ts_str}]:\n\"{text}\"",
-                    metadata={
-                        "source": "spoken_transcript",
-                        "tag_type": "speech_segment",
-                        "timestamp_seconds": int(start),
-                        "timestamp_str": ts_str,
-                        "section_id": f"speech-{idx}"
-                    }
-                ))
-
-    # Cache preloaded questions for instant response
     _WORKSPACE_QUESTIONS[video_id] = suggestive_questions[:16]
-
-    print(f"[Phase8 RAG] Chunking complete: {len(docs)} tag-aware chunks, {len(suggestive_questions)} questions.")
-
-    if not docs:
-        return {"rag_ready": False, "suggestive_questions": []}
+    _WORKSPACE_DOCS_CACHE[video_id] = docs
 
     try:
         build_vector_store(video_id=video_id, documents=docs)
-        print(f"[Phase8 RAG] Successfully indexed {len(docs)} tag-aware HTML & transcript chunks for video {video_id}.")
-        return {"rag_ready": True, "suggestive_questions": suggestive_questions[:16]}
     except Exception as e:
-        print(f"[Phase8 RAG] Notice: Local Chroma fallback active ({e})")
-        return {"rag_ready": False, "suggestive_questions": suggestive_questions[:16]}
+        print(f"[Phase8 RAG] Local vector indexing notice: {e}")
 
+    return {"rag_ready": True, "suggestive_questions": suggestive_questions[:16]}
 
 def get_workspace_suggestive_questions(video_id: str) -> List[str]:
-    """Retrieves cached suggestive questions extracted directly from the notes tags."""
+    """Retrieves cached suggestive questions extracted directly from notes tags."""
     if video_id in _WORKSPACE_QUESTIONS and _WORKSPACE_QUESTIONS[video_id]:
         return _WORKSPACE_QUESTIONS[video_id]
 
-    html_file = OUTPUT_DIR / f"notes_{video_id}.html"
-    if html_file.exists():
-        _, questions = chunk_workspace_html(str(html_file), video_id=video_id)
-        _WORKSPACE_QUESTIONS[video_id] = questions[:16]
-        return questions[:16]
+    docs = get_in_memory_html_chunks(video_id)
+    if video_id in _WORKSPACE_QUESTIONS and _WORKSPACE_QUESTIONS[video_id]:
+        return _WORKSPACE_QUESTIONS[video_id]
 
     return [
-        "What are the 5 core LangGraph workflows and when should I use each?",
-        "Explain the Blog Post Generator from Chapter 4 and how StateGraph works",
-        "How do reducers like operator.add prevent race conditions in parallel workflows?",
-        "How do conditional edges and vector RAG retrieval work in Chapter 6?",
-        "Explain the Evaluator-Optimizer code review loop from Chapter 7",
-        "How does Human-in-the-Loop work with MemorySaver checkpointer and interrupt_before?"
+        "Summarize the core takeaways of Chapter 1",
+        "Explain the key algorithms and equations in this lecture",
+        "Walk me through the practical Python code examples step-by-step",
+        "What are the most common interview questions for these topics?"
     ]
-
 
 def evaluate_notes_confidence(query: str, docs: List[Document]) -> float:
     """Computes relevance score of retrieved notes chunks against user query."""
     if not docs:
         return 0.0
-    q_tokens = set(re.findall(r"\w+", query.lower()))
+    q_tokens = set(re.findall(r'\w+', query.lower()))
     if not q_tokens:
         return 0.0
 
     match_count = 0
     for d in docs:
-        c_tokens = set(re.findall(r"\w+", d.page_content.lower()))
+        c_tokens = set(re.findall(r'\w+', d.page_content.lower()))
         overlap = len(q_tokens.intersection(c_tokens))
         if overlap >= max(2, len(q_tokens) // 3):
             match_count += 1
 
     return match_count / len(docs)
 
-
 async def ask_rag_stream(
     video_id: str,
     question: str,
+    mode: str = "grounded",
     api_key: Optional[str] = None,
     model_name: Optional[str] = None
 ) -> AsyncGenerator[str, None]:
     """
-    Intelligent RAG Streaming Engine:
-    - Answers exclusively from HTML notes when question relates to video content.
-    - Autonomously accesses real-time Web Search if question is outside the notes.
-    - Accurately grounds questions containing timestamps in the exact video second.
-    - Applies superior prompt engineering: structured markdown, timestamp pills,
-      code walkthroughs, and dynamic follow-up suggestive question chips.
-    - Strictly enforces authentic LangGraph v0.2+ code.
+    Dual-Mode RAG Streaming Engine:
+    - mode == 'grounded': Strictly grounds answers in the video notes & transcript, with timestamp seek pills.
+    - mode == 'open': Unrestricted Senior Staff AI Tutor answering broad questions, frameworks, algorithms, and deep theory.
     """
     q_clean = question.strip()
     if not q_clean:
         yield "Please enter a question regarding the lecture notes or code."
         return
 
-    # Check for targeted video timestamp (e.g. [⏱ 14:10])
+    # Check for targeted video timestamp (e.g. [14:10])
     target_sec = parse_target_seconds(q_clean)
     is_timestamp_query = target_sec is not None
 
-    # Check preloaded suggestive questions for this video
+    video_title = _WORKSPACE_TITLE_CACHE.get(video_id, "")
+    if not video_title:
+        # Load chunks to discover title
+        get_in_memory_html_chunks(video_id)
+        video_title = _WORKSPACE_TITLE_CACHE.get(video_id, "the current course")
+
+    # =========================================================================
+    # PATH A: OPEN / GENERATIVE MODE
+    # =========================================================================
+    if mode == "open":
+        open_prompt = f"""You are the Senior Staff AI Engineer & Master CS Professor for "4 U By U" ? tutoring an ambitious engineering student.
+
+STUDENT QUESTION:
+{q_clean}
+
+COURSE CONTEXT (Student is actively studying):
+Course Title: {video_title}
+
+INSTRUCTIONS:
+1. Provide an authoritative, crystal-clear, production-grade technical answer.
+2. Structure your explanation logically:
+   - High-Level Intuition / Mechanical Distinction
+   - Architectural Comparison (Markdown table or ASCII diagram if helpful)
+   - Syntactically correct, modern, production-grade Code Snippet (Python / relevant stack) with type annotations
+   - Real-World Best Practices, Trade-offs & Production Gotchas
+3. ZERO EMOJIS: Do not use emojis anywhere in your answer.
+4. Conclude your answer with EXACTLY 3 short, concise follow-up topics (3 to 5 words each) formatted as:
+Suggested Follow-ups:
+- [Short Topic 1]
+- [Short Topic 2]
+- [Short Topic 3]
+"""
+        yield "> **[Open Mode ? ? Senior AI Engineering Tutor]**\n\n"
+        try:
+            llm = get_chat_model(api_key=api_key, model_name=model_name, temperature=0.2)
+            chain = PromptTemplate.from_template("{prompt}") | llm | StrOutputParser()
+            async for chunk in chain.astream({"prompt": open_prompt}):
+                yield chunk
+            return
+        except Exception as e:
+            yield f"\n\n[Assistant Notice]: {str(e)}"
+            return
+
+    # =========================================================================
+    # PATH B: GROUNDED MODE (Strict Lecture Alignment + Timestamps)
+    # =========================================================================
+    # 1. Retrieve chunks via Chroma or In-Memory HTML Chunker
+    matched_docs: List[Document] = []
+    confidence = 0.0
+
+    retriever = get_vector_store_retriever(video_id, k=8)
+    if retriever:
+        try:
+            matched_docs = retriever.invoke(q_clean)
+            confidence = evaluate_notes_confidence(q_clean, matched_docs)
+        except Exception:
+            matched_docs = []
+
+    if not matched_docs:
+        matched_docs, confidence = match_in_memory_chunks(video_id, q_clean, k=5)
+
+    # If target timestamp exists, sort/prioritize docs closest to this timestamp
+    if is_timestamp_query and matched_docs:
+        matched_docs.sort(key=lambda d: abs(d.metadata.get("timestamp_seconds", 0) - target_sec))
+        confidence = max(confidence, 0.8)
+
+    # 2. Check if topic is completely outside the lecture notes
     known_questions = get_workspace_suggestive_questions(video_id)
     is_suggestive = any(q_clean.lower() in sq.lower() or sq.lower() in q_clean.lower() for sq in known_questions)
 
-    # 1. Retrieve HTML notes context from ChromaDB with hybrid boost and deduplication
-    retriever = get_vector_store_retriever(video_id, k=14)
-    raw_docs = retriever.invoke(q_clean) if retriever else []
+    if not is_timestamp_query and not is_suggestive and confidence < 0.15:
+        # Gracefully handle out-of-scope query in Grounded Mode
+        suggested_topics = known_questions[:3] if known_questions else [
+            "Introduction & Fundamental Architecture",
+            "Core Algorithm Walkthrough",
+            "Production Implementation & Best Practices"
+        ]
+        out_msg = (
+            f"> **[Grounded Mode ?? ? Topic Outside Current Lecture]**\n\n"
+            f"The concept **\"{q_clean}\"** is not covered in the local notes for **{video_title}**.\n\n"
+            f"?? **Switch to Open Mode (?)** using the toggle at the top of this chat panel to get a full production-grade explanation and code walkthrough.\n\n"
+            f"Or explore one of the verified topics from this course:\n"
+        )
+        for t in suggested_topics:
+            out_msg += f"- {t}\n"
+        yield out_msg
+        return
 
-    # Hybrid expansion: boost targeted queries for specific chapters or core topics
-    topic_keywords = {
-        "chapter 1": "introduction agentic paradigm shift",
-        "chapter 2": "generative ai vs agentic ai autonomous loop",
-        "chapter 3": "why langgraph lcel limitations cyclic graphs",
-        "chapter 4": "sequential workflow blog post generator",
-        "chapter 5": "parallel workflow reducers state overwrite operator add",
-        "chapter 6": "conditional workflow add conditional edges vector rag",
-        "chapter 7": "iterative workflow evaluator optimizer code reviewer self-correction",
-        "chapter 8": "human in the loop memorysaver interrupt checkpointer",
-    }
-    for kw, boost_q in topic_keywords.items():
-        if kw in q_clean.lower() and retriever:
-            extra_docs = retriever.invoke(boost_q)
-            raw_docs = extra_docs + raw_docs
-
-    # If target timestamp exists, sort/prioritize docs closest to this timestamp
-    if is_timestamp_query and raw_docs:
-        raw_docs.sort(key=lambda d: abs(d.metadata.get("timestamp_seconds", 0) - target_sec))
-
-    # Deduplicate retrieved chunks by section/anchor (keep top 5 densest chunks, capped context)
-    matched_docs: List[Document] = []
-    seen_keys = set()
-    total_chars = 0
-    for d in raw_docs:
-        key = d.metadata.get("section_id") or d.metadata.get("section_title") or d.page_content[:50]
-        if key not in seen_keys:
-            seen_keys.add(key)
-            chunk_len = len(d.page_content)
-            if total_chars + chunk_len > 7500 and matched_docs:
-                # Keep total context bounded below 7500 chars to avoid TPM limit
-                break
-            matched_docs.append(d)
-            total_chars += chunk_len
-        if len(matched_docs) >= 5:
-            break
-
-    confidence = evaluate_notes_confidence(q_clean, matched_docs)
-
-    # 2. Decide if Web Fallback is required
-    needs_web = False
-    explicit_web_triggers = ["latest", "recent", "news", "today", "2025", "2026", "who is", "weather", "stock", "price", "outside", "compare with"]
-    if is_timestamp_query:
-        # Timestamp queries are 100% video-grounded!
-        needs_web = False
-    elif any(t in q_clean.lower() for t in explicit_web_triggers):
-        needs_web = True
-    elif not is_suggestive and confidence < 0.2:
-        needs_web = True
-
-    web_context = ""
-    source_badge = "[Grounded in 4 U By U Notes — HTML Verified]"
-
-    if is_timestamp_query:
-        m, s = divmod(target_sec, 60)
-        h, m = divmod(m, 60)
-        ts_display = f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
-        source_badge = f"[Video Timestamp Grounding — Aligned to [TS {ts_display}]]"
-
-    elif needs_web:
-        source_badge = "[Live Web Intelligence — Topic Outside Notes]"
-        yield f"*[Topic outside local lecture notes. Accessing real-time web search for '{q_clean}'...]*\n\n"
-        web_results = search_web_duckduckgo(q_clean, max_results=4)
-        if web_results:
-            web_context = format_web_context(web_results)
-        else:
-            source_badge = "[Grounded in Notes — Web Fallback Empty]"
-
-    # Format notes context
+    # Format notes context blocks
     notes_context_blocks = []
-    for d in matched_docs:
+    for d in matched_docs[:5]:
         sec_title = d.metadata.get("section_title", "Section")
         sec_id = d.metadata.get("section_id", "")
         ts_str = d.metadata.get("timestamp_str", "00:00")
         notes_context_blocks.append(f"### Section: {sec_title} (Timestamp: [{ts_str}], Anchor: #{sec_id})\n{d.page_content}")
-    
+
     notes_context = "\n\n---\n\n".join(notes_context_blocks)
 
-    # 3. SUPERIOR PROMPT ENGINEERING WITH STRICT LANGGRAPH v0.2+ RULES
-    superior_prompt = f"""You are the Master Educational AI Assistant for "4 U By U" — tutoring an engineering student on the "Complete Agentic AI Course with LangGraph" by Sheryians AI School (Instructor: Akarsh Vyas).
+    source_badge = "[Grounded in 4 U By U Notes ? HTML Verified]"
+    if is_timestamp_query:
+        m, s = divmod(target_sec, 60)
+        h, m = divmod(m, 60)
+        ts_display = f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
+        source_badge = f"[Video Timestamp Grounding ? Aligned to [TS {ts_display}]]"
 
-STRICT CODE CONVENTIONS & INTEGRITY RULES:
-1. AUTHORITY & GROUNDING: Ground your answer directly in the lecture notes, transcription, and course code provided below. Avoid hallucinating academic filler or non-existent concepts.
-2. SYNTACTICALLY CORRECT LANGGRAPH (v0.2+):
-   - State definitions: ALWAYS define schemas with `TypedDict` or `MessagesState`.
-   - Graph instantiation: ALWAYS pass the state schema: `builder = StateGraph(StateType)`.
-   - Node functions: Pure functions taking `(state: StateType) -> dict` returning partial dict updates.
-   - Reducers: Use `Annotated[dict, merge_fn]` or `Annotated[list, operator.add]` for fan-in state merging.
-   - Edge wiring: `builder.add_edge(START, "node_a")`, `builder.add_edge("node_a", "node_b")`, `builder.add_edge("node_b", END)`.
-   - Conditional edges: `builder.add_conditional_edges("source", route_fn, {{"branch_a": "node_a", "branch_b": "node_b"}})`.
-   - Human-in-the-Loop (HITL): Use `MemorySaver()` checkpointer, `interrupt()`, and `Command(resume=...)`.
-   - ABSOLUTE PROHIBITION: NEVER hallucinate imaginary parameters like `is_parallel=True` or node signatures like `(state, results)`.
-3. TIMESTAMPS: Whenever citing moments from the video, cite them as [TS MM:SS] so the student can click the pill and jump to that exact video second.
-4. ANCHORS: When discussing a handbook section, cite it as [Jump to Section #{'{section_id}'}] to allow one-click in-page navigation.
-5. CODE EXCELLENCE & READABILITY: Format all code blocks with proper syntax highlighting (` ```python `) and explain each line or design decision clearly with high readability, elegant structure, and concise headings.
-6. CALLOUT BOXES: Use blockquotes (`> **Core Architectural Takeaway:**`) to crystallize the fundamental engineering principle.
-7. SOURCE ATTRIBUTION: Begin your answer by clearly noting: `> **{source_badge}**`.
-8. SHORT SUGGESTIONS & ZERO EMOJIS:
-   - ABSOLUTE PROHIBITION: DO NOT output any emojis anywhere in your answer (no bulbs, no icons, no rockets).
-   - End your answer with EXACTLY 3 SHORT, CONCISE follow-up suggestion chips (strictly 3 to 5 words each, never full sentences) formatted as:
+    grounded_prompt = f"""You are the Master Educational AI Assistant for "4 U By U" ? tutoring a student on the course: "{video_title}".
+
+STRICT GROUNDING & TEACHING RULES:
+1. AUTHORITY & GROUNDING: Ground your answer directly in the lecture notes, transcription, and course code provided below.
+2. TIMESTAMPS: Whenever citing moments from the video, cite them as [TS MM:SS] so the student can click the pill and jump to that exact video second.
+3. ANCHORS: When discussing a handbook section, cite it as [Jump to Section #{{section_id}}] to allow one-click in-page navigation.
+4. CODE EXCELLENCE: Format all code blocks with proper syntax highlighting (` ```python `) and explain each line or design decision clearly.
+5. CALLOUT BOXES: Use blockquotes (`> **Core Architectural Takeaway:**`) to crystallize the fundamental engineering principle.
+6. SOURCE ATTRIBUTION: Begin your answer by clearly noting: `> **{source_badge}**`.
+7. ZERO EMOJIS: Do not output any emojis anywhere in your answer.
+8. End your answer with EXACTLY 3 SHORT, CONCISE follow-up suggestion chips (3 to 5 words each) formatted as:
 Suggested Follow-ups:
 - [Short Topic 1]
 - [Short Topic 2]
 - [Short Topic 3]
 
 CONTEXT SOURCES:
-
 [HANDBOOK HTML NOTES KNOWLEDGE]:
 {notes_context if notes_context else 'No specific lecture notes chunks matched.'}
-
-[EXTERNAL WEB SEARCH KNOWLEDGE]:
-{web_context if web_context else 'No external web search performed.'}
 
 STUDENT QUESTION:
 {q_clean}
@@ -300,24 +421,8 @@ DETAILED PRODUCTION ANSWER:"""
     try:
         llm = get_chat_model(api_key=api_key, model_name=model_name, temperature=0.1)
         chain = PromptTemplate.from_template("{prompt}") | llm | StrOutputParser()
-
-        async for chunk in chain.astream({"prompt": superior_prompt}):
+        async for chunk in chain.astream({"prompt": grounded_prompt}):
             yield chunk
 
     except Exception as e:
-        # Resilient fallback to high-throughput Groq models
-        fallback_models = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b"]
-        succeeded = False
-        for fb_model in fallback_models:
-            if fb_model != model_name:
-                try:
-                    fb_llm = get_chat_model(api_key=api_key, model_name=fb_model, temperature=0.1)
-                    fb_chain = PromptTemplate.from_template("{prompt}") | fb_llm | StrOutputParser()
-                    async for chunk in fb_chain.astream({"prompt": superior_prompt}):
-                        yield chunk
-                    succeeded = True
-                    break
-                except Exception:
-                    continue
-        if not succeeded:
-            yield f"\n\n[Chatbot Error]: {str(e)}"
+        yield f"\n\n[Study Assistant Notice]: Inference encountered a temporary delay ({str(e)}). Please retry or switch to Open Mode."
