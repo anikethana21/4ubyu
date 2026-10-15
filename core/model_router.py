@@ -228,8 +228,6 @@ def get_chat_model(
         elif DEFAULT_GROQ_KEY:
             effective_key = DEFAULT_GROQ_KEY
             provider = "groq"
-            effective_key = os.getenv("GROQ_API_KEY")
-            provider = "groq"
         elif os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
             effective_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
             provider = "gemini"
