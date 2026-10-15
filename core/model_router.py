@@ -74,10 +74,18 @@ class DirectUniversalChatModel(BaseChatModel):
                 "messages": payload_messages,
                 "temperature": self.temperature
             }
-            res = requests.post(url, headers=headers, json=body, timeout=45)
+            res = requests.post(url, headers=headers, json=body, timeout=25)
             if res.status_code == 200:
                 txt = res.json()["choices"][0]["message"]["content"]
                 return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+            elif res.status_code == 401:
+                from config import DEFAULT_GROQ_KEY
+                if DEFAULT_GROQ_KEY and self.api_key != DEFAULT_GROQ_KEY:
+                    headers["Authorization"] = f"Bearer {DEFAULT_GROQ_KEY}"
+                    res_def = requests.post(url, headers=headers, json=body, timeout=25)
+                    if res_def.status_code == 200:
+                        txt = res_def.json()["choices"][0]["message"]["content"]
+                        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
             elif res.status_code == 429:
                 # Fast retry with gpt-oss-20b after brief pause
                 time.sleep(1.5)
@@ -107,10 +115,18 @@ class DirectUniversalChatModel(BaseChatModel):
                 "messages": payload_messages,
                 "temperature": self.temperature
             }
-            res = requests.post(url, headers=headers, json=body, timeout=45)
+            res = requests.post(url, headers=headers, json=body, timeout=25)
             if res.status_code == 200:
                 txt = res.json()["choices"][0]["message"]["content"]
                 return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+            elif res.status_code == 401:
+                from config import DEFAULT_GROQ_KEY
+                if DEFAULT_GROQ_KEY and self.api_key != DEFAULT_GROQ_KEY:
+                    headers["Authorization"] = f"Bearer {DEFAULT_GROQ_KEY}"
+                    res_def = requests.post(url, headers=headers, json=body, timeout=25)
+                    if res_def.status_code == 200:
+                        txt = res_def.json()["choices"][0]["message"]["content"]
+                        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
             raise RuntimeError(f"Gemini API Error {res.status_code}: {res.text}")
 
         elif self.provider == "openrouter":
@@ -126,10 +142,18 @@ class DirectUniversalChatModel(BaseChatModel):
                 "messages": payload_messages,
                 "temperature": self.temperature
             }
-            res = requests.post(url, headers=headers, json=body, timeout=45)
+            res = requests.post(url, headers=headers, json=body, timeout=25)
             if res.status_code == 200:
                 txt = res.json()["choices"][0]["message"]["content"]
                 return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+            elif res.status_code == 401:
+                from config import DEFAULT_GROQ_KEY
+                if DEFAULT_GROQ_KEY and self.api_key != DEFAULT_GROQ_KEY:
+                    headers["Authorization"] = f"Bearer {DEFAULT_GROQ_KEY}"
+                    res_def = requests.post(url, headers=headers, json=body, timeout=25)
+                    if res_def.status_code == 200:
+                        txt = res_def.json()["choices"][0]["message"]["content"]
+                        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
             raise RuntimeError(f"OpenRouter API Error {res.status_code}: {res.text}")
 
         elif self.provider == "openai":
@@ -143,10 +167,18 @@ class DirectUniversalChatModel(BaseChatModel):
                 "messages": payload_messages,
                 "temperature": self.temperature
             }
-            res = requests.post(url, headers=headers, json=body, timeout=45)
+            res = requests.post(url, headers=headers, json=body, timeout=25)
             if res.status_code == 200:
                 txt = res.json()["choices"][0]["message"]["content"]
                 return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+            elif res.status_code == 401:
+                from config import DEFAULT_GROQ_KEY
+                if DEFAULT_GROQ_KEY and self.api_key != DEFAULT_GROQ_KEY:
+                    headers["Authorization"] = f"Bearer {DEFAULT_GROQ_KEY}"
+                    res_def = requests.post(url, headers=headers, json=body, timeout=25)
+                    if res_def.status_code == 200:
+                        txt = res_def.json()["choices"][0]["message"]["content"]
+                        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
             raise RuntimeError(f"OpenAI API Error {res.status_code}: {res.text}")
 
         raise ValueError(f"Unsupported provider: {self.provider}")

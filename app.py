@@ -262,10 +262,17 @@ async def delete_handbook(video_id: str):
 async def health_check():
     """Health endpoint for monitoring."""
     allowed, status_msg = check_capacity_limits()
+    key_env = os.getenv("GROQ_API_KEY", "")
+    from config import DEFAULT_GROQ_KEY
     return {
         "app": "4 U By U",
         "mode": APP_MODE,
-        "capacity_status": status_msg
+        "capacity_status": status_msg,
+        "has_env_key": bool(key_env),
+        "env_key_prefix": key_env[:10] if key_env else "",
+        "env_key_len": len(key_env),
+        "default_key_prefix": DEFAULT_GROQ_KEY[:10] if DEFAULT_GROQ_KEY else "",
+        "default_key_len": len(DEFAULT_GROQ_KEY)
     }
 
 if __name__ == "__main__":
