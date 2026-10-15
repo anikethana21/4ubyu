@@ -1459,91 +1459,18 @@ input#notes-search::placeholder {
 <!-- Theory Block -->
               
               <div class="theory-block">
-<p class="theory-text">**  
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Course Welcome, Prerequisites & Machine Learning Foundations**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
 
-Machine Learning (ML) is formally defined as the study of algorithms that enable a computer to improve its performance on a specific task *P* by extracting patterns from a dataset *D* without being explicitly programmed with task‑specific rules.  In statistical learning theory this is expressed as the search for a hypothesis *𝑓̂* belonging to a hypothesis space 𝓗 that minimizes an expected risk  
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
 
-\[
-R(𝑓) = \mathbb{E}_{(X,Y)\sim\mathcal{D}}[\ell\bigl(𝑓(X),Y\bigr)],
-\]
-
-where ℓ is a loss function (e.g., squared error for regression, cross‑entropy for classification) and 𝔻 is the (unknown) joint distribution of inputs X and targets Y.  Practically we replace the expectation with the empirical risk over a finite sample \(\{(x_i,y_i)\}_{i=1}^n\) and solve  
-
-\[
-\hat{𝑓}= \arg\min_{f\in\mathcal{H}} \frac{1}{n}\sum_{i=1}^{n}\ell\bigl(f(x_i),y_i\bigr) + \lambda\Omega(f),
-\]
-
-where Ω is a regularisation term that encodes prior assumptions (smoothness, sparsity, etc.) and λ controls the bias‑variance trade‑off.  The underlying statistical assumptions—most notably that the samples are independent and identically distributed (i.i.d.) and that the training distribution approximates the deployment distribution—must be explicitly acknowledged, because violations (concept drift, covariate shift) directly impair model validity.
-
-From a practical standpoint, the first phase of any ML project is **Exploratory Data Analysis (EDA) and preprocessing**, often abbreviated as EDA/EDA‑pipeline.  In Python this typically proceeds as follows:
-
-```python
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-
-# 1. Load raw data
-df = pd.read_csv('raw_data.csv')
-
-# 2. Basic sanity checks
-assert not df.isnull().all().any(), "Column completely empty"
-df = df.drop_duplicates()
-
-# 3. Split into features / target
-X = df.drop(columns='target')
-y = df['target']
-
-# 4. Train‑validation‑test split (stratified if classification)
-X_train, X_temp, y_train, y_temp = train_test_split(
-    X, y, test_size=0.30, stratify=y, random_state=42)
-X_valid, X_test, y_valid, y_test = train_test_split(
-    X_temp, y_temp, test_size=0.50, stratify=y_temp, random_state=42)
-
-# 5. Define preprocessing per column type
-numeric_features = X_train.select_dtypes(include=['int64','float64']).columns
-categorical_features = X_train.select_dtypes(include=['object','category']).columns
-
-preprocess = ColumnTransformer(
-    transformers=[
-        ('num', StandardScaler(), numeric_features),
-        ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
-    ])
-
-# 6. Fit transformer on training data only (prevent leakage)
-X_train_prepared = preprocess.fit_transform(X_train)
-X_valid_prepared = preprocess.transform(X_valid)
-X_test_prepared  = preprocess.transform(X_test)
-```
-
-Key points illustrated above are **(i)** strict separation of training, validation, and test sets before any transformation, **(ii)** fitting all statistical estimators (scalers, encoders) exclusively on the training split to avoid data leakage, and **(iii)** using a `ColumnTransformer` to produce a reproducible, column‑wise pipeline that can be serialized (e.g., via `joblib`) and later attached to a model artifact.
-
-When moving from a notebook prototype to a production‑grade system, several engineering considerations become paramount:
-
-1. **Data Leakage Prevention** – Beyond the classic train‑test contamination, leakage can arise from temporal ordering (future information leaking into past features), target leakage (features derived from the label), or leakage through shared preprocessing state (e.g., using global statistics computed on the full dataset). Robust pipelines enforce *fit‑only‑on‑train* semantics and, in streaming contexts, maintain rolling statistics that respect causality.
-
-2. **Scalability & Performance** – For datasets that exceed memory, the preprocessing must be expressed in a distributed fashion (e.g., Spark’s `ml.feature` transformers, Dask‑ML, or TensorFlow Transform). Batch‑oriented pipelines should be designed to operate on chunked data, and feature engineering functions should be pure (no hidden side‑effects) to enable parallel execution.
-
-3. **Versioning & Reproducibility** – Every artifact—raw data snapshots, schema definitions, preprocessing code, hyper‑parameters, and the trained model—should be version‑controlled (Git, DVC, MLflow). Immutable feature stores (e.g., Feast) guarantee that the same feature values used at training time are served at inference, eliminating subtle drift caused by ad‑hoc feature recomputation.
-
-4. **Monitoring & Drift Detection** – In production, continuous monitoring of input feature distributions (population stability index, KL divergence) and model performance (accuracy, calibration) is required. Automated alerts trigger retraining pipelines when statistically significant drift is detected, ensuring the model remains within its original assumption envelope.
-
-By rigorously adhering to these theoretical, procedural, and engineering disciplines, the practitioner transforms the abstract notion of “teaching a computer from data” into a reliable, maintainable, and ethically sound ML system.
-
----
-
-**</p>
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
                 
                 <div class="analogy-card">
 
-<span>**  
-
-Imagine a **modern automobile assembly line** that builds a car from raw steel sheets to a finished vehicle. The raw steel (raw data) arrives in bulk, but before any welding can occur, the sheets must be **cut, stamped, and painted** according to precise specifications—this is the *pre‑processing* stage. Each workstation (cutting, stamping, painting) is a *deterministic machine* that knows exactly how to transform the material, and the settings of each machine are calibrated **once** using a *reference batch* (the training set). Crucially, the calibration never uses the final car that will roll off the line (the test set), otherwise the line would be “cheating” by tailoring the process to a specific vehicle.
-
-Once the parts are ready, they move to the **engine installation bay**, where the *learning algorithm* (the engine) is installed. The engine’s performance depends on how well the preceding stations prepared the parts; a mis‑aligned chassis (feature leakage) or a paint job that hides a defect (data drift) will cause the engine to under‑perform or fail. After assembly, the car goes through a **quality‑control tunnel** (validation) that checks for defects without altering the car. Only after passing QC does the vehicle enter the **distribution network** (deployment), where it must operate under varying road conditions (real‑world data). If the road conditions change dramatically (concept drift), the factory must **re‑tune** the cutting and stamping machines (re‑train and re‑process) to keep producing reliable cars.
-
-Thus, the ML pipeline mirrors an assembly line: raw inputs are systematically transformed, each stage is calibrated on a representative sample, leakage is avoided by never letting future information influence earlier stations, and continuous monitoring ensures that the line adapts to new conditions without compromising safety or quality. This concrete industrial metaphor helps internalise the disciplined flow from data ingestion to model deployment.</span>
+<span>Think of Course Welcome, Prerequisites & Machine Learning Foundations like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
 </div>
                 
               </div>
@@ -1557,357 +1484,169 @@ Thus, the ML pipeline mirrors an assembly line: raw inputs are systematically tr
 <div class="code-header">
   <span class="code-caption">Course Welcome, Prerequisites & Machine Learning Foundations — Synthesized & Cleaned from Lecture Audio + Repo Assets</span>
   <div class="code-header-actions">
-    <span class="code-lang-badge">python</span>
+    <span class="code-lang-badge">PYTHON</span>
     <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
       <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span class="copy-text">Copy</span>
     </button>
   </div>
 </div>
-<pre><code class="language-python">"""
-Machine Learning Foundations – End‑to‑End Example
-================================================
+<pre><code class="language-python"># -------------------------------------------------------------
+# Machine Learning Foundations Demo
+# ---------------------------------------------
+# This script walks through the core steps of a typical ML workflow:
+#   1. Load data
+#   2. Exploratory Data Analysis (EDA)
+#   3. Data cleaning & preprocessing
+#   4. Feature engineering & selection
+#   5. Train a simple model
+# -------------------------------------------------------------
 
-This script demonstrates a complete, production‑ready workflow that mirrors the
-topics covered in the introductory lecture:
-
-1. What is Machine Learning?
-2. Differences between AI, ML and Deep Learning.
-3. Types of ML (supervised, unsupervised, reinforcement).
-4. Real‑world ML scope.
-5. **EDA → Data Cleaning → Feature Engineering → Modeling → Evaluation**.
-
-We use the classic *Titanic* dataset (available via seaborn) because it
-contains a mix of numeric & categorical columns, missing values, and a clear
-binary target (survived). The code is fully self‑contained, reproducible
-(`random_state=42`) and follows best‑practice conventions (type hints,
-functions, pipelines, logging).
-
-Run the script as a stand‑alone program:
-
-    $ python ml_foundations.py
-"""
-
-# --------------------------------------------------------------------------- #
-# Step 0: Imports & Global Settings
-# --------------------------------------------------------------------------- #
-import logging
-import pathlib
-from typing import Tuple
-
-import joblib
-import matplotlib.pyplot as plt
-import numpy as np
+# =========================
+# Step 1: Imports
+# =========================
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import (accuracy_score, classification_report,
-                             confusion_matrix, ConfusionMatrixDisplay)
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-# Configure a simple logger – useful for production debugging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler()],
+# Scikit‑learn utilities
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+# Ensure plots are displayed inline (useful in notebooks)
+# %matplotlib inline  # Uncomment if running in Jupyter
+
+# =========================
+# Step 2: Load dataset
+# =========================
+# Using seaborn's Titanic dataset for a realistic classification example
+df = sns.load_dataset('titanic')
+print("Dataset shape:", df.shape)
+print("\nFirst 5 rows:\n", df.head())
+
+# =========================
+# Step 3: Basic EDA
+# =========================
+print("\nData types:\n", df.dtypes)
+print("\nMissing values per column:\n", df.isnull().sum())
+
+# Summary statistics for numeric columns
+print("\nNumeric summary:\n", df.describe())
+
+# Visualize target distribution
+sns.countplot(x='survived', data=df)
+plt.title('Survival Count')
+plt.show()
+
+# Correlation heatmap (numeric features only)
+numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+plt.figure(figsize=(8,6))
+sns.heatmap(df[numeric_cols].corr(), annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
+
+# =========================
+# Step 4: Data cleaning
+# =========================
+# 4.1 Handle missing values
+#   - Numerical columns: median imputation (robust to outliers)
+#   - Categorical columns: most frequent category
+numeric_features = ['age', 'fare']
+categorical_features = ['embarked', 'sex', 'class', 'who', 'adult_male',
+                        'deck', 'embark_town', 'alone']
+
+numeric_imputer = SimpleImputer(strategy='median')
+categorical_imputer = SimpleImputer(strategy='most_frequent')
+
+# 4.2 Encode categorical variables
+#   - OneHotEncoder with handle_unknown='ignore' to avoid errors on unseen categories
+ohe = OneHotEncoder(handle_unknown='ignore', sparse=False)
+
+# 4.3 Build a ColumnTransformer to apply the above steps
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_imputer, numeric_features),
+        ('cat', Pipeline(steps=[
+            ('imputer', categorical_imputer),
+            ('encoder', ohe)
+        ]), categorical_features)
+    ],
+    remainder='drop'  # drop any remaining columns (e.g., 'survived')
 )
 
-# --------------------------------------------------------------------------- #
-# Step 1: Load the dataset
-# --------------------------------------------------------------------------- #
-def load_data() -> pd.DataFrame:
-    """
-    Load the Titanic dataset from seaborn.
+# =========================
+# Step 5: Feature engineering
+# =========================
+# Create new features that may help the model
+df['family_size'] = df['sibsp'] + df['parch'] + 1  # +1 for the passenger themselves
+df['is_alone'] = (df['family_size'] == 1).astype(int)
 
-    Returns
-    -------
-    pd.DataFrame
-        Raw data frame with original column types.
-    """
-    logging.info("Loading Titanic dataset...")
-    df = sns.load_dataset("titanic")
-    # Ensure a deterministic copy (seaborn may return a view)
-    return df.copy()
+# Update feature lists to include engineered features
+numeric_features += ['family_size', 'is_alone']
 
+# =========================
+# Step 6: Feature selection
+# =========================
+# After preprocessing, we will select the top k features based on ANOVA F-test
+# This helps reduce dimensionality and remove irrelevant features
+k_best = SelectKBest(score_func=f_classif, k=10)  # keep top 10 features
 
-# --------------------------------------------------------------------------- #
-# Step 2: Basic Exploratory Data Analysis (EDA)
-# --------------------------------------------------------------------------- #
-def basic_eda(df: pd.DataFrame) -> None:
-    """Print a quick statistical summary and visual sanity‑checks."""
-    logging.info("Running basic EDA...")
-    print("\n--- First 5 rows ---")
-    print(df.head())
+# =========================
+# Step 7: Train-test split
+# =========================
+X = df.drop(columns=['survived'])
+y = df['survived']
 
-    print("\n--- DataFrame info ---")
-    df.info()
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-    print("\n--- Summary statistics (numeric) ---")
-    print(df.describe())
+# =========================
+# Step 8: Build pipeline
+# =========================
+# The pipeline ensures that all preprocessing steps are applied consistently
+pipeline = Pipeline(steps=[
+    ('preprocess', preprocessor),
+    ('select', k_best),
+    ('scale', StandardScaler()),  # scale numeric features for better convergence
+    ('clf', LogisticRegression(max_iter=1000, random_state=42))
+])
 
-    # Missing‑value overview
-    missing = df.isnull().mean() * 100
-    print("\n--- Missing values (% per column) ---")
-    print(missing[missing > 0].round(2))
+# =========================
+# Step 9: Train the model
+# =========================
+pipeline.fit(X_train, y_train)
 
+# =========================
+# Step 10: Evaluate
+# =========================
+y_pred = pipeline.predict(X_test)
+print("\nAccuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
 
-# --------------------------------------------------------------------------- #
-# Step 3: Visual Exploration
-# --------------------------------------------------------------------------- #
-def visual_eda(df: pd.DataFrame, output_dir: pathlib.Path) -> None:
-    """Generate a few common plots and store them as PNG files."""
-    output_dir.mkdir(parents=True, exist_ok=True)
+# Visualize feature importances (coefficients of logistic regression)
+# Note: After one-hot encoding, feature names are available via get_feature_names_out
+feature_names = pipeline.named_steps['preprocess'].named_transformers_['cat'].named_steps['encoder'].get_feature_names_out(categorical_features)
+numeric_names = numeric_features
+all_feature_names = np.concatenate([numeric_names, feature_names])
 
-    # 1️⃣ Distribution of numeric features
-    numeric_cols = df.select_dtypes(include=["float64", "int64"]).columns
-    for col in numeric_cols:
-        plt.figure(figsize=(6, 4))
-        sns.histplot(df[col].dropna(), kde=True, bins=30)
-        plt.title(f"Distribution of {col}")
-        plt.tight_layout()
-        plt.savefig(output_dir / f"dist_{col}.png")
-        plt.close()
+# Get coefficients from the trained logistic regression
+coefficients = pipeline.named_steps['clf'].coef_[0]
+# Map coefficients to feature names
+coef_df = pd.DataFrame({
+    'feature': all_feature_names,
+    'coefficient': coefficients
+}).sort_values(by='coefficient', key=abs, ascending=False)
 
-    # 2️⃣ Survival rate by categorical variables
-    cat_cols = df.select_dtypes(include=["object", "category", "bool"]).columns
-    for col in cat_cols:
-        plt.figure(figsize=(6, 4))
-        sns.barplot(x=col, y="survived", data=df, ci=None)
-        plt.title(f"Survival Rate by {col}")
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        plt.savefig(output_dir / f"survival_by_{col}.png")
-        plt.close()
-
-    # 3️⃣ Pairwise relationships (only a subset for speed)
-    sns.pairplot(df, hue="survived", vars=["age", "fare", "sibsp", "parch"])
-    plt.suptitle("Pairwise relationships", y=1.02)
-    plt.savefig(output_dir / "pairplot.png")
-    plt.close()
-
-
-# --------------------------------------------------------------------------- #
-# Step 4: Data Cleaning & Feature Engineering
-# --------------------------------------------------------------------------- #
-def preprocess_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Clean the raw data and engineer useful features.
-
-    Steps
-    -----
-    1. Drop columns that are either identifiers or have too many missing values.
-    2. Fill missing numeric values with the median (robust to outliers).
-    3. Fill missing categorical values with the most frequent category.
-    4. Engineer:
-       * `family_size` = sibsp + parch + 1 (including the passenger)
-       * `is_alone`   = 1 if family_size == 1 else 0
-       * `title`      = extracted from the passenger's name (e.g., Mr, Mrs)
-    """
-    df_clean = df.copy()
-
-    # ------------------------------------------------------------------- #
-    # 1️⃣ Drop low‑information / high‑missing columns
-    # ------------------------------------------------------------------- #
-    cols_to_drop = ["deck", "embark_town", "alive", "class", "who", "adult_male"]
-    df_clean.drop(columns=cols_to_drop, inplace=True, errors="ignore")
-
-    # ------------------------------------------------------------------- #
-    # 2️⃣ Feature engineering
-    # ------------------------------------------------------------------- #
-    # Family size (including self)
-    df_clean["family_size"] = df_clean["sibsp"] + df_clean["parch"] + 1
-    df_clean["is_alone"] = (df_clean["family_size"] == 1).astype(int)
-
-    # Extract title from the name (e.g., "Mr.", "Mrs.", "Miss.", etc.)
-    # This often improves model performance on Titanic.
-    df_clean["title"] = df_clean["who"] if "who" in df_clean.columns else df_clean["name"].apply(
-        lambda x: x.split(",")[1].split(".")[0].strip()
-    )
-    # Consolidate rare titles into a single category
-    rare_titles = ["Lady", "Countess", "Capt", "Col", "Don", "Dr", "Major",
-                   "Rev", "Sir", "Jonkheer", "Dona"]
-    df_clean["title"] = df_clean["title"].replace(rare_titles, "Rare")
-    df_clean["title"] = df_clean["title"].replace(["Mlle", "Ms"], "Miss")
-    df_clean["title"] = df_clean["title"].replace("Mme", "Mrs")
-
-    # ------------------------------------------------------------------- #
-    # 3️⃣ Separate target & features
-    # ------------------------------------------------------------------- #
-    # Target column is `survived`. Ensure it is integer (0/1).
-    df_clean["survived"] = df_clean["survived"].astype(int)
-
-    return df_clean
-
-
-# --------------------------------------------------------------------------- #
-# Step 5: Train‑Test Split
-# --------------------------------------------------------------------------- #
-def split_data(df: pd.DataFrame, test_size: float = 0.2) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-    """
-    Split the cleaned DataFrame into training and testing sets.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Cleaned data with target column `survived`.
-    test_size : float, default 0.2
-        Proportion of the dataset to include in the test split.
-
-    Returns
-    -------
-    X_train, X_test, y_train, y_test
-    """
-    X = df.drop(columns=["survived"])
-    y = df["survived"]
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, stratify=y, random_state=42
-    )
-    logging.info(f"Data split: {X_train.shape[0]} train / {X_test.shape[0]} test samples")
-    return X_train, X_test, y_train, y_test
-
-
-# --------------------------------------------------------------------------- #
-# Step 6: Build a Scikit‑Learn Pipeline (preprocessing + model)
-# --------------------------------------------------------------------------- #
-def build_pipeline() -> Pipeline:
-    """
-    Construct a preprocessing + model pipeline.
-
-    - Numeric columns: median imputation → standard scaling.
-    - Categorical columns: most‑frequent imputation → one‑hot encoding
-      (ignore unknown categories at inference time).
-
-    The final estimator is a RandomForestClassifier (robust, little tuning needed).
-    """
-    # Identify column types *after* feature engineering
-    numeric_features = ["age", "fare", "sibsp", "parch", "family_size"]
-    categorical_features = ["sex", "embarked", "title", "is_alone"]
-
-    # Numeric transformer
-    numeric_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),  # median protects against outliers
-            ("scaler", StandardScaler()),
-        ]
-    )
-
-    # Categorical transformer
-    categorical_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            (
-                "onehot",
-                OneHotEncoder(handle_unknown="ignore", sparse_output=False),
-            ),
-        ]
-    )
-
-    # Combine transformers
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features),
-        ]
-    )
-
-    # Full pipeline
-    pipeline = Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            (
-                "model",
-                RandomForestClassifier(
-                    n_estimators=300,
-                    max_depth=None,
-                    random_state=42,
-                    n_jobs=-1,
-                ),
-            ),
-        ]
-    )
-    return pipeline
-
-
-# --------------------------------------------------------------------------- #
-# Step 7: Model Training
-# --------------------------------------------------------------------------- #
-def train_model(pipeline: Pipeline, X_train: pd.DataFrame, y_train: pd.Series) -> Pipeline:
-    """Fit the pipeline on the training data."""
-    logging.info("Training the model...")
-    pipeline.fit(X_train, y_train)
-    logging.info("Training completed.")
-    return pipeline
-
-
-# --------------------------------------------------------------------------- #
-# Step 8: Evaluation
-# --------------------------------------------------------------------------- #
-def evaluate_model(pipeline: Pipeline, X_test: pd.DataFrame, y_test: pd.Series) -> None:
-    """Print metrics and plot a confusion matrix."""
-    logging.info("Evaluating the model on the test set...")
-    y_pred = pipeline.predict(X_test)
-
-    acc = accuracy_score(y_test, y_pred)
-    print(f"\nTest Accuracy: {acc:.4f}\n")
-    print("Classification Report:")
-    print(classification_report(y_test, y_pred, digits=4))
-
-    # Confusion matrix plot
-    cm = confusion_matrix(y_test, y_pred, labels=[0, 1])
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1])
-    disp.plot(cmap=plt.cm.Blues)
-    plt.title("Confusion Matrix")
-    plt.show()
-
-
-# --------------------------------------------------------------------------- #
-# Step 9: Persist the trained pipeline
-# --------------------------------------------------------------------------- #
-def save_model(pipeline: Pipeline, path: pathlib.Path) -> None:
-    """Serialize the entire pipeline (preprocessing + model) to disk."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(pipeline, path)
-    logging.info(f"Model saved to {path}")
-
-
-# --------------------------------------------------------------------------- #
-# Step 10: Main orchestration
-# --------------------------------------------------------------------------- #
-def main() -> None:
-    # 1️⃣ Load raw data
-    raw_df = load_data()
-
-    # 2️⃣ Quick EDA (printed to console)
-    basic_eda(raw_df)
-
-    # 3️⃣ Visual EDA – saved under ./outputs/eda/
-    visual_eda(raw_df, pathlib.Path("outputs/eda"))
-
-    # 4️⃣ Clean + feature engineering
-    df_clean = preprocess_features(raw_df)
-
-    # 5️⃣ Train‑test split
-    X_train, X_test, y_train, y_test = split_data(df_clean)
-
-    # 6️⃣ Build pipeline
-    pipeline = build_pipeline()
-
-    # 7️⃣ Train
-    pipeline = train_model(pipeline, X_train, y_train)
-
-    # 8️⃣ Evaluate
-    evaluate_model(pipeline, X_test, y_test)
-
-    # 9️⃣ Persist model for later inference
-    save_model(pipeline, pathlib.Path("models/titanic_random_forest.joblib"))
-
-
-if __name__ == "__main__":
-    main()</code></pre>
+print("\nTop 10 features by absolute coefficient value:\n", coef_df.head(10))</code></pre>
 </div>
               
 
@@ -1917,13 +1656,15 @@ if __name__ == "__main__":
 <h4>Key Takeaways</h4>
 <ul>
                   
-                  <li>**Adopt a modular learning strategy**: Break down complex topics like Machine Learning into distinct, manageable parts (e.g., a 4-part series) rather than attempting to consume all content in a single session, ensuring better retention and structured progression.</li>
+                  <li>The course is divided into four distinct parts; completing all four is essential to build functional ML models.</li>
                   
-                  <li>**Understand the core definition**: Machine Learning is fundamentally about teaching computers to learn from data, mirroring how the human brain learns from experience, which serves as the foundational concept for the entire field.</li>
+                  <li>Content is intentionally split into manageable chunks rather than one long video, making it easier to absorb and apply concepts.</li>
                   
-                  <li>**Prioritize hands-on implementation**: The ultimate goal of the course is not just theoretical understanding but the practical ability to build and deploy machine learning models, emphasizing the importance of completing all parts to achieve this competency.</li>
+                  <li>Machine learning is fundamentally about teaching computers to learn from data, mirroring how humans learn from experience.</li>
                   
-                  <li>**Leverage curated resources**: Rely on well-researched and curated course structures that have been optimized for effectiveness, as the instructor has analyzed various existing courses to design a perfect learning path for beginners.</li>
+                  <li>The curriculum focuses on core ML concepts and hands‑on model building, ensuring you gain practical skills alongside theory.</li>
+                  
+                  <li>The instructor has curated the material after extensive research, providing a streamlined, effective learning path tailored to beginners.</li>
                   
                 </ul>
 </div>
@@ -1977,15 +1718,18 @@ if __name__ == "__main__":
 <!-- Theory Block -->
               
               <div class="theory-block">
-<p class="theory-text">Exploratory Data Analysis (EDA) serves as the foundational diagnostic phase in the machine learning pipeline, where raw, unstructured, or semi-structured data is subjected to rigorous statistical scrutiny to understand its underlying structure, distribution, and quality before any modeling occurs. Theoretically, EDA is grounded in descriptive statistics and hypothesis testing, aiming to characterize the central tendency, dispersion, and shape of data distributions. Key metrics such as mean, median, mode, variance, and standard deviation provide a quantitative summary of the data, while higher-order moments like skewness and kurtosis reveal deviations from normality. For instance, a high positive skewness indicates a long tail to the right, suggesting the presence of outliers or non-linear relationships that may violate the assumptions of linear models. Understanding these distributions is critical because many machine learning algorithms, particularly those based on distance metrics (like K-Nearest Neighbors) or probabilistic assumptions (like Gaussian Naive Bayes), perform optimally when data is approximately normally distributed or when features are standardized. In Python, this phase typically involves libraries such as `pandas` for data manipulation and `numpy` for numerical computations, where functions like `describe()`, `hist()`, and `boxplot()` are employed to generate initial insights. The objective is not merely to summarize data but to identify patterns, anomalies, and potential feature engineering opportunities that can enhance model performance.
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
 
-The practical mechanics of EDA involve a systematic transformation of raw data into actionable insights through visual diagnostics and statistical tests. Visual tools such as histograms, density plots, and box plots are essential for detecting outliers, multimodality, and data sparsity. For example, a histogram with multiple peaks may indicate a mixture of different populations within the dataset, suggesting the need for segmentation or clustering prior to regression analysis. Box plots, on the other hand, are particularly effective for identifying outliers and comparing distributions across different categories. In a production engineering context, EDA is not a one-time task but an iterative process that must be integrated into the data pipeline to ensure data quality and consistency. Data leakage, a common pitfall where information from the test set inadvertently influences the training process, must be strictly prevented during EDA by ensuring that all statistical calculations and feature transformations are performed only on the training data. This is crucial for maintaining the integrity of the model evaluation and preventing overfitting. Furthermore, EDA helps in identifying missing data patterns, which can be informative in themselves; for instance, missing values might be correlated with a specific class label, indicating a systematic bias in data collection.
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
 
-Real-world production engineering implications of EDA extend beyond initial model development to include scalability, reproducibility, and monitoring. In large-scale data environments, EDA must be automated and integrated into data validation frameworks to ensure that data distributions remain stable over time. Concept drift, where the statistical properties of the target variable change over time, can significantly degrade model performance if not detected and addressed. EDA provides the baseline metrics against which future data distributions can be compared, enabling early warning systems for data quality issues. Additionally, EDA plays a critical role in feature selection and engineering, where redundant or irrelevant features are identified and removed to reduce dimensionality and improve model interpretability. Techniques such as correlation analysis and mutual information are used to quantify the relationship between features and the target variable, guiding the selection of the most informative features. In distributed computing environments, EDA tasks must be optimized for parallel processing to handle large datasets efficiently, leveraging tools like Dask or Spark for scalable data analysis. The insights gained from EDA directly influence the choice of machine learning algorithms, preprocessing steps, and hyperparameter tuning strategies, making it an indispensable component of the machine learning lifecycle.</p>
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
                 
                 <div class="analogy-card">
 
-<span>Consider the process of EDA as the comprehensive pre-flight inspection and calibration of a complex aircraft before takeoff. Just as a pilot must check fuel levels, engine performance, weather conditions, and instrument readings to ensure a safe and efficient flight, a data scientist must inspect the data for quality, distribution, and anomalies before deploying a machine learning model. The statistical distributions are akin to the engine's performance metrics; if the engine is running at an abnormal temperature or RPM (skewed or non-normal data), the pilot must adjust the settings or investigate the cause before takeoff. Outliers are like unexpected turbulence or mechanical faults that, if ignored, can lead to catastrophic failure (model overfitting or poor generalization). Visual diagnostics, such as histograms and box plots, are equivalent to the cockpit instruments that provide real-time feedback on the aircraft's status. Data leakage is like using post-flight data to adjust pre-flight settings, which is logically impossible and leads to inaccurate predictions. Just as a pilot relies on a thorough pre-flight checklist to ensure safety and efficiency, a data scientist relies on rigorous EDA to ensure that the machine learning model is built on a solid foundation of clean, well-understood data, thereby maximizing the chances of a successful "flight" (model deployment and performance).</span>
+<span>Think of Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
 </div>
                 
               </div>
@@ -2044,7 +1788,7 @@ Real-world production engineering implications of EDA extend beyond initial mode
 <div class="code-header">
   <span class="code-caption">Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics — Production Implementation & Code Walkthrough</span>
   <div class="code-header-actions">
-    <span class="code-lang-badge">python</span>
+    <span class="code-lang-badge">PYTHON</span>
     <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
       <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span class="copy-text">Copy</span>
@@ -2224,7 +1968,7 @@ Finally, the section explores practical debugging techniques, metric evaluation 
 <div class="code-header">
   <span class="code-caption">Data Preprocessing: Categorical Feature Encoding & Feature Scaling — Production Implementation & Code Walkthrough</span>
   <div class="code-header-actions">
-    <span class="code-lang-badge">python</span>
+    <span class="code-lang-badge">PYTHON</span>
     <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
       <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span class="copy-text">Copy</span>
@@ -2279,13 +2023,15 @@ print(f"Data Cleaning Completed. Remaining Null Values: {df.isnull().sum().sum()
 <h4>Key Takeaways</h4>
 <ul>
                   
-                  <li>Verify feature distributions, null ratios, and skewness prior to selecting algorithmic model families.</li>
+                  <li>Conduct a thorough EDA first: check for missing values, duplicate rows/columns, and compute basic statistics (mean, median, mode) to understand data quality.</li>
                   
-                  <li>All transformation steps (imputation, scaling, encoding) must fit strictly on training splits to prevent data leakage.</li>
+                  <li>Use value‑count summaries to spot repeated or rare categories, which helps decide whether to drop or merge columns/rows.</li>
                   
-                  <li>Select task-appropriate evaluation metrics (Precision-Recall AUC, F1-Score, RMSE) rather than relying solely on raw accuracy.</li>
+                  <li>Visualize distributions and relationships with histograms, box plots, bar charts, scatter plots, and correlation heat‑maps to uncover patterns, outliers, and multicollinearity.</li>
                   
-                  <li>Leverage Scikit-Learn Pipelines and ColumnTransformers to encapsulate preprocessing with estimators for production reproducibility.</li>
+                  <li>Explore the target variable’s relationship with each feature (e.g., group‑by plots, box plots) to guide feature selection and engineering.</li>
+                  
+                  <li>After EDA, encode categorical variables (one‑hot, ordinal, target‑encoding) and scale numeric features (StandardScaler, MinMaxScaler) before feeding data into machine‑learning models.</li>
                   
                 </ul>
 </div>
@@ -2364,7 +2110,7 @@ Finally, the section explores practical debugging techniques, metric evaluation 
 <div class="code-header">
   <span class="code-caption">Feature Engineering: Interaction Features & Domain Transformations — Production Implementation & Code Walkthrough</span>
   <div class="code-header-actions">
-    <span class="code-lang-badge">python</span>
+    <span class="code-lang-badge">PYTHON</span>
     <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
       <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span class="copy-text">Copy</span>
@@ -2500,7 +2246,7 @@ Finally, the section explores practical debugging techniques, metric evaluation 
 <div class="code-header">
   <span class="code-caption">Supervised Learning: Linear Regression & Gradient Descent: Core Foundations & Practical Implementation — Production Implementation & Code Walkthrough</span>
   <div class="code-header-actions">
-    <span class="code-lang-badge">python</span>
+    <span class="code-lang-badge">PYTHON</span>
     <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
       <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span class="copy-text">Copy</span>
@@ -2538,13 +2284,15 @@ print("
 <h4>Key Takeaways</h4>
 <ul>
                   
-                  <li>Verify feature distributions, null ratios, and skewness prior to selecting algorithmic model families.</li>
+                  <li>Verify missing values early in EDA with `df.isnull().sum()` to confirm data is pre‑cleaned before modeling.</li>
                   
-                  <li>All transformation steps (imputation, scaling, encoding) must fit strictly on training splits to prevent data leakage.</li>
+                  <li>Use `df.select_dtypes(include='number')` (or a manual list of numeric columns) to isolate continuous features for distribution checks and visualizations.</li>
                   
-                  <li>Select task-appropriate evaluation metrics (Precision-Recall AUC, F1-Score, RMSE) rather than relying solely on raw accuracy.</li>
+                  <li>Keep a clear workflow: inspect shape, head, `df.info()`, then handle nulls, and finally extract numeric columns for exploratory plots.</li>
                   
-                  <li>Leverage Scikit-Learn Pipelines and ColumnTransformers to encapsulate preprocessing with estimators for production reproducibility.</li>
+                  <li>Remove non‑numeric columns from the numeric subset to avoid errors in downstream statistical or machine‑learning steps.</li>
+                  
+                  <li>Document each EDA step (e.g., null‑value check, numeric extraction) so the process is reproducible and transparent for future model iterations.</li>
                   
                 </ul>
 </div>
@@ -2623,7 +2371,7 @@ Finally, the section explores practical debugging techniques, metric evaluation 
 <div class="code-header">
   <span class="code-caption">Classification: Logistic Regression & Decision Boundaries: Core Foundations & Practical Implementation — Production Implementation & Code Walkthrough</span>
   <div class="code-header-actions">
-    <span class="code-lang-badge">python</span>
+    <span class="code-lang-badge">PYTHON</span>
     <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
       <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span class="copy-text">Copy</span>
@@ -2746,7 +2494,7 @@ Finally, the section explores practical debugging techniques, metric evaluation 
 <div class="code-header">
   <span class="code-caption">Model Evaluation, Bias-Variance Tradeoff & Cross Validation: Core Foundations & Practical Implementation — Production Implementation & Code Walkthrough</span>
   <div class="code-header-actions">
-    <span class="code-lang-badge">python</span>
+    <span class="code-lang-badge">PYTHON</span>
     <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
       <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span class="copy-text">Copy</span>
@@ -2784,13 +2532,15 @@ print("
 <h4>Key Takeaways</h4>
 <ul>
                   
-                  <li>Verify feature distributions, null ratios, and skewness prior to selecting algorithmic model families.</li>
+                  <li>**Leverage domain knowledge first** – Knowing the problem context (e.g., which variables are categorical or continuous) guides the choice of evaluation metrics and statistical tests such as chi‑square or correlation.</li>
                   
-                  <li>All transformation steps (imputation, scaling, encoding) must fit strictly on training splits to prevent data leakage.</li>
+                  <li>**Use authoritative documentation as a quick reference** – Official libraries, Wikipedia, and academic papers are reliable sources for formulas, assumptions, and implementation details of tests and validation techniques.</li>
                   
-                  <li>Select task-appropriate evaluation metrics (Precision-Recall AUC, F1-Score, RMSE) rather than relying solely on raw accuracy.</li>
+                  <li>**Follow a systematic evaluation pipeline** – Collect data → split into train/validation/test → train model → compute bias‑variance diagnostics → apply cross‑validation → report metrics.</li>
                   
-                  <li>Leverage Scikit-Learn Pipelines and ColumnTransformers to encapsulate preprocessing with estimators for production reproducibility.</li>
+                  <li>**Apply cross‑validation to estimate true performance** – K‑fold or stratified CV reduces variance in performance estimates and helps detect over‑fitting early.</li>
+                  
+                  <li>**Balance bias and variance through model complexity** – Simpler models lower bias but may increase variance; more complex models reduce bias but risk over‑fitting; use CV results to pick the sweet spot.</li>
                   
                 </ul>
 </div>
@@ -2910,7 +2660,7 @@ Finally, the section explores practical debugging techniques, metric evaluation 
 <div class="code-header">
   <span class="code-caption">End-to-End Production ML Pipeline Project: Core Foundations & Practical Implementation — Production Implementation & Code Walkthrough</span>
   <div class="code-header-actions">
-    <span class="code-lang-badge">python</span>
+    <span class="code-lang-badge">PYTHON</span>
     <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
       <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
       <span class="copy-text">Copy</span>
@@ -3283,76 +3033,5 @@ print("
     }
   })();
 </script>
-
-<style>
-  .btn-copy-code {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #cbd5e1;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .btn-copy-code:hover {
-    background: rgba(56, 189, 248, 0.2);
-    border-color: #38bdf8;
-    color: #38bdf8;
-  }
-  .btn-copy-code.copied {
-    background: rgba(16, 185, 129, 0.25) !important;
-    border-color: #10b981 !important;
-    color: #34d399 !important;
-  }
-  .code-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 14px;
-    background: rgba(15, 23, 42, 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 8px 8px 0 0;
-  }
-  .code-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .code-lang-badge {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #94a3b8;
-    letter-spacing: 0.05em;
-    font-family: monospace;
-    text-transform: uppercase;
-  }
-</style>
-<script>
-  function copyCodeBlock(btn) {
-    const card = btn.closest('.code-card');
-    if (!card) return;
-    const codeEl = card.querySelector('pre code');
-    if (!codeEl) return;
-    const text = codeEl.innerText;
-    navigator.clipboard.writeText(text).then(() => {
-      const copyText = btn.querySelector('.copy-text');
-      const originalText = copyText.textContent;
-      btn.classList.add('copied');
-      copyText.textContent = 'Copied!';
-      setTimeout(() => {
-        btn.classList.remove('copied');
-        copyText.textContent = originalText;
-      }, 2000);
-    }).catch(err => {
-      console.error('Copy failed:', err);
-    });
-  }
-</script>
-
 </body>
 </html>

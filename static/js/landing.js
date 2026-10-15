@@ -70,15 +70,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Helper: Get Model Friendly Label
   function getModelLabel(val) {
-    if (val.includes("120b")) return "Groq 120B";
-    if (val.includes("qwen")) return "Groq Qwen";
-    if (val.includes("20b")) return "Groq 20B";
-    if (val.includes("llama")) return "Groq LLaMA 3.3";
-    if (val.includes("gemini-2.0")) return "Gemini 2.0 Flash";
-    if (val.includes("gemini")) return "Gemini Pro";
-    if (val.includes("4o-mini")) return "GPT-4o Mini";
-    if (val.includes("4o")) return "GPT-4o";
-    if (val.includes("claude")) return "Claude 3.5";
+    if (val.includes("120b")) return "Groq 120B [FREE]";
+    if (val.includes("20b")) return "Groq 20B [FREE]";
+    if (val.includes("qwen")) return "Groq Qwen 27B [FREE]";
+    if (val.includes("gemini-2.0")) return "Gemini 2.0 Flash [FREE]";
+    if (val.includes("gemini-1.5")) return "Gemini 1.5 Flash [FREE]";
+    if (val.includes(":free")) return "OpenRouter Free [:free]";
     return val;
   }
 
@@ -87,13 +84,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const updateKeyPlaceholder = () => {
       const val = modelSelect.value;
       if (val.startsWith("openai/gpt") || val.startsWith("qwen") || val.startsWith("llama")) {
-        apiKeyInput.placeholder = "Paste Groq API key (gsk_...) [Leave blank for default 120B high-capacity tier]";
+        apiKeyInput.placeholder = "Groq Free Tier (gsk_...) [Leave blank to use built-in 100% Free Groq Key]";
       } else if (val.startsWith("gemini")) {
-        apiKeyInput.placeholder = "Paste Google Gemini API key (AIza...) [Leave blank for free tier]";
-      } else if (val.startsWith("gpt-")) {
-        apiKeyInput.placeholder = "Paste OpenAI API key (sk-...)";
-      } else if (val.startsWith("claude")) {
-        apiKeyInput.placeholder = "Paste Anthropic Claude API key (sk-ant-...)";
+        apiKeyInput.placeholder = "Google Gemini Free Key (AIza...) [Leave blank for built-in free tier]";
+      } else if (val.includes(":free")) {
+        apiKeyInput.placeholder = "OpenRouter Free Key (sk-or-...) [100% Free Zero-Cost Tier]";
+      } else {
+        apiKeyInput.placeholder = "Leave blank for built-in 100% Free Tier (Zero Debit Risk)";
       }
     };
     modelSelect.addEventListener("change", updateKeyPlaceholder);

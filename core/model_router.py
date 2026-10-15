@@ -113,6 +113,25 @@ class DirectUniversalChatModel(BaseChatModel):
                 return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
             raise RuntimeError(f"Gemini API Error {res.status_code}: {res.text}")
 
+        elif self.provider == "openrouter":
+            url = "https://openrouter.ai/api/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://4ubyu.vercel.app",
+                "X-Title": "4 U By U Educational Handbook Generator"
+            }
+            body = {
+                "model": self.model_name or "meta-llama/llama-3.3-70b-instruct:free",
+                "messages": payload_messages,
+                "temperature": self.temperature
+            }
+            res = requests.post(url, headers=headers, json=body, timeout=45)
+            if res.status_code == 200:
+                txt = res.json()["choices"][0]["message"]["content"]
+                return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+            raise RuntimeError(f"OpenRouter API Error {res.status_code}: {res.text}")
+
         elif self.provider == "openai":
             url = "https://api.openai.com/v1/chat/completions"
             headers = {
