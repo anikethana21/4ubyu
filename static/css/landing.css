@@ -25,6 +25,11 @@
   box-sizing: border-box;
 }
 
+html, body.landing-body {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
 body.landing-body {
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
   background-color: var(--bg-primary);

@@ -2493,3 +2493,67 @@ h1, h2, h3, h4,
     height: 30px !important;
   }
 }
+
+/* ========================================================================= */
+/* BULLETPROOF MOBILE SCROLL ARCHITECTURE (<= 960px)                          */
+/* Document-level viewport scrolling with zero touch trapping or selection   */
+/* ========================================================================= */
+@media (max-width: 960px) {
+  html {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+
+  body.workspace-body,
+  body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+
+  .workspace-container,
+  #app-workspace {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    position: relative !important;
+    touch-action: pan-y !important;
+  }
+
+  .handbook-pane,
+  #handbook-pane {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    padding: 0.75rem 0.85rem 80px 0.85rem !important;
+    border-right: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+
+  .chapter-card,
+  .section-block,
+  .handbook-toc,
+  .handbook-header {
+    touch-action: pan-y !important;
+  }
+}
