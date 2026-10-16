@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>4 U By U — Interactive Educational Notes & Tri-Pane Workspace</title>
+  <title>4 U By U &bull; Interactive Educational Notes &amp; Tri-Pane Workspace</title>
   <link rel="stylesheet" href="/static/css/landing.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2•family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body class="landing-body">
 
@@ -20,8 +20,14 @@
       </div>
     </div>
     <nav class="ecosystem-nav">
-      <a href="/" class="nav-item active">🎓 4 U By U (Notes Workspace)</a>
-      <a href="https://r-prep.vercel.app" target="_blank" class="nav-item">📄 R-Prep (Resume Suite) ↗</a>
+      <a href="/" class="nav-item active">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        <span>4 U By U (Notes Workspace)</span>
+      </a>
+      <a href="https://r-prep.vercel.app" target="_blank" rel="noopener noreferrer" class="nav-item">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        <span>R-Prep (Resume Suite) &#8599;</span>
+      </a>
     </nav>
     <div class="header-status">
       <span class="badge-mode {{ app_mode }}">{{ app_mode | upper }} MODE</span>
@@ -36,7 +42,7 @@
       <div class="hero-badge">AI-Synthesized Interactive Study Handbooks</div>
       <h1 class="hero-title">Turn Any Technical Video into a <br><span class="gradient-text">Side-by-Side Study Workspace</span></h1>
       <p class="hero-subtitle">
-        3-Pane Synchronized Workspace: Grounded ?? & Open ? AI Assistant + Predictive Topic Search + YouTube Frame Alignment.
+        3-Pane Synchronized Workspace: Grounded &amp; Open AI Assistant + Predictive Topic Search + YouTube Frame Alignment.
       </p>
 
       <!-▶ CREATION FORM -->
@@ -47,8 +53,8 @@
           <div class="form-group">
             <label for="yt-url">YouTube Video URL</label>
             <div class="input-with-icon">
-              <span class="input-icon">▶</span>
-              <input type="url" id="yt-url" placeholder="https://www.youtube.com/watch•v=..." required>
+              <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
+              <input type="url" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." required>
             </div>
           </div>
 
@@ -152,8 +158,8 @@
         </div>
         <div class="library-stats">
           <span id="total-handbooks-badge" class="stat-pill">{{ library_entries | length }} Handbooks</span>
-          <span class="stat-pill">💾 Saved to your PC</span>
-          <button class="stat-pill" onclick="if(window.LocalLibrary) window.LocalLibrary.exportLocalBackup()" style="cursor:pointer; background:rgba(99,102,241,0.2); border:1px solid #6366f1; color:#c7d2fe; transition:0.2s;">📥 Export Backup (JSON)</button>
+          <span class="stat-pill">Saved to your PC</span>
+          <button class="stat-pill" onclick="if(window.LocalLibrary) window.LocalLibrary.exportLocalBackup()" style="cursor:pointer; background:rgba(99,102,241,0.2); border:1px solid #6366f1; color:#c7d2fe; transition:0.2s;">Export Backup (JSON)</button>
         </div>
       </div>
 
@@ -180,7 +186,7 @@
           {% endfor %}
         {% else %}
           <div class="empty-library">
-            <div class="empty-icon">📚</div>
+            <div class="empty-icon">&#128214;</div>
             <h3>No Handbooks Created Yet</h3>
             <p>Paste a YouTube tutorial URL above to synthesize your first interactive study workspace.</p>
           </div>
@@ -267,8 +273,7 @@
 
       <!-- Dynamic Agent Pipeline Cards -->
       <div class="swarm-agent-grid">
-        <div class="agent-card" id="agent-card-cluster">
-          <div class="agent-card-icon">🧠</div>
+        <div class="agent-card" id="agent-card-cluster"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg></div>
           <div class="agent-card-info">
             <span class="agent-role">Clustering &amp; Threshold Agent</span>
             <span class="agent-status" id="status-agent-cluster">Standby</span>
@@ -276,8 +281,7 @@
           <span class="agent-indicator"></span>
         </div>
 
-        <div class="agent-card" id="agent-card-code">
-          <div class="agent-card-icon">💻</div>
+        <div class="agent-card" id="agent-card-code"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></div>
           <div class="agent-card-info">
             <span class="agent-role">Code Cleaning &amp; Repo Agent</span>
             <span class="agent-status" id="status-agent-code">Standby</span>
@@ -285,8 +289,7 @@
           <span class="agent-indicator"></span>
         </div>
 
-        <div class="agent-card" id="agent-card-theory">
-          <div class="agent-card-icon">📚</div>
+        <div class="agent-card" id="agent-card-theory"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
           <div class="agent-card-info">
             <span class="agent-role">Deep Technical Theory Agent</span>
             <span class="agent-status" id="status-agent-theory">Standby</span>
@@ -294,8 +297,7 @@
           <span class="agent-indicator"></span>
         </div>
 
-        <div class="agent-card" id="agent-card-visual">
-          <div class="agent-card-icon">📊</div>
+        <div class="agent-card" id="agent-card-visual"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
           <div class="agent-card-info">
             <span class="agent-role">Visual Architect Agent</span>
             <span class="agent-status" id="status-agent-visual">Standby</span>
@@ -303,8 +305,7 @@
           <span class="agent-indicator"></span>
         </div>
 
-        <div class="agent-card" id="agent-card-compiler">
-          <div class="agent-card-icon">⚡</div>
+        <div class="agent-card" id="agent-card-compiler"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
           <div class="agent-card-info">
             <span class="agent-role">Tri-Pane Compiler &amp; RAG Vector</span>
             <span class="agent-status" id="status-agent-compiler">Standby</span>
@@ -354,9 +355,7 @@
 
   </main>
 
-  <footer class="landing-footer">
-    <p>4 U By U • Agentic AI Educational Engineering System • Grounded in LangGraph Handbooks</p>
-  </footer>
+  <footer class="landing-footer"><p>4 U By U &bull; Agentic AI Educational Engineering System &bull; Grounded in LangGraph Handbooks</p></footer>
 
   <script src="/static/js/local_storage_db.js"></script>
   <script src="/static/js/landing.js"></script>

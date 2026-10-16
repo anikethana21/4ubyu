@@ -402,21 +402,7 @@
     border-color: #0f766e !important;
   }
 
-  /* Compact mode transitions */
-  .handbook-header.is-compact .workspace-brand-area .brand-tagline {
-    display: none !important;
-  }
-
-  .handbook-header.is-compact .workspace-brand-area .brand-symbol {
-    width: 26px !important;
-    height: 26px !important;
-    font-size: 0.8rem !important;
-    border-radius: 7px !important;
-  }
-
-  .handbook-header.is-compact .workspace-brand-area .brand-name {
-    font-size: 0.95rem !important;
-  }
+  /* Stable brand presentation */
 
 /* ========================================================================= */
   /* OFFICIAL 4U BY U BRAND: 3D EMERALD GREEN & METALLIC GOLD THEME STYLING   */
@@ -1320,66 +1306,7 @@ input#notes-search::placeholder {
   cursor: pointer !important;
 }
 
-/* Compact Burger State (Sticky on Scroll) */
-.handbook-header.is-compact {
-  height: 38px !important;
-  min-height: 38px !important;
-  max-height: 38px !important;
-  padding: 0 1rem !important;
-  margin: 0 -0.75rem 0.75rem -0.75rem !important;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  background: rgba(34, 40, 49, 0.98) !important;
-  backdrop-filter: blur(10px) !important;
-  border-bottom: 1px solid #76ABAE !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-}
-
-.handbook-header.is-compact .video-title,
-.handbook-header.is-compact .video-meta,
-.handbook-header.is-compact .handbook-badge,
-.handbook-header.is-compact #current-playback-time,
-.handbook-header.is-compact .btn-frame-sync {
-  display: none !important;
-}
-
-.handbook-header.is-compact .header-top {
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-shrink: 0 !important;
-  order: 1 !important;
-}
-
-.handbook-header.is-compact .btn-back-home {
-  margin: 0 !important;
-  padding: 3px 8px !important;
-  font-size: 0.72rem !important;
-}
-
-.handbook-header.is-compact .handbook-controls {
-  margin: 0 0 0 auto !important;
-  order: 2 !important;
-  flex: 0 1 350px !important;
-  height: 26px !important;
-  padding: 2px 6px !important;
-  background: rgba(0, 0, 0, 0.45) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: 5px !important;
-}
-
-.handbook-header.is-compact input#notes-search {
-  height: 22px !important;
-  font-size: 0.74rem !important;
-}
-
-.handbook-header.is-compact .btn-sync-toggle {
-  height: 20px !important;
-  font-size: 0.68rem !important;
-  padding: 0 6px !important;
-}
+/* Stable Sticky Header - Zero Layout Shift */
 
 /* ========================================================================= */
 /* 2. STRICT CONTRAST RULES:                                                */
@@ -2049,7 +1976,7 @@ input#notes-search::placeholder {
     <!-- AI Topic Suggestions Dropdown -->
     <div class="search-suggestions-dropdown" id="search-suggestions-dropdown" style="display: none;">
       <div class="suggestions-header">
-        <span class="suggestions-title">?? AI Suggested Topics</span>
+        <span class="suggestions-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg> AI Suggested Topics</span>
         <span class="suggestions-hint">Click to jump or ask</span>
       </div>
       <div class="suggestions-list" id="suggestions-list"></div>
@@ -3479,10 +3406,10 @@ print("
     <!-- DUAL-MODE INTERACTIVE TOGGLE: GROUNDED VS OPEN -->
     <div class="chat-mode-toggle" id="chat-mode-toggle" role="group" aria-label="Study Assistant Mode">
       <button type="button" class="mode-toggle-btn active" id="mode-grounded-btn" onclick="setChatMode('grounded')" title="Strictly ground answers in current video notes & timestamps">
-        <span class="mode-icon">??</span> Grounded
+        <span class="mode-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:3px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span> Grounded
       </button>
       <button type="button" class="mode-toggle-btn" id="mode-open-btn" onclick="setChatMode('open')" title="Switch to open AI mode for broader CS concepts, frameworks, and coding">
-        <span class="mode-icon">?</span> Open
+        <span class="mode-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span> Open
       </button>
     </div>
   </div>
@@ -3519,23 +3446,23 @@ print("
 
 <!-- FLOATING RESTORE COMPANION FAB (WHEN SIDEBAR IS COLLAPSED ON DESKTOP) -->
 <button type="button" class="floating-companion-fab" id="floating-companion-fab" onclick="toggleSidebar()" title="Show Video & Chat Assistant">
-  <span>??</span>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
   <span>Show Companion</span>
 </button>
 
 <!-- MOBILE DOCKED VIEW SWITCHER (VISIBLE ONLY ON MOBILE <= 960px) -->
 <nav class="mobile-nav-bar" id="mobile-nav-bar" aria-label="Mobile Navigation">
-  <button type="button" class="mobile-tab-btn active" id="tab-btn-notes" onclick="setMobileView('notes')">
-    <span class="tab-icon">??</span>
+  <button type="button" class="mobile-tab-btn active" id="tab-btn-notes" onclick="setMobileView('notes')" aria-label="Study Notes">
+    <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span>
     <span class="tab-label">Notes</span>
   </button>
-  <button type="button" class="mobile-tab-btn" id="tab-btn-video" onclick="setMobileView('video')">
-    <span class="tab-icon">??</span>
+  <button type="button" class="mobile-tab-btn" id="tab-btn-video" onclick="setMobileView('video')" aria-label="Video Player">
+    <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2.5"></rect><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon></svg></span>
     <span class="tab-label">Video</span>
     <span class="tab-badge" id="mobile-time-badge">00:00</span>
   </button>
-  <button type="button" class="mobile-tab-btn" id="tab-btn-chat" onclick="setMobileView('chat')">
-    <span class="tab-icon">??</span>
+  <button type="button" class="mobile-tab-btn" id="tab-btn-chat" onclick="setMobileView('chat')" aria-label="AI Study Assistant">
+    <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg></span>
     <span class="tab-label">Assistant</span>
     <span class="tab-badge-ai">AI</span>
   </button>
@@ -3758,37 +3685,7 @@ print("
 <script src="/static/js/yt_sync_controller.js?v=202610101820"></script>
 <script src="/static/js/rag_chat_client.js?v=202610101820"></script>
 <script id="header-burger-inline-script">
-  (function() {
-    function setupBurger() {
-      var pane = document.getElementById("handbook-pane");
-      var header = document.querySelector(".handbook-header");
-      if (!pane || !header) return;
-
-      function onScroll() {
-        var top = pane.scrollTop || window.pageYOffset || document.documentElement.scrollTop || 0;
-        if (top > 25) {
-          if (!header.classList.contains("is-compact")) {
-            header.classList.add("is-compact");
-          }
-        } else {
-          if (header.classList.contains("is-compact")) {
-            header.classList.remove("is-compact");
-          }
-        }
-      }
-
-      pane.addEventListener("scroll", onScroll, { passive: true });
-      window.addEventListener("scroll", onScroll, { passive: true });
-      document.addEventListener("scroll", onScroll, { passive: true });
-      onScroll();
-    }
-
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", setupBurger);
-    } else {
-      setupBurger();
-    }
-  })();
+  // Smooth 60fps scrolling enabled
 </script>
 </body>
 </html>

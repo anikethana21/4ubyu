@@ -84,33 +84,10 @@ function trackVideoPlaybackTime() {
   }
 }
 
-// 4. Header Minimization & Reading-Aware Auto-Seek
-(function initNavbarBurger() {
+// 4. Reading-Aware Auto-Seek
+(function initReadingSync() {
   function setup() {
     const handbookPane = document.getElementById("handbook-pane");
-    const header = document.querySelector(".handbook-header");
-    if (!header) return;
-
-    function handleNavbarBurgerScroll() {
-      const scrollPos = (handbookPane ? handbookPane.scrollTop : 0) || window.pageYOffset || document.documentElement.scrollTop || 0;
-      if (scrollPos > 25) {
-        if (!header.classList.contains("is-compact")) {
-          header.classList.add("is-compact");
-        }
-      } else {
-        if (header.classList.contains("is-compact")) {
-          header.classList.remove("is-compact");
-        }
-      }
-    }
-
-    if (handbookPane) {
-      handbookPane.addEventListener("scroll", handleNavbarBurgerScroll, { passive: true });
-    }
-    window.addEventListener("scroll", handleNavbarBurgerScroll, { passive: true });
-    document.addEventListener("scroll", handleNavbarBurgerScroll, { passive: true });
-    handleNavbarBurgerScroll();
-
     if (handbookPane && window.IntersectionObserver) {
       const sectionBlocks = handbookPane.querySelectorAll(".chapter-card, .section-block");
       const readingObserver = new IntersectionObserver(function(entries) {

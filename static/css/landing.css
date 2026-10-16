@@ -39,10 +39,14 @@ body.landing-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
+  padding: 0.85rem 2rem;
   border-bottom: 1px solid var(--border-color);
-  background: rgba(17, 24, 39, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(17, 24, 39, 0.88);
+  backdrop-filter: blur(14px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  gap: 1rem;
 }
 
 .logo-area {
@@ -83,6 +87,7 @@ body.landing-body {
   color: #10b981;
   text-transform: uppercase;
   font-weight: 700;
+  white-space: nowrap !important;
 }
 
 .brand-symbol {
@@ -116,11 +121,14 @@ body.landing-body {
 
 .brand-name {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  font-size: 1.25rem;
   font-weight: 800;
-  letter-spacing: -0.3px;
-  color: #ffffff;
-  line-height: 1.18;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, #fde68a 0%, #d4af37 50%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  white-space: nowrap !important;
 }
 
 .ecosystem-nav {
@@ -1245,4 +1253,111 @@ body.landing-body {
   font-weight: 700;
   font-size: 0.72rem;
   letter-spacing: 0.02em;
+}
+
+
+/* =========================================================================
+   MOBILE ECOSYSTEM BAR & NAVBAR RESPONSIVENESS (<= 768px)
+   ========================================================================= */
+.mobile-ecosystem-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .ecosystem-header {
+    padding: 0.65rem 1rem !important;
+    gap: 0.5rem !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+
+  .logo-area {
+    gap: 0.6rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .brand-logo-img {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .brand-name {
+    font-size: 1.15rem !important;
+    white-space: nowrap !important;
+    line-height: 1.15 !important;
+  }
+
+  .brand-tagline {
+    font-size: 0.58rem !important;
+    letter-spacing: 1.5px !important;
+    white-space: nowrap !important;
+  }
+
+  /* CRITICAL: Hide crowded desktop ecosystem links in top header on mobile screens to stop overlapping the logo and mode badge */
+  .ecosystem-nav {
+    display: none !important;
+  }
+
+  /* Hide zero-cost badge on mobile header to keep it sleek and minimal */
+  .badge-zero-cost {
+    display: none !important;
+  }
+
+  .header-status {
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .badge-mode {
+    font-size: 0.72rem !important;
+    padding: 0.28rem 0.6rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* Mobile ecosystem pill row right under hero */
+  .mobile-ecosystem-bar {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 0.65rem !important;
+    margin: 1.25rem auto 1.75rem auto !important;
+    flex-wrap: wrap !important;
+    padding: 0 1rem !important;
+  }
+
+  .mobile-eco-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    padding: 0.45rem 0.85rem !important;
+    border-radius: 9999px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    color: #cbd5e1 !important;
+    background: rgba(30, 41, 59, 0.7) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    backdrop-filter: blur(8px) !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .mobile-eco-pill.active {
+    color: #34d399 !important;
+    border-color: rgba(16, 185, 129, 0.45) !important;
+    background: rgba(6, 78, 59, 0.35) !important;
+  }
+
+  .hero-title {
+    font-size: 1.85rem !important;
+    letter-spacing: -0.5px !important;
+  }
+
+  .hero-subtitle {
+    font-size: 0.88rem !important;
+    padding: 0 0.5rem !important;
+  }
+
+  .main-container {
+    padding: 1.5rem 1rem !important;
+  }
 }

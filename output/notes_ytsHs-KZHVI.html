@@ -402,21 +402,7 @@
     border-color: #0f766e !important;
   }
 
-  /* Compact mode transitions */
-  .handbook-header.is-compact .workspace-brand-area .brand-tagline {
-    display: none !important;
-  }
-
-  .handbook-header.is-compact .workspace-brand-area .brand-symbol {
-    width: 26px !important;
-    height: 26px !important;
-    font-size: 0.8rem !important;
-    border-radius: 7px !important;
-  }
-
-  .handbook-header.is-compact .workspace-brand-area .brand-name {
-    font-size: 0.95rem !important;
-  }
+  /* Stable brand presentation */
 
 </style>
 
@@ -620,66 +606,7 @@ input#notes-search::placeholder {
   cursor: pointer !important;
 }
 
-/* Compact Burger State (Sticky on Scroll) */
-.handbook-header.is-compact {
-  height: 38px !important;
-  min-height: 38px !important;
-  max-height: 38px !important;
-  padding: 0 1rem !important;
-  margin: 0 -0.75rem 0.75rem -0.75rem !important;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  background: rgba(34, 40, 49, 0.98) !important;
-  backdrop-filter: blur(10px) !important;
-  border-bottom: 1px solid #76ABAE !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-}
-
-.handbook-header.is-compact .video-title,
-.handbook-header.is-compact .video-meta,
-.handbook-header.is-compact .handbook-badge,
-.handbook-header.is-compact #current-playback-time,
-.handbook-header.is-compact .btn-frame-sync {
-  display: none !important;
-}
-
-.handbook-header.is-compact .header-top {
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-shrink: 0 !important;
-  order: 1 !important;
-}
-
-.handbook-header.is-compact .btn-back-home {
-  margin: 0 !important;
-  padding: 3px 8px !important;
-  font-size: 0.72rem !important;
-}
-
-.handbook-header.is-compact .handbook-controls {
-  margin: 0 0 0 auto !important;
-  order: 2 !important;
-  flex: 0 1 350px !important;
-  height: 26px !important;
-  padding: 2px 6px !important;
-  background: rgba(0, 0, 0, 0.45) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: 5px !important;
-}
-
-.handbook-header.is-compact input#notes-search {
-  height: 22px !important;
-  font-size: 0.74rem !important;
-}
-
-.handbook-header.is-compact .btn-sync-toggle {
-  height: 20px !important;
-  font-size: 0.68rem !important;
-  padding: 0 6px !important;
-}
+/* Stable Sticky Header - Zero Layout Shift */
 
 /* ========================================================================= */
 /* 2. STRICT CONTRAST RULES:                                                */
@@ -4016,37 +3943,7 @@ print("Resumed and completed:", final["status"])</code></pre>
 <script src="/static/js/yt_sync_controller.js?v=202610101820"></script>
 <script src="/static/js/rag_chat_client.js?v=202610101820"></script>
 <script id="header-burger-inline-script">
-  (function() {
-    function setupBurger() {
-      var pane = document.getElementById("handbook-pane");
-      var header = document.querySelector(".handbook-header");
-      if (!pane || !header) return;
-
-      function onScroll() {
-        var top = pane.scrollTop || window.pageYOffset || document.documentElement.scrollTop || 0;
-        if (top > 25) {
-          if (!header.classList.contains("is-compact")) {
-            header.classList.add("is-compact");
-          }
-        } else {
-          if (header.classList.contains("is-compact")) {
-            header.classList.remove("is-compact");
-          }
-        }
-      }
-
-      pane.addEventListener("scroll", onScroll, { passive: true });
-      window.addEventListener("scroll", onScroll, { passive: true });
-      document.addEventListener("scroll", onScroll, { passive: true });
-      onScroll();
-    }
-
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", setupBurger);
-    } else {
-      setupBurger();
-    }
-  })();
+  // Smooth 60fps scrolling enabled
 </script>
 </body>
 </html>

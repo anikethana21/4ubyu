@@ -366,9 +366,9 @@ Suggested Follow-ups:
             "Production Implementation & Best Practices"
         ]
         out_msg = (
-            f"> **[Grounded Mode ?? ? Topic Outside Current Lecture]**\n\n"
+            f"> **[Grounded Mode 🔒 • Topic Outside Current Lecture]**\n\n"
             f"The concept **\"{q_clean}\"** is not covered in the local notes for **{video_title}**.\n\n"
-            f"?? **Switch to Open Mode (?)** using the toggle at the top of this chat panel to get a full production-grade explanation and code walkthrough.\n\n"
+            f"💡 **Switch to Open Mode (⚡)** using the toggle at the top of this chat panel to get a full production-grade explanation and code walkthrough.\n\n"
             f"Or explore one of the verified topics from this course:\n"
         )
         for t in suggested_topics:
