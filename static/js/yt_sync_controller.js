@@ -57,6 +57,8 @@ function trackVideoPlaybackTime() {
   
   const timeDisplay = document.getElementById("current-playback-time");
   if (timeDisplay) timeDisplay.textContent = formatSec(currentTime);
+  const mobileTimeBadge = document.getElementById("mobile-time-badge");
+  if (mobileTimeBadge) mobileTimeBadge.textContent = formatSec(currentTime);
 
   if (autoSyncMode === "MANUAL") return;
 
