@@ -2260,16 +2260,18 @@ h1, h2, h3, h4,
     overflow-x: hidden !important;
     overflow-y: auto !important;
     height: auto !important;
-    min-height: 100vh !important;
+    min-height: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
   }
 
   .workspace-container {
     display: block !important;
-    width: 100vw !important;
+    width: 100% !important;
     height: auto !important;
-    min-height: 100vh !important;
+    min-height: 100% !important;
     position: relative !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
   }
 
   #v-resizer, #h-resizer {
@@ -2356,17 +2358,21 @@ h1, h2, h3, h4,
     border-radius: 4px !important;
   }
 
-  /* Default State: Mobile Notes Active */
+  /* Default State: Mobile Notes Active - Fluid Native Scrolling */
   .handbook-pane {
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 100% !important;
     height: auto !important;
     min-height: 100vh !important;
-    padding: 1.25rem 0.85rem !important;
-    padding-bottom: 76px !important;
+    padding: 1rem 0.85rem 80px 0.85rem !important;
     border-right: none !important;
+    overflow: visible !important;
     overflow-y: visible !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
   }
 
   .right-column {

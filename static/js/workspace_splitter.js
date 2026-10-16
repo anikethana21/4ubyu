@@ -271,6 +271,31 @@
     }
   }
 
+  
+    // Desktop Wheel Scroll Delegation & Focus Support
+    const hp = document.getElementById("handbook-pane");
+    if (hp && !hp.hasAttribute("tabindex")) {
+      hp.setAttribute("tabindex", "0");
+      hp.style.outline = "none";
+    }
+
+    window.addEventListener("wheel", function(e) {
+      if (window.innerWidth <= 960) return;
+      const handbookPane = document.getElementById("handbook-pane");
+      if (!handbookPane) return;
+      const chatMessages = document.getElementById("chat-messages");
+      if (chatMessages && (e.target === chatMessages || chatMessages.contains(e.target))) {
+        return;
+      }
+      if (e.target.closest && e.target.closest("pre, code, textarea, input, .search-suggestions-dropdown")) {
+        return;
+      }
+      if (handbookPane.contains(e.target) || e.target === handbookPane) {
+        return;
+      }
+      handbookPane.scrollTop += e.deltaY;
+    }, { passive: true });
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initWorkspace);
   } else {
