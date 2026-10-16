@@ -139,8 +139,8 @@
     const isMobile = window.innerWidth <= 960;
 
     if (isMobile) {
-      const savedMobileView = localStorage.getItem("4u_mobile_view") || "notes";
-      window.setMobileView(savedMobileView);
+      // Always initialize with notes view on mobile load so study content is immediately visible & scrollable
+      window.setMobileView("notes");
     } else {
       const savedVSplit = localStorage.getItem("4u_v_split");
       const savedHSplit = localStorage.getItem("4u_h_split");

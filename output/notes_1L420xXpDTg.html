@@ -866,38 +866,118 @@
   font-weight: 400 !important;
 }
 
-/* 4. MOBILE NAVBAR DOCK & RESPONSIVE RULES */
-.mobile-nav-bar {
-  display: none;
+</style>
+
+<style id="theme-slate-teal-master">
+@font-face {
+  font-family: 'Gagalin';
+  src: url('/static/fonts/gagalin-regular.woff2') format('woff2'),
+       url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
-@media (max-width: 960px) {
-  html {
-    height: auto !important;
-    min-height: 100% !important;
+:root, [data-theme="dark_academic"] {
+  --theme-bg: #1e242c !important;
+  --theme-pane-bg: #1e242c !important;
+  --theme-header-bg: #222831 !important;
+  --theme-card-bg: #ffffff !important;
+  --theme-border: #384352 !important;
+  --theme-text: #eeeeee !important;
+  --theme-text-muted: #9ba5b1 !important;
+  --theme-accent: #76ABAE !important;
+  --theme-accent-hover: #5d999d !important;
+  --theme-code-bg: #181c22 !important;
+  --splitter-hover: #76ABAE !important;
+}
+
+body, html, .workspace-body {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  background-color: #1e242c !important;
+  color: #eeeeee !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Headings with Gagalin */
+h1, h2, h3, h4, 
+.video-title, 
+.chapter-heading, 
+.section-heading, 
+.toc-header h3, 
+.handbook-badge, 
+.header-top .handbook-badge,
+.pane-title {
+  font-family: 'Gagalin', 'Gagalin-Regular', -apple-system, sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* ========================================================================= */
+/* 1. COMPACT MARGINS SYSTEM: SIGNIFICANTLY REDUCED MARGINS ACROSS THE BOARD  */
+/* ========================================================================= */
+
+
+@media (min-width: 961px) {
+  html, body.workspace-body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .workspace-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .handbook-pane, #handbook-pane {
+    background: #1e242c !important;
+    padding: 0 0.75rem 2.5rem 0.75rem !important;
+    position: relative !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
     overflow-y: scroll !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
   }
+}
 
-  body.workspace-body {
+
+@media (max-width: 960px) {
+  html {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  body.workspace-body,
+  body {
     height: auto !important;
     min-height: 100% !important;
     overflow: visible !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
+    position: static !important;
     -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
   }
 
-  .workspace-container {
+  .workspace-container,
+  #app-workspace {
     display: block !important;
     width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
     min-height: 100% !important;
-    position: relative !important;
     overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    position: relative !important;
   }
 
   #v-resizer, #h-resizer {
@@ -984,17 +1064,31 @@
     border-radius: 4px !important;
   }
 
-  /* Default State: Mobile Notes Active */
-  .handbook-pane {
+  /* Default State: Mobile Notes Active - Fluid Document-Level Native Scrolling */
+  .handbook-pane,
+  #handbook-pane {
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-width: 100% !important;
+    min-width: 0 !important;
     height: auto !important;
-    min-height: 100vh !important;
-    padding: 1.25rem 0.85rem !important;
-    padding-bottom: 76px !important;
+    min-height: 100% !important;
+    padding: 0.75rem 0.85rem 90px 0.85rem !important;
     border-right: none !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
     overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .handbook-header {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    margin: 0 0 1rem 0 !important;
+    padding: 0.75rem 0.85rem !important;
+    z-index: 10 !important;
   }
 
   .right-column {
@@ -1050,14 +1144,6 @@
     height: 100% !important;
   }
 
-  /* Header mobile adjustment */
-  .handbook-header {
-    margin: -1.25rem -0.85rem 1rem -0.85rem !important;
-    padding: 1rem 0.85rem !important;
-    position: sticky !important;
-    top: 0 !important;
-  }
-
   .video-title {
     font-size: 1.15rem !important;
     line-height: 1.3 !important;
@@ -1086,7 +1172,7 @@
   }
 
   .btn-sidebar-toggle {
-    display: none !important; /* Sidebar is already fullscreen on mobile */
+    display: none !important;
   }
 
   .chapter-card {
@@ -1096,6 +1182,12 @@
 
   .chapter-heading {
     font-size: 1.15rem !important;
+  }
+
+  pre, .code-block {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   pre code {
@@ -1115,152 +1207,6 @@
     height: 30px !important;
   }
 }
-
-</style>
-
-<style id="theme-slate-teal-master">
-@font-face {
-  font-family: 'Gagalin';
-  src: url('/static/fonts/gagalin-regular.woff2') format('woff2'),
-       url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-:root, [data-theme="dark_academic"] {
-  --theme-bg: #1e242c !important;
-  --theme-pane-bg: #1e242c !important;
-  --theme-header-bg: #222831 !important;
-  --theme-card-bg: #ffffff !important;
-  --theme-border: #384352 !important;
-  --theme-text: #eeeeee !important;
-  --theme-text-muted: #9ba5b1 !important;
-  --theme-accent: #76ABAE !important;
-  --theme-accent-hover: #5d999d !important;
-  --theme-code-bg: #181c22 !important;
-  --splitter-hover: #76ABAE !important;
-}
-
-body, html, .workspace-body {
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  background-color: #1e242c !important;
-  color: #eeeeee !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Headings with Gagalin */
-h1, h2, h3, h4, 
-.video-title, 
-.chapter-heading, 
-.section-heading, 
-.toc-header h3, 
-.handbook-badge, 
-.header-top .handbook-badge,
-.pane-title {
-  font-family: 'Gagalin', 'Gagalin-Regular', -apple-system, sans-serif !important;
-  letter-spacing: 0.5px !important;
-}
-
-/* ========================================================================= */
-/* 1. COMPACT MARGINS SYSTEM: SIGNIFICANTLY REDUCED MARGINS ACROSS THE BOARD  */
-/* ========================================================================= */
-
-
-@media (min-width: 961px) {
-  html, body.workspace-body {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  .workspace-container {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .handbook-pane, #handbook-pane {
-    background: #1e242c !important;
-    padding: 0 0.75rem 2.5rem 0.75rem !important;
-    position: relative !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow-y: scroll !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-  }
-}
-
-
-/* ========================================================================= */
-/* BULLETPROOF MOBILE SCROLL ARCHITECTURE (<= 960px)                          */
-/* Document-level viewport scrolling with zero touch trapping or selection   */
-/* ========================================================================= */
-@media (max-width: 960px) {
-  html {
-    height: auto !important;
-    min-height: 100% !important;
-    overflow-y: scroll !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-  }
-
-  body.workspace-body,
-  body {
-    height: auto !important;
-    min-height: 100% !important;
-    overflow: visible !important;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-  }
-
-  .workspace-container,
-  #app-workspace {
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 100% !important;
-    overflow: visible !important;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-    position: relative !important;
-    touch-action: pan-y !important;
-  }
-
-  .handbook-pane,
-  #handbook-pane {
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 100% !important;
-    height: auto !important;
-    min-height: 100% !important;
-    overflow: visible !important;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-    padding: 0.75rem 0.85rem 80px 0.85rem !important;
-    border-right: none !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-  }
-
-  .chapter-card,
-  .section-block,
-  .handbook-toc,
-  .handbook-header {
-    touch-action: pan-y !important;
-  }
-}
-
 
 /* Header: Sleek & Compact */
 .handbook-header {
