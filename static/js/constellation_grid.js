@@ -102,7 +102,7 @@
       const speed = Math.sqrt(mouse.vx * mouse.vx + mouse.vy * mouse.vy);
 
       // Color paletting tailored to Amber Gold & Espresso Theme
-      const bgColor = '#2c2f35'; // Theme primary dark background
+      const bgColor = '#15191d'; // Theme primary dark background
       const nodeColor = '229, 229, 229'; // Champagne star text / foreground
       const accentColor = '255, 255, 255'; // Amber Gold 45 68% 47%
 
@@ -113,7 +113,7 @@
       if (mouse.x > 0 && mouse.y > 0) {
         const glowRad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, mouse.radius);
         glowRad.addColorStop(0, 'rgba(229, 229, 229, 0.12)');
-        glowRad.addColorStop(1, 'rgba(44, 47, 53, 0)');
+        glowRad.addColorStop(1, 'rgba(21, 25, 29, 0)');
         ctx.fillStyle = glowRad;
         ctx.beginPath();
         ctx.arc(mouse.x, mouse.y, mouse.radius, 0, Math.PI * 2);

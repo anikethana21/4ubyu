@@ -1,7 +1,7 @@
 /* 4 U By U — Landing Page & Study Library Styles */
 /* 4 U By U ? Official Emerald Green & 3D Metallic Gold Brand Identity */
 :root {
-  --bg-primary: #2c2f35;
+  --bg-primary: #15191d;
   --bg-card: rgba(43, 43, 43, 0.65);
   --bg-card-hover: rgba(79, 79, 79, 0.7);
   --bg-input: rgba(43, 43, 43, 0.55);
@@ -296,7 +296,7 @@ body.landing-body {
   display: inline-block;
   padding: 0.35rem 0.95rem;
   border-radius: 9999px;
-  background: rgba(44, 47, 53, 0.38);
+  background: rgba(21, 25, 29, 0.38);
   border: 1px solid rgba(201, 154, 37, 0.3);
   font-family: var(--font-mono), monospace;
   font-size: 0.78rem;
@@ -334,7 +334,7 @@ body.landing-body {
   max-width: 880px !important;
   width: 100% !important;
   margin: 0 auto;
-  background: rgba(44, 47, 53, 0.38) !important;
+  background: rgba(21, 25, 29, 0.38) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid hsl(45 40% 97% / 0.1) !important;
@@ -429,7 +429,7 @@ body.landing-body {
   border-radius: 12px !important;
   background: linear-gradient(135deg, hsl(45 68% 47%) 0%, hsl(44 63% 36%) 100%) !important;
   border: 1px solid hsl(45 68% 47% / 0.5) !important;
-  color: #2c2f35 !important;
+  color: #15191d !important;
   font-size: 1.02rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.3px;
@@ -1479,7 +1479,7 @@ body.landing-body {
   max-width: 880px !important;
   width: 100% !important;
   margin: 0 auto;
-  background: rgba(44, 47, 53, 0.38) !important;
+  background: rgba(21, 25, 29, 0.38) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid hsl(45 40% 97% / 0.1) !important;
@@ -1807,7 +1807,7 @@ body.landing-body {
 }
 
 .animated-settings-btn {
-  background: rgba(44, 47, 53, 0.38);
+  background: rgba(21, 25, 29, 0.38);
   border: 1px solid hsl(45 40% 97% / 0.15);
   border-radius: 50%;
   width: 40px;
@@ -1899,7 +1899,7 @@ body.landing-body {
   height: 46px;
   border-radius: 50%;
   background: linear-gradient(135deg, hsl(45 68% 47%), hsl(44 63% 33%));
-  color: #2c2f35;
+  color: #15191d;
   font-weight: 800;
   font-size: 1.25rem;
   display: flex;
@@ -1964,7 +1964,7 @@ body.landing-body {
 
 .btn-dialog-login {
   background: linear-gradient(135deg, hsl(45 68% 47%), hsl(44 63% 33%));
-  color: #2c2f35;
+  color: #15191d;
   font-weight: 700;
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -2029,7 +2029,7 @@ body.landing-body {
   width: 100vw !important;
   height: 100vh !important;
   z-index: 999999 !important;
-  background: rgba(44, 47, 53, 0.78) !important;
+  background: rgba(21, 25, 29, 0.78) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   display: flex !important;
@@ -2110,7 +2110,7 @@ body.landing-body {
 
 .btn-primary {
   background: linear-gradient(135deg, #e5e5e5 0%, #a4a4a4 100%) !important;
-  color: #2c2f35 !important;
+  color: #15191d !important;
   border: 1px solid rgba(229, 229, 229, 0.5) !important;
   box-shadow: 0 4px 20px rgba(229, 229, 229, 0.25) !important;
 }
@@ -2256,7 +2256,7 @@ body.landing-body {
   transform: translate(-50%, -50%);
   width: 125%;
   height: 160%;
-  background: radial-gradient(ellipse at center, rgba(255, 220, 175, 0.20) 0%, rgba(210, 150, 95, 0.10) 42%, rgba(44, 47, 53, 0) 70%);
+  background: radial-gradient(ellipse at center, rgba(255, 220, 175, 0.20) 0%, rgba(210, 150, 95, 0.10) 42%, rgba(21, 25, 29, 0) 70%);
   filter: blur(28px);
   z-index: -1;
   pointer-events: none;
@@ -2404,7 +2404,7 @@ body.landing-body {
   gap: 0.5rem;
   margin-bottom: 1.5rem;
   padding: 0.3rem;
-  background: rgba(44, 47, 53, 0.28);
+  background: rgba(21, 25, 29, 0.28);
   border: 1px solid rgba(115, 115, 115, 0.25);
   border-radius: 12px;
 }
@@ -2512,9 +2512,9 @@ body.landing-body {
 }
 
 
-/* Translucent Glass Generator Card & Library Cards with #2c2f35 Tint */
+/* Translucent Glass Generator Card & Library Cards with #15191d Tint */
 .card-generator {
-  background: rgba(44, 47, 53, 0.35) !important;
+  background: rgba(21, 25, 29, 0.35) !important;
   backdrop-filter: blur(28px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
   border: 1px solid rgba(229, 229, 229, 0.15) !important;
@@ -2522,21 +2522,21 @@ body.landing-body {
 }
 
 .card-generator .input-with-icon {
-  background: rgba(44, 47, 53, 0.28) !important;
+  background: rgba(21, 25, 29, 0.28) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
   border: 1px solid rgba(229, 229, 229, 0.15) !important;
 }
 
 .hero-vault-chip {
-  background: rgba(44, 47, 53, 0.32) !important;
+  background: rgba(21, 25, 29, 0.32) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
   border: 1px solid rgba(229, 229, 229, 0.14) !important;
 }
 
 .handbook-card, .workspace-card {
-  background: rgba(44, 47, 53, 0.35) !important;
+  background: rgba(21, 25, 29, 0.35) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid rgba(229, 229, 229, 0.14) !important;
@@ -2553,7 +2553,7 @@ body.landing-body {
 }
 
 .workspace-badge-private {
-  background: rgba(44, 47, 53, 0.55) !important;
+  background: rgba(21, 25, 29, 0.55) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
   border: 1px solid rgba(201, 154, 37, 0.35) !important;
@@ -2579,11 +2579,11 @@ body.landing-body {
 .btn-card-open:hover {
   background: linear-gradient(135deg, hsl(43 74% 66%), hsl(45 68% 47%)) !important;
   box-shadow: 0 6px 20px rgba(201, 154, 37, 0.45) !important;
-  color: #2c2f35 !important;
+  color: #15191d !important;
 }
 
 .btn-card-delete {
-  background: rgba(44, 47, 53, 0.4) !important;
+  background: rgba(21, 25, 29, 0.4) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   border: 1px solid rgba(229, 229, 229, 0.14) !important;
@@ -2598,7 +2598,7 @@ body.landing-body {
   color: #fca5a5 !important;
 }
 
-/* Universal Translucent Frosted Glass Scrollbars Matching #2c2f35 Tint */
+/* Universal Translucent Frosted Glass Scrollbars Matching #15191d Tint */
 * {
   scrollbar-width: thin !important;
   scrollbar-color: rgba(229, 229, 229, 0.22) transparent !important;
@@ -2642,7 +2642,7 @@ body.landing-body {
   display: flex !important;
   align-items: center !important;
   gap: 0.85rem !important;
-  background: rgba(44, 47, 53, 0.28) !important;
+  background: rgba(21, 25, 29, 0.28) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
   border: 1px solid rgba(229, 229, 229, 0.15) !important;
