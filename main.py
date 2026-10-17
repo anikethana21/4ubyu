@@ -6,6 +6,7 @@ Handbook Pattern: Multi-Agent Orchestrator Pipeline
 """
 
 import asyncio
+import os
 from typing import Dict, Any, Optional, List
 from states import MasterNotesState
 from phase1_ingestion import build_phase1_graph
@@ -197,6 +198,17 @@ async def run_master_notes_pipeline(
     render_res = html_tri_pane_workspace_renderer(state)
     state.update(render_res)
 
+    # PHASE 7.5: Jupyter Notebook Export (best-effort, non-fatal)
+    if str(state.get("output_format", "")).lower() == "ipynb" or os.environ.get("EXPORT_NOTEBOOK", "1").lower() == "1":
+        print("[4 U By U] Phase 7.5: Exporting Jupyter notebook (.ipynb)...")
+        try:
+            from core.notebook_exporter import export_state_to_notebook
+            nb_path = export_state_to_notebook(state)
+            if nb_path:
+                state["output_notebook_path"] = nb_path
+        except Exception as e:
+            print(f"[4 U By U] Phase 7.5 notebook export notice: {e}")
+
     # PHASE 8: RAG Indexing
     print("[4 U By U] Phase 8: Building local ChromaDB vector index...")
     try:
@@ -206,4 +218,6 @@ async def run_master_notes_pipeline(
         print(f"[4 U By U] Phase 8 notice: {e}")
 
     print(f"[4 U By U] Pipeline complete! Output saved to: {state['output_html_path']}")
+    if state.get("output_notebook_path"):
+        print(f"[4 U By U] Notebook exported to: {state['output_notebook_path']}")
     return state

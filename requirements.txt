@@ -37,3 +37,9 @@ pyjwt>=2.8.0
 cryptography>=42.0.0
 numpy>=1.24.0
 markdown>=3.6.0
+
+# Jupyter Notebook Export (lightweight, pure Python)
+nbformat>=5.9.0
+
+# NOTE: Neural chapter-classifier training deps (torch, sentence-transformers)
+# live in requirements-ml.txt — install only for local model training.

@@ -178,6 +178,62 @@ def _segments_to_chapters(
     return _normalize_end_times(chapters, video_duration)
 
 
+def _detect_chapters_with_nn_model(
+    timed_transcript: List[Dict[str, Any]],
+    video_duration: float,
+    window_sec: int,
+    api_key: Optional[str] = None,
+    model_name: Optional[str] = None,
+) -> Optional[List[Dict[str, Any]]]:
+    """
+    Optional neural-boundary chapterization (opt-in via USE_NN_CHAPTERIZER=1).
+    Uses the trained ChapterBoundaryMLP to label windows, then merges adjacent
+    positive windows into chapter spans. Returns None when the model cannot be
+    loaded so callers can fall back to embedding clustering.
+    """
+    try:
+        import os
+        if os.environ.get("USE_NN_CHAPTERIZER", "0").lower() not in ("1", "true", "yes"):
+            return None
+        from core.chapter_classifier_nn import ChapterClassifierModel
+
+        model = ChapterClassifierModel()
+        if not model.load():
+            return None
+
+        windows = build_timed_windows(timed_transcript, window_sec=window_sec)
+        if not windows:
+            return None
+
+        preds = model.predict_boundaries(windows)
+        boundary_starts = [w["start_sec"] for w, p in zip(windows, preds) if p == 1]
+        if not boundary_starts:
+            return None
+
+        # Always treat lecture start as a chapter start
+        if boundary_starts[0] != 0:
+            boundary_starts = [0] + boundary_starts
+
+        segments = []
+        for i, start in enumerate(boundary_starts):
+            end = boundary_starts[i + 1] if i + 1 < len(boundary_starts) else video_duration
+            if end <= start:
+                end = start + 60
+            segments.append({"start_sec": start, "end_sec": end,
+                             "timestamp_str": format_seconds(start), "text": ""})
+        if len(segments) < 2:
+            return None
+
+        print(f"[ChapterDetector] NN model proposed {len(segments)} chapter boundaries.")
+        return _segments_to_chapters(
+            segments, timed_transcript, video_duration,
+            api_key=api_key, model_name=model_name,
+        )
+    except Exception as e:
+        print(f"[ChapterDetector] NN chapterizer unavailable, using clustering fallback: {e}")
+        return None
+
+
 def detect_chapters_from_transcript(
     timed_transcript: List[Dict[str, Any]],
     full_transcript: str,
@@ -223,6 +279,29 @@ def detect_chapters_from_transcript(
         window_sec = 60
 
     windows = build_timed_windows(timed_transcript, window_sec=window_sec)
+
+    # Opt-in neural boundary model (USE_NN_CHAPTERIZER=1); falls back to clustering
+    nn_chapters = _detect_chapters_with_nn_model(
+        timed_transcript, video_duration, window_sec,
+        api_key=api_key, model_name=model_name,
+    )
+    if nn_chapters and len(nn_chapters) >= 2:
+        chapters = nn_chapters
+        chapters = _split_oversized_chapters(
+            chapters, timed_transcript, max_duration_sec=max_chapter_duration_sec
+        )
+        chapters = _normalize_end_times(chapters, video_duration)
+        for ch in chapters:
+            if not ch.get("transcript"):
+                s = float(ch["start_time"])
+                e = float(ch["end_time"])
+                ch["transcript"] = _slice_transcript(timed_transcript, s, e)
+        print(
+            f"[ChapterDetector] NN-model chapterization: {len(chapters)} chapters "
+            f"(duration ~{int(video_duration)}s)."
+        )
+        return chapters, "transcript_nn_model"
+
     segments = cluster_windows_to_segments(windows, distance_threshold=distance_threshold)
 
     chapters = _segments_to_chapters(

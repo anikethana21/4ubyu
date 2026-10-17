@@ -1,0 +1,17 @@
+# 4 U By U — ML Chapter-Classifier Training Dependencies (LOCAL ONLY)
+# Not included in requirements.txt to keep the Vercel serverless bundle small.
+# Install only when training the neural chapter classifier:
+#   pip install -r requirements-ml.txt
+
+# Neural network training/inference
+torch>=2.2.0
+
+# Sentence embeddings (preferred encoder; falls back to sklearn hashing if absent)
+sentence-transformers>=2.6.0
+
+# Notebook export/validation
+nbformat>=5.9.0
+
+# Training utilities (already in most ML envs, pinned for safety)
+scikit-learn>=1.4.0
+numpy>=1.26.0

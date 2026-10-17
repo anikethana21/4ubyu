@@ -274,6 +274,34 @@ async def remove_user_workspace(workspace_id: str, user: Dict[str, Any] = Depend
         raise HTTPException(status_code=404, detail="Workspace not found or unauthorized.")
     return {"status": "deleted", "workspace_id": workspace_id}
 
+@app.get("/api/workspace/{video_id}/notebook")
+async def export_workspace_notebook(video_id: str):
+    """
+    Converts a generated tri-pane HTML handbook into a Jupyter notebook (.ipynb)
+    and returns it as a file download. Re-export is idempotent per call.
+    """
+    from core.notebook_exporter import HandbookNotebookConverter
+
+    html_path = OUTPUT_DIR / f"notes_{video_id}.html"
+    if not html_path.exists():
+        raise HTTPException(status_code=404, detail=f"No generated handbook for video {video_id}.")
+
+    try:
+        nb_path = HandbookNotebookConverter.html_to_notebook(
+            html_path, OUTPUT_DIR / "notebooks" / f"notes_{video_id}.ipynb"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Notebook export failed: {e}")
+
+    nb_bytes = Path(nb_path).read_bytes()
+    return Response(
+        content=nb_bytes,
+        media_type="application/x-ipynb+json",
+        headers={
+            "Content-Disposition": f'attachment; filename="notes_{video_id}.ipynb"'
+        },
+    )
+
 # ---------------------------------------------------------------------------
 # PRIMARY LANDING & PIPELINE ENDPOINTS
 # ---------------------------------------------------------------------------

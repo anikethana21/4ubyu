@@ -35,3 +35,8 @@ scratch_*
 notes_vectordb/
 *.log
 .vercel
+
+# ML chapter-classifier artifacts (train locally, don't commit)
+models/
+data/chapter_classification/
+output/notebooks/
