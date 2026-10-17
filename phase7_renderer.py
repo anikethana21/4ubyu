@@ -22,6 +22,28 @@ def html_tri_pane_workspace_renderer(state: MasterNotesState) -> Dict[str, Any]:
     chapters: List[ChapterContent] = state.get("chapter_contents", [])
     color_palette = state.get("color_palette", "dark_academic")
     
+    # Deduplicate leading chapter numbers for clean Table of Contents
+    import re
+    for ch in chapters:
+        c_title = ch.get("title") or ch.get("chapter_title", "")
+        clean_title = re.sub(r"^\s*\d+[\.\:\-\)\s]+", "", c_title).strip()
+        if isinstance(ch, dict):
+            ch["chapter_clean_title"] = clean_title or c_title
+        else:
+            setattr(ch, "chapter_clean_title", clean_title or c_title)
+
+    # Pre-render structured Theory Markdown & LaTeX Equations
+    from core.theory_formatter import format_theory_content
+    for ch in chapters:
+        sections = ch.get('sections', []) if isinstance(ch, dict) else getattr(ch, 'sections', [])
+        for sec in sections:
+            tb = sec.get('theory_block') if isinstance(sec, dict) else getattr(sec, 'theory_block', None)
+            if tb:
+                if isinstance(tb, dict) and 'explanation' in tb:
+                    tb['explanation_html'] = format_theory_content(tb['explanation'])
+                elif hasattr(tb, 'explanation'):
+                    setattr(tb, 'explanation_html', format_theory_content(tb.explanation))
+
     # Load Jinja2 templates
     templates_dir = BASE_DIR / "templates"
     env = Environment(loader=FileSystemLoader(str(templates_dir)))

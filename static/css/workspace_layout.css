@@ -1250,27 +1250,31 @@ h1.video-title {
 }
 
 .toc-order {
-  color: #0f766e !important;
-  font-weight: 800 !important;
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
   font-family: 'Roboto Mono', monospace !important;
   margin-right: 0.6rem !important;
-  min-width: 22px !important;
+  min-width: 24px !important;
 }
 
 .toc-title {
   flex: 1 !important;
-  font-weight: 600 !important;
-  color: #1f2937 !important;
+  font-weight: 500 !important;
+  color: #f8fafc !important;
+  font-size: 0.92rem !important;
+  line-height: 1.4 !important;
 }
 
 .toc-ts {
-  color: #4b5563 !important;
+  color: #fbbf24 !important;
   font-family: 'Roboto Mono', monospace !important;
-  font-size: 0.85rem !important;
+  font-size: 0.74rem !important;
   font-weight: 600 !important;
-  background: #e2e8f0 !important;
-  padding: 2px 7px !important;
-  border-radius: 5px !important;
+  background: rgba(251, 191, 36, 0.12) !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  padding: 2px 9px !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.12) !important;
 }
 
 /* Headings Everywhere Use Gagalin */

@@ -154,48 +154,55 @@ def get_in_memory_html_chunks(video_id: str) -> List[Document]:
 
     return docs
 
+STOP_WORDS = {
+    'a', 'an', 'the', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with',
+    'by', 'about', 'like', 'through', 'over', 'before', 'between', 'after', 'since', 'without',
+    'under', 'within', 'along', 'following', 'across', 'behind', 'beyond', 'plus', 'except',
+    'but', 'up', 'out', 'around', 'down', 'off', 'above', 'near', 'tell', 'me', 'what', 'how',
+    'why', 'can', 'you', 'explain', 'give', 'detail', 'details', 'show', 'please'
+}
+
 def match_in_memory_chunks(video_id: str, query: str, k: int = 5) -> Tuple[List[Document], float]:
-    """Scores and returns the top k relevant chunks from in-memory HTML documents."""
+    """Scores and returns the top k relevant chunks with stop-word filtering and stem matching."""
     docs = get_in_memory_html_chunks(video_id)
     if not docs:
         return [], 0.0
 
-    q_tokens = set(re.findall(r'\w+', query.lower()))
+    raw_tokens = [w.lower() for w in re.findall(r'[a-zA-Z0-9]+', query) if len(w) > 1]
+    q_tokens = [w for w in raw_tokens if w not in STOP_WORDS]
     if not q_tokens:
-        return docs[:k], 0.5
+        q_tokens = raw_tokens
 
-    scored: List[Tuple[float, Document]] = []
+    scored = []
     for d in docs:
         score = 0.0
         sec_title = d.metadata.get("section_title", "").lower()
         ch_title = d.metadata.get("chapter_title", "").lower()
         content = d.page_content.lower()
 
-        sec_tokens = set(re.findall(r'\w+', sec_title))
-        ch_tokens = set(re.findall(r'\w+', ch_title))
-        body_tokens = set(re.findall(r'\w+', content))
+        for q in q_tokens:
+            q_stem = q[:4] if len(q) >= 4 else q
+            if q in sec_title:
+                score += 5.0
+            elif q_stem in sec_title:
+                score += 3.0
 
-        # Weight titles heavily
-        title_overlap = len(q_tokens.intersection(sec_tokens))
-        ch_overlap = len(q_tokens.intersection(ch_tokens))
-        body_overlap = len(q_tokens.intersection(body_tokens))
+            if q in ch_title:
+                score += 3.5
+            elif q_stem in ch_title:
+                score += 2.0
 
-        score += title_overlap * 4.0
-        score += ch_overlap * 2.5
-        score += body_overlap * 1.0
+            if q in content:
+                score += 1.5
+            elif q_stem in content:
+                score += 0.8
 
         if score > 0:
             scored.append((score, d))
 
     scored.sort(key=lambda x: x[0], reverse=True)
     top_docs = [item[1] for item in scored[:k]]
-
-    if not top_docs:
-        confidence = 0.0
-    else:
-        best_score = scored[0][0]
-        confidence = min(1.0, best_score / max(1.0, len(q_tokens) * 2.0))
-
+    confidence = min(1.0, scored[0][0] / max(1.0, len(q_tokens) * 2.0)) if scored else 0.0
     return top_docs, confidence
 
 def build_rag_index_node(state: MasterNotesState) -> Dict[str, Any]:
@@ -320,7 +327,7 @@ Suggested Follow-ups:
 - [Short Topic 2]
 - [Short Topic 3]
 """
-        yield "> **[Open Mode ? ? Senior AI Engineering Tutor]**\n\n"
+        yield "> **[Open Mode • Senior AI Engineering Tutor]**\n\n"
         try:
             llm = get_chat_model(api_key=api_key, model_name=model_name, temperature=0.2)
             chain = PromptTemplate.from_template("{prompt}") | llm | StrOutputParser()
@@ -358,7 +365,7 @@ Suggested Follow-ups:
     known_questions = get_workspace_suggestive_questions(video_id)
     is_suggestive = any(q_clean.lower() in sq.lower() or sq.lower() in q_clean.lower() for sq in known_questions)
 
-    if not is_timestamp_query and not is_suggestive and confidence < 0.15:
+    if not is_timestamp_query and not is_suggestive and len(matched_docs) == 0 and confidence < 0.05:
         # Gracefully handle out-of-scope query in Grounded Mode
         suggested_topics = known_questions[:3] if known_questions else [
             "Introduction & Fundamental Architecture",
@@ -386,12 +393,12 @@ Suggested Follow-ups:
 
     notes_context = "\n\n---\n\n".join(notes_context_blocks)
 
-    source_badge = "[Grounded in 4 U By U Notes ? HTML Verified]"
+    source_badge = "[Grounded in Video Notes • HTML Verified]"
     if is_timestamp_query:
         m, s = divmod(target_sec, 60)
         h, m = divmod(m, 60)
         ts_display = f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
-        source_badge = f"[Video Timestamp Grounding ? Aligned to [TS {ts_display}]]"
+        source_badge = f"[Video Timestamp Grounding • Aligned to [TS {ts_display}]]"
 
     grounded_prompt = f"""You are the Master Educational AI Assistant for "4 U By U" ? tutoring a student on the course: "{video_title}".
 

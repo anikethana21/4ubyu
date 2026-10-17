@@ -1,5 +1,53 @@
 [
   {
+    "id": "0Q4yhrkwn7c",
+    "title": "Deep Learning Complete Course | Part 3| RNN implementation.",
+    "channel": "Sheryians AI School",
+    "duration": "04:02:54",
+    "thumbnail": "https://i.ytimg.com/vi/0Q4yhrkwn7c/hqdefault.jpg",
+    "chapters_count": 5,
+    "file_name": "notes_0Q4yhrkwn7c.html",
+    "color_palette": "dark_academic",
+    "size_mb": 0.21,
+    "created_at": "2026-10-17T06:49:57.803590"
+  },
+  {
+    "id": "FSZhPDzESPU",
+    "title": "Complete End To End AI Forward Deployed Engineer(FDE) Project Implementation",
+    "channel": "Krish Naik",
+    "duration": "55:00",
+    "thumbnail": "https://i.ytimg.com/vi/FSZhPDzESPU/hqdefault.jpg",
+    "chapters_count": 5,
+    "file_name": "notes_FSZhPDzESPU.html",
+    "color_palette": "dark_academic",
+    "size_mb": 0.2,
+    "created_at": "2026-10-17T04:12:58.392588"
+  },
+  {
+    "id": "-JtjQ-OA7XE",
+    "title": "How Video Streaming Works on Scale - System Design ",
+    "channel": "Piyush Garg",
+    "duration": "30:53",
+    "thumbnail": "https://i.ytimg.com/vi/-JtjQ-OA7XE/hqdefault.jpg",
+    "chapters_count": 5,
+    "file_name": "notes_-JtjQ-OA7XE.html",
+    "color_palette": "dark_academic",
+    "size_mb": 0.14,
+    "created_at": "2026-10-16T18:41:47.946012"
+  },
+  {
+    "id": "yZ26CXny3iI",
+    "title": "How to use IndexedDB to store data for your web application in the browser",
+    "channel": "Alex Eagleson",
+    "duration": "35:38",
+    "thumbnail": "https://i.ytimg.com/vi/yZ26CXny3iI/hqdefault.jpg",
+    "chapters_count": 5,
+    "file_name": "notes_yZ26CXny3iI.html",
+    "color_palette": "dark_academic",
+    "size_mb": 0.14,
+    "created_at": "2026-10-16T17:58:06.427276"
+  },
+  {
     "id": "1L420xXpDTg",
     "title": "Complete Machine Learning Course for Beginners | Part 1- Foundation | Sheryians AI School",
     "channel": "Sheryians AI School",

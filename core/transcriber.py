@@ -44,14 +44,25 @@ def fetch_youtube_transcript(video_id: str) -> Tuple[str, List[Dict[str, Any]]]:
         transcript_list = ytt.list(video_id)
         
         target_t = None
-        for lang in ['en', 'en-US', 'en-GB']:
+        for lang in ["en", "en-US", "en-GB"]:
             try:
                 target_t = transcript_list.find_transcript([lang])
                 if target_t:
                     break
             except Exception:
                 pass
-                
+
+        translated_from = None
+        if not target_t:
+            for t in transcript_list:
+                try:
+                    target_t = t.translate("en")
+                    translated_from = getattr(t, "language_code", "auto")
+                    print(f"[Transcriber] Translated transcript from '{translated_from}' → English.")
+                    break
+                except Exception:
+                    continue
+
         if not target_t:
             for t in transcript_list:
                 target_t = t

@@ -179,57 +179,112 @@ def compute_settlement_affinity(
 
     return score
 
+def _chapter_transcript(ch: Dict[str, Any]) -> str:
+    if ch.get("transcript"):
+        return ch["transcript"]
+    sections = ch.get("sections") or []
+    if sections:
+        combined = " ".join([s.get("transcript_slice", "") for s in sections if s.get("transcript_slice")])
+        if combined.strip():
+            return combined
+        return sections[0].get("transcript_slice") or ""
+    return ""
+
+
+def _symbol_hits_in_transcript(parsed_file: Dict[str, Any], transcript: str) -> int:
+    t_lower = (transcript or "").lower()
+    hits = 0
+    for sym in parsed_file.get("all_symbols", []):
+        sym_clean = re.sub(r"[_\-]+", " ", sym.lower())
+        if sym.lower() in t_lower or sym_clean in t_lower:
+            hits += 1
+    return hits
+
+
 def settle_procured_code(
     chapters: List[Dict[str, Any]],
     code_files: Dict[str, str],
-    timed_transcript: List[Dict[str, Any]]
+    timed_transcript: List[Dict[str, Any]],
+    min_affinity: float = 6.0,
 ) -> List[Dict[str, Any]]:
     """
-    Slices and settles procured repository code into each chapter and section.
-    Returns enhanced chapter definitions with ground-truth code attachments.
+    One repo file → at most one chapter. Code attaches only when transcript + filename
+    affinity is strong (prevents cross-chapter code pollution).
     """
     parsed_files = [parse_python_ast(fn, code) for fn, code in code_files.items()]
     if not parsed_files:
         return chapters
 
-    # For each chapter, find best-matching code file
-    for ch in chapters:
+    MIN_AFFINITY = min_affinity
+    pairs: List[tuple[float, int, Dict[str, Any]]] = []
+
+    for ch_idx, ch in enumerate(chapters):
         ch_title = ch.get("title") or ch.get("chapter_title", "")
-        ch_transcript = ch.get("transcript", "")
-        
-        # Rank files for chapter
-        scored_files = []
+        sections = ch.get("sections") or []
+        sec_title = (
+            sections[0].get("section_title", ch_title) if sections else ch_title
+        )
+        ch_transcript = _chapter_transcript(ch)
+
         for pf in parsed_files:
-            aff = compute_settlement_affinity(ch_title, ch_title, ch_transcript, pf)
-            scored_files.append((aff, pf))
+            aff = compute_settlement_affinity(ch_title, sec_title, ch_transcript, pf)
+            sym_hits = _symbol_hits_in_transcript(pf, ch_transcript)
+            if sym_hits:
+                aff += sym_hits * 2.0
+            if aff >= MIN_AFFINITY:
+                pairs.append((aff, ch_idx, pf))
 
-        scored_files.sort(key=lambda x: x[0], reverse=True)
-        best_affinity, best_pf = scored_files[0] if scored_files else (0.0, None)
+    pairs.sort(key=lambda x: x[0], reverse=True)
+    used_files: set[str] = set()
+    chapter_file: Dict[int, Dict[str, Any]] = {}
 
-        sections = ch.get("sections", [])
-        if best_pf and best_affinity > 1.5:
-            print(f"[CodeSettlement] Settled '{best_pf['filename']}' -> Chapter '{ch_title}' (Affinity: {best_affinity:.1f})")
-            
-            # Settle code across sub-sections
-            for idx, sec in enumerate(sections):
-                sec_title = sec.get("title", "")
-                sec_lower = sec_title.lower()
+    for aff, ch_idx, pf in pairs:
+        fn = pf["filename"]
+        if fn in used_files or ch_idx in chapter_file:
+            continue
+        chapter_file[ch_idx] = pf
+        used_files.add(fn)
+        ch = chapters[ch_idx]
+        print(
+            f"[CodeSettlement] '{fn}' → Chapter '{ch.get('title') or ch.get('chapter_title')}' "
+            f"(affinity {aff:.1f})"
+        )
 
-                # Determine whether section needs schema, node functions, or full assembly
-                if "state" in sec_lower or "schema" in sec_lower or "fundamental" in sec_lower or idx == 0:
-                    assigned_code = best_pf["slices"].get("state_schema") or best_pf["code"]
-                    slice_name = "State Schema Definition"
-                elif "node" in sec_lower or "function" in sec_lower or idx == 1:
-                    assigned_code = best_pf["slices"].get("node_functions") or best_pf["code"]
-                    slice_name = "Pure Node Logic"
-                else:
-                    assigned_code = best_pf["code"]
-                    slice_name = "Full StateGraph Workflow"
+    for ch_idx, ch in enumerate(chapters):
+        pf = chapter_file.get(ch_idx)
+        sections = ch.get("sections") or []
+        if not pf or not sections:
+            for sec in sections:
+                sec.pop("procured_code", None)
+                sec["is_grounded_repo_code"] = False
+            continue
 
-                sec["procured_code"] = assigned_code
-                sec["procured_filename"] = best_pf["filename"]
-                sec["procured_symbols"] = best_pf["all_symbols"]
-                sec["procured_slice_type"] = slice_name
-                sec["is_grounded_repo_code"] = True
+        for idx, sec in enumerate(sections):
+            sec_title = sec.get("section_title") or sec.get("title") or ""
+            sec_lower = sec_title.lower()
+            sec_transcript = sec.get("transcript_slice") or _chapter_transcript(ch)
+
+            if not _symbol_hits_in_transcript(pf, sec_transcript) and not any(
+                tok in sec_lower for tok in ["code", "implement", "project", "hands-on", "build"]
+            ):
+                sec.pop("procured_code", None)
+                sec["is_grounded_repo_code"] = False
+                continue
+
+            if "state" in sec_lower or "schema" in sec_lower:
+                assigned_code = pf["slices"].get("state_schema") or pf["code"]
+                slice_name = "State Schema Definition"
+            elif "node" in sec_lower or "function" in sec_lower:
+                assigned_code = pf["slices"].get("node_functions") or pf["code"]
+                slice_name = "Pure Node Logic"
+            else:
+                assigned_code = pf["code"]
+                slice_name = "Matched Repository Module"
+
+            sec["procured_code"] = assigned_code
+            sec["procured_filename"] = pf["filename"]
+            sec["procured_symbols"] = pf["all_symbols"]
+            sec["procured_slice_type"] = slice_name
+            sec["is_grounded_repo_code"] = True
 
     return chapters

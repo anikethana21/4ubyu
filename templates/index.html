@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -7,135 +7,1233 @@
   <link rel="stylesheet" href="/static/css/landing.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<link href="/static/css/glassmorphic_master.css" rel="stylesheet"/>
+<style id="glassmorphic-inline-master">
+/* ========================================================================= */
+/* 4 U By U — UNIVERSAL GLASSMORPHISM MASTER STYLESHEET                     */
+/* Implements frosted glass everywhere possible over #2c2f35 ambient canvas   */
+/* Theme Palette: #211a1a (card), 45 68% 47% (primary gold), 45 40% 97% (fg) */
+/* ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
+
+
+/* Constellation Grid Background Mesh (Amber Gold Kinetic Canvas) */
+#constellation-bg-canvas, .constellation-bg-canvas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+.ecosystem-header,
+.landing-main,
+.landing-hero-card,
+.study-hub-grid,
+.custom-modal-overlay,
+.custom-modal-card,
+.landing-footer {
+  position: relative;
+  z-index: 10;
+}
+
+/* 1. Global Ambient Canvas with Layered Warm Radial Lighting */
+html, body, .landing-body, .workspace-body {
+  background-color: #2c2f35 !important;
+  background-image: 
+    radial-gradient(ellipse 90% 50% at 50% -15%, rgba(201, 154, 37, 0.16), transparent 75%),
+    radial-gradient(circle 800px at 90% 15%, rgba(139, 69, 19, 0.14), transparent 70%),
+    radial-gradient(circle 600px at 10% 75%, rgba(201, 154, 37, 0.1), transparent 70%),
+    radial-gradient(circle 500px at 50% 115%, rgba(139, 69, 19, 0.12), transparent 70%) !important;
+  background-attachment: fixed !important;
+  color: hsl(45 40% 97%) !important;
+  font-family: var(--font-body), var(--font-sans), ui-sans-serif, system-ui, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 2. Top Header Navigation */
+.workspace-header {
+  background: rgba(44, 47, 53, 0.8) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-bottom: 1px solid hsl(45 40% 97% / 0.08) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Landing Ecosystem Header: Fully transparent background across page, no bottom line */
+.ecosystem-header {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 1.35rem 3rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  z-index: 1000 !important;
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ecosystem-header.header-scrolled {
+  padding: 0.75rem 3rem !important;
+}
+
+/* Logo Area: Transparent on Left, only Brand Name */
+.logo-area {
+  display: flex !important;
+  align-items: center !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Floating Glass Capsule Navbar on Right (Exact match to reference capsule) */
+.header-nav-capsule {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  background: rgba(28, 31, 38, 0.65) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 9999px !important;
+  padding: 0.35rem 0.45rem 0.35rem 1.15rem !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.header-nav-capsule:hover {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.6), 0 0 24px rgba(201, 154, 37, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Item 1: Search Workspaces */
+.nav-capsule-link {
+  background: transparent !important;
+  border: none !important;
+  color: rgba(249, 246, 238, 0.88) !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.2px !important;
+  padding: 0.45rem 0.85rem !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+.nav-capsule-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.45) !important;
+}
+
+.nav-capsule-link .nav-icon-search {
+  opacity: 0.8;
+  transition: transform 0.2s ease, opacity 0.2s ease, stroke 0.2s ease;
+}
+
+.nav-capsule-link:hover .nav-icon-search {
+  opacity: 1;
+  transform: scale(1.1);
+  stroke: hsl(45 68% 47%);
+}
+
+/* Item 2: R-Prep CTA Pill Button */
+.nav-capsule-cta {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  background: #ffffff !important;
+  color: #0c0f14 !important;
+  border-radius: 9999px !important;
+  padding: 0.45rem 1.2rem !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 0.86rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2px !important;
+  text-decoration: none !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  white-space: nowrap !important;
+}
+
+.nav-capsule-cta:hover {
+  background: #f4f4f5 !important;
+  color: #000000 !important;
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 4px 18px rgba(255, 255, 255, 0.5) !important;
+}
+
+.nav-cta-arrow {
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  transition: transform 0.2s ease !important;
+}
+
+.nav-capsule-cta:hover .nav-cta-arrow {
+  transform: translate(2px, -2px) !important;
+}
+
+/* Item 3: Settings Gear inside Capsule */
+.header-nav-capsule .settings-profile-container {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.header-nav-capsule .animated-settings-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 50% !important;
+  width: 34px !important;
+  height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: hsl(45 68% 47%) !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.header-nav-capsule .animated-settings-btn:hover {
+  background: rgba(201, 154, 37, 0.22) !important;
+  border-color: hsl(45 68% 47% / 0.75) !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 0 16px rgba(201, 154, 37, 0.45) !important;
+}
+
+@media (max-width: 768px) {
+  .ecosystem-header {
+    padding: 0.85rem 1.25rem !important;
+  }
+  .header-nav-capsule {
+    padding: 0.25rem 0.35rem 0.25rem 0.75rem !important;
+    gap: 0.45rem !important;
+  }
+  .nav-capsule-link span {
+    display: none !important;
+  }
+  .nav-capsule-cta {
+    padding: 0.35rem 0.85rem !important;
+    font-size: 0.8rem !important;
+  }
+  .header-nav-capsule .animated-settings-btn {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
+
+.brand-name, .logo-title, .header-brand-title {
+  font-family: var(--font-en), "Instrument Serif", Georgia, serif !important;
+  color: hsl(45 40% 97%) !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 20px rgba(201, 154, 37, 0.35) !important;
+}
+
+.header-status-badge, .nav-item, .btn-header-action {
+  background: rgba(249, 246, 238, 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid hsl(45 40% 97% / 0.1) !important;
+  color: hsl(45 40% 97%) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-header-action:hover, .nav-item:hover {
+  background: rgba(201, 154, 37, 0.15) !important;
+  border-color: hsl(45 68% 47% / 0.5) !important;
+  color: hsl(45 40% 97%) !important;
+  box-shadow: 0 0 15px rgba(201, 154, 37, 0.25) !important;
+}
+
+.btn-header-action.btn-highlight {
+  background: hsl(45 68% 47%) !important;
+  color: #2c2f35 !important;
+  font-weight: 700 !important;
+  border-color: hsl(45 68% 47%) !important;
+  box-shadow: 0 0 16px rgba(201, 154, 37, 0.4) !important;
+}
+
+/* 3. Handbook & Lecture Notes Pane (Frosted Glass Surface) */
+.pane-handbook, .workspace-left-pane {
+  background: rgba(18, 12, 12, 0.6) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border-right: 1px solid hsl(45 40% 97% / 0.08) !important;
+}
+
+/* Chapter Cards — Deep Espresso Obsidian Glass */
+.chapter-card {
+  background: rgba(44, 47, 53, 0.32) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid hsl(45 40% 97% / 0.09) !important;
+  border-radius: 14px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.75rem !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.55), inset 0 1px 1px 0 rgba(249, 246, 238, 0.12) !important;
+  color: hsl(45 40% 97%) !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+.chapter-card:hover {
+  border-color: hsl(45 68% 47% / 0.35) !important;
+  box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.65), 0 0 25px rgba(201, 154, 37, 0.15), inset 0 1px 1px 0 rgba(249, 246, 238, 0.2) !important;
+}
+
+.chapter-title {
+  font-family: var(--font-en), "Instrument Serif", Georgia, serif !important;
+  font-size: 1.55rem !important;
+  font-weight: 500 !important;
+  color: hsl(45 40% 97%) !important;
+  letter-spacing: 0.3px !important;
+}
+
+.chapter-card p,
+.chapter-card li,
+.chapter-card span:not(.code-lang):not(.diagram-tag):not(.chapter-num) {
+  color: hsl(45 40% 97% / 0.88) !important;
+  line-height: 1.7 !important;
+}
+
+.chapter-num, .chapter-tag {
+  background: rgba(201, 154, 37, 0.18) !important;
+  border: 1px solid rgba(201, 154, 37, 0.45) !important;
+  color: hsl(43 74% 66%) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-radius: 20px !important;
+  padding: 2px 10px !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+}
+
+/* 4. Theory Block & Mathematical Typography */
+.theory-block {
+  background: rgba(22, 16, 16, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid hsl(45 40% 97% / 0.08) !important;
+  border-left: 4px solid hsl(45 68% 47%) !important;
+  border-radius: 12px !important;
+  padding: 1.35rem 1.6rem !important;
+  margin: 1.35rem 0 !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(249, 246, 238, 0.1) !important;
+  color: hsl(45 40% 97%) !important;
+}
+
+.theory-content {
+  font-family: var(--font-body), var(--font-sans), sans-serif !important;
+  font-size: 1.02rem !important;
+  line-height: 1.75 !important;
+  color: hsl(45 40% 97%) !important;
+}
+
+.theory-content p {
+  color: hsl(45 40% 97% / 0.9) !important;
+  margin-bottom: 1.15rem !important;
+}
+
+.theory-content h3 {
+  font-family: var(--font-en), "Instrument Serif", Georgia, serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 500 !important;
+  color: hsl(43 74% 66%) !important;
+  border-bottom: 1px solid hsl(45 40% 97% / 0.08) !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+  padding-bottom: 0.4rem !important;
+}
+
+.theory-content h4 {
+  font-family: var(--font-en), Georgia, serif !important;
+  font-size: 1.15rem !important;
+  color: hsl(45 40% 97%) !important;
+}
+
+/* Key Terminology Badges (Frosted Gold Glass) */
+.theory-content strong {
+  background: rgba(201, 154, 37, 0.16) !important;
+  border: 1px solid rgba(201, 154, 37, 0.38) !important;
+  color: hsl(43 74% 66%) !important;
+  padding: 0.12rem 0.45rem !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+}
+
+/* Math Display Cards (Frosted Obsidian Glass) */
+.math-display-card {
+  background: rgba(13, 12, 12, 0.85) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid rgba(201, 154, 37, 0.3) !important;
+  border-radius: 10px !important;
+  padding: 1.25rem 1.4rem !important;
+  margin: 1.4rem 0 !important;
+  text-align: center !important;
+  overflow-x: auto !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(201, 154, 37, 0.04) !important;
+  color: hsl(45 40% 97%) !important;
+}
+
+/* Analogy Cards (Luminous Amber Glass) */
+.analogy-card {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.85rem !important;
+  background: linear-gradient(135deg, rgba(44, 47, 53, 0.38), rgba(45, 30, 15, 0.65)) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid rgba(201, 154, 37, 0.35) !important;
+  border-left: 4px solid hsl(45 68% 47%) !important;
+  border-radius: 10px !important;
+  padding: 1rem 1.25rem !important;
+  margin-top: 1.2rem !important;
+  color: hsl(45 40% 97%) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+.analogy-title {
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  color: hsl(43 74% 66%) !important;
+}
+
+/* 5. Visual Diagram Cards & Keyframes */
+.visual-diagram-card {
+  background: rgba(28, 22, 22, 0.62) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid hsl(45 40% 97% / 0.09) !important;
+  border-radius: 12px !important;
+  padding: 1rem !important;
+  margin: 1.1rem 0 !important;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.09) !important;
+}
+
+.diagram-tag {
+  background: rgba(201, 154, 37, 0.15) !important;
+  border: 1px solid rgba(201, 154, 37, 0.35) !important;
+  color: hsl(43 74% 66%) !important;
+  border-radius: 6px !important;
+  font-size: 0.72rem !important;
+}
+
+/* 6. Code Cards in Handbook */
+.code-card {
+  background: rgba(13, 12, 12, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(201, 154, 37, 0.25) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.55) !important;
+}
+
+.code-header {
+  background: rgba(44, 47, 53, 0.38) !important;
+  border-bottom: 1px solid rgba(249, 246, 238, 0.08) !important;
+  padding: 0.6rem 1rem !important;
+}
+
+.code-lang-badge {
+  background: rgba(201, 154, 37, 0.2) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(201, 154, 37, 0.4) !important;
+  border-radius: 4px !important;
+  font-size: 0.72rem !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+.btn-copy-code {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: hsl(45 40% 97%) !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-copy-code:hover {
+  background: rgba(201, 154, 37, 0.25) !important;
+  border-color: hsl(45 68% 47%) !important;
+}
+
+/* 7. Video Player Pane */
+.pane-video, .video-container {
+  background: rgba(18, 12, 12, 0.7) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid hsl(45 40% 97% / 0.08) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 8. Docked RAG Chat Assistant (Frosted Glass Everywhere) */
+.chat-pane, #chat-pane {
+  background: rgba(18, 13, 13, 0.78) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border-left: 1px solid hsl(45 40% 97% / 0.08) !important;
+  border-top: 1px solid hsl(45 40% 97% / 0.08) !important;
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6) !important;
+}
+
+.chat-minimal-navbar {
+  background: rgba(25, 18, 18, 0.8) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border-bottom: 1px solid hsl(45 40% 97% / 0.08) !important;
+}
+
+.chat-nav-title {
+  font-family: var(--font-en), Georgia, serif !important;
+  font-size: 1.15rem !important;
+  color: hsl(45 40% 97%) !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Mode Toggle (Grounded vs Open in Glass) */
+.chat-mode-toggle {
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid hsl(45 40% 97% / 0.08) !important;
+  border-radius: 20px !important;
+  padding: 2px !important;
+}
+
+.mode-toggle-btn {
+  background: transparent !important;
+  border: none !important;
+  color: hsl(0 0% 55%) !important;
+  border-radius: 16px !important;
+  padding: 3px 10px !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.mode-toggle-btn.active#mode-grounded-btn {
+  background: rgba(201, 154, 37, 0.25) !important;
+  border: 1px solid hsl(45 68% 47% / 0.7) !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 12px rgba(201, 154, 37, 0.35) !important;
+}
+
+.mode-toggle-btn.active#mode-open-btn {
+  background: rgba(217, 119, 6, 0.25) !important;
+  border: 1px solid hsl(43 74% 66% / 0.7) !important;
+  color: #fde68a !important;
+  box-shadow: 0 0 12px rgba(217, 119, 6, 0.35) !important;
+}
+
+/* Chat Messages */
+.chat-msg {
+  padding: 0.75rem 1rem !important;
+  border-radius: 12px !important;
+  font-size: 0.88rem !important;
+  line-height: 1.6 !important;
+  max-width: 90% !important;
+  word-break: break-word !important;
+}
+
+.user-msg {
+  background: linear-gradient(135deg, rgba(201, 154, 37, 0.3), rgba(139, 92, 20, 0.38)) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(201, 154, 37, 0.45) !important;
+  border-bottom-right-radius: 2px !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.18) !important;
+  color: hsl(45 40% 97%) !important;
+  align-self: flex-end !important;
+}
+
+.ai-msg {
+  background: rgba(44, 47, 53, 0.38) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid hsl(45 40% 97% / 0.1) !important;
+  border-bottom-left-radius: 2px !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(249, 246, 238, 0.09) !important;
+  color: hsl(45 40% 97%) !important;
+  align-self: flex-start !important;
+}
+
+.ai-msg, .ai-msg p, .ai-msg li, .ai-msg span {
+  color: hsl(45 40% 97% / 0.92) !important;
+}
+
+.ai-msg strong {
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
+}
+
+.ai-msg code {
+  color: #fbbf24 !important;
+  background: rgba(13, 12, 12, 0.8) !important;
+  border: 1px solid rgba(201, 154, 37, 0.25) !important;
+  padding: 1px 5px !important;
+  border-radius: 4px !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.82rem !important;
+}
+
+/* Chat Input Bar */
+.chat-input-bar {
+  background: rgba(25, 18, 18, 0.88) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-top: 1px solid hsl(45 40% 97% / 0.1) !important;
+  padding: 0.65rem 0.85rem !important;
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+.chat-input-bar input {
+  background: hsl(45 40% 97% / 0.07) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid hsl(45 40% 97% / 0.12) !important;
+  color: hsl(45 40% 97%) !important;
+  border-radius: 8px !important;
+  padding: 0.6rem 0.9rem !important;
+  font-size: 0.88rem !important;
+  font-family: var(--font-body), var(--font-sans), sans-serif !important;
+}
+
+.chat-input-bar input:focus {
+  border-color: hsl(45 68% 47%) !important;
+  box-shadow: 0 0 12px rgba(201, 154, 37, 0.3) !important;
+  outline: none !important;
+}
+
+.btn-send-sym {
+  background: hsl(45 68% 47%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.6rem 0.8rem !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 16px rgba(201, 154, 37, 0.45) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-send-sym:hover {
+  background: hsl(43 74% 66%) !important;
+  box-shadow: 0 0 22px rgba(201, 154, 37, 0.65) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 9. Landing Page Generator Card & Library Grid */
+.card-generator {
+  max-width: 880px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 2.2rem 2.6rem !important;
+  background: rgba(44, 47, 53, 0.38) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid hsl(45 40% 97% / 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(249, 246, 238, 0.15) !important;
+}
+
+#btn-paste-url {
+  background: rgba(201, 154, 37, 0.12) !important;
+  border: 1px solid hsl(45 68% 47% / 0.35) !important;
+  color: hsl(45 68% 47%) !important;
+  border-radius: 8px !important;
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+#btn-paste-url:hover {
+  background: rgba(201, 154, 37, 0.25) !important;
+  box-shadow: 0 0 10px rgba(201, 154, 37, 0.3) !important;
+}
+
+.card-generator input[type="url"],
+.card-generator select {
+  background: hsl(45 40% 97% / 0.07) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid hsl(45 40% 97% / 0.12) !important;
+  color: hsl(45 40% 97%) !important;
+  border-radius: 8px !important;
+}
+
+.card-generator input[type="url"]:focus,
+.card-generator select:focus {
+  border-color: hsl(45 68% 47%) !important;
+  box-shadow: 0 0 15px rgba(201, 154, 37, 0.35) !important;
+  outline: none !important;
+}
+
+/* Handbook / Workspace Library Cards */
+.handbook-card {
+  background: rgba(44, 47, 53, 0.32) !important;
+  backdrop-filter: blur(18px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+  border: 1px solid hsl(45 40% 97% / 0.09) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(249, 246, 238, 0.12) !important;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+.handbook-card:hover {
+  transform: translateY(-4px) !important;
+  border-color: hsl(45 68% 47% / 0.45) !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65), 0 0 25px rgba(201, 154, 37, 0.2), inset 0 1px 1px rgba(249, 246, 238, 0.2) !important;
+}
+
+.card-title {
+  font-family: var(--font-en), "Instrument Serif", Georgia, serif !important;
+  font-size: 1.15rem !important;
+  color: hsl(45 40% 97%) !important;
+}
+
+.btn-card-open {
+  background: hsl(45 68% 47%) !important;
+  color: #2c2f35 !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: 0 0 14px rgba(201, 154, 37, 0.35) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-card-open:hover {
+  background: hsl(43 74% 66%) !important;
+  box-shadow: 0 0 22px rgba(201, 154, 37, 0.6) !important;
+  color: #2c2f35 !important;
+}
+
+/* Modals (HITL Inspect, Workplace Pipeline, Auth, Vault) */
+.hitl-modal-overlay,
+.workplace-modal-overlay,
+.custom-modal-overlay {
+  background: rgba(44, 47, 53, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+.hitl-modal-card,
+.workplace-modal-card,
+.custom-modal-card {
+  background: rgba(44, 47, 53, 0.60) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1px solid hsl(45 40% 97% / 0.14) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(249, 246, 238, 0.18) !important;
+  color: hsl(45 40% 97%) !important;
+}
+
+.modal-header-banner,
+.hitl-modal-header,
+.workplace-modal-header {
+  border-bottom: 1px solid hsl(45 40% 97% / 0.08) !important;
+}
+
+.modal-header-title,
+.hitl-title,
+.workplace-title {
+  font-family: var(--font-en), "Instrument Serif", Georgia, serif !important;
+  color: hsl(45 40% 97%) !important;
+  font-size: 1.45rem !important;
+}
+
+/* Agent Progress Cards in Pipeline Modal */
+.agent-card {
+  background: rgba(13, 12, 12, 0.65) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid hsl(45 40% 97% / 0.08) !important;
+  border-radius: 10px !important;
+}
+
+.agent-card.active {
+  border-color: hsl(45 68% 47% / 0.7) !important;
+  background: rgba(201, 154, 37, 0.12) !important;
+  box-shadow: 0 0 20px rgba(201, 154, 37, 0.25) !important;
+}
+
+.agent-card.completed {
+  border-color: rgba(45, 212, 191, 0.4) !important;
+  background: rgba(13, 148, 136, 0.1) !important;
+}
+
+/* Inputs in Modals */
+.modal-body input,
+.modal-body textarea,
+.modal-body select {
+  background: hsl(45 40% 97% / 0.07) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid hsl(45 40% 97% / 0.12) !important;
+  color: hsl(45 40% 97%) !important;
+  border-radius: 8px !important;
+}
+
+.modal-body input:focus,
+.modal-body textarea:focus,
+.modal-body select:focus {
+  border-color: hsl(45 68% 47%) !important;
+  box-shadow: 0 0 12px rgba(201, 154, 37, 0.35) !important;
+  outline: none !important;
+}
+
+.btn-primary-action, .btn-modal-submit {
+  background: hsl(45 68% 47%) !important;
+  color: #2c2f35 !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 16px rgba(201, 154, 37, 0.4) !important;
+}
+
+.btn-primary-action:hover, .btn-modal-submit:hover {
+  background: hsl(43 74% 66%) !important;
+  box-shadow: 0 0 24px rgba(201, 154, 37, 0.65) !important;
+}
+
+/* Universal Translucent Frosted Glass Scrollbars Matching #2c2f35 Tint */
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(229, 229, 229, 0.22) transparent !important;
+}
+
+*::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(229, 229, 229, 0.18) !important;
+  border-radius: 9999px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: background 0.2s ease !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(229, 229, 229, 0.38) !important;
+}
+
+*::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+
+/* UNIVERSAL FIXED MODAL OVERLAY & GRAPHITE GLASS CARDS */
+.custom-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(44, 47, 53, 0.78) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  padding: 1.5rem !important;
+  pointer-events: auto !important;
+}
+
+.custom-modal-overlay.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.custom-modal-card,
+.custom-modal-card.settings-card {
+  width: 100% !important;
+  max-width: 680px !important;
+  background: rgba(43, 43, 43, 0.75) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(229, 229, 229, 0.22) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(229, 229, 229, 0.2) !important;
+  color: #e5e5e5 !important;
+  overflow: hidden !important;
+}
+
+.dialog-profile-card {
+  background: rgba(79, 79, 79, 0.35) !important;
+  border: 1px solid rgba(164, 164, 164, 0.25) !important;
+  border-radius: 14px !important;
+}
+.dialog-profile-avatar {
+  background: linear-gradient(135deg, #e5e5e5, #737373) !important;
+  color: #2c2f35 !important;
+}
+.dialog-profile-email {
+  color: #e5e5e5 !important;
+}
+.dialog-profile-status {
+  color: #a4a4a4 !important;
+}
+.status-indicator-dot {
+  background: #e5e5e5 !important;
+  box-shadow: 0 0 8px #e5e5e5 !important;
+}
+
+
+
+/* Translucent Glass Generator Card & Library Cards with #2c2f35 Tint */
+.card-generator {
+  background: rgba(44, 47, 53, 0.35) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1px solid rgba(229, 229, 229, 0.15) !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.14) !important;
+}
+
+.card-generator .input-with-icon {
+  background: rgba(44, 47, 53, 0.28) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.15) !important;
+}
+
+.hero-vault-chip {
+  background: rgba(44, 47, 53, 0.32) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.14) !important;
+}
+
+.handbook-card, .workspace-card {
+  background: rgba(44, 47, 53, 0.35) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(229, 229, 229, 0.14) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+.handbook-card:hover, .workspace-card:hover {
+  background: rgba(50, 54, 62, 0.52) !important;
+  border-color: rgba(229, 229, 229, 0.32) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45), 0 0 25px rgba(255, 255, 255, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-4px) !important;
+}
+
+.workspace-badge-private {
+  background: rgba(44, 47, 53, 0.55) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(201, 154, 37, 0.35) !important;
+  color: #fbbf24 !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+}
+
+.btn-card-open {
+  background: linear-gradient(135deg, rgba(201, 154, 37, 0.85) 0%, rgba(180, 130, 25, 0.85) 100%) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 15px rgba(201, 154, 37, 0.25) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-card-open:hover {
+  background: linear-gradient(135deg, hsl(43 74% 66%), hsl(45 68% 47%)) !important;
+  box-shadow: 0 6px 20px rgba(201, 154, 37, 0.45) !important;
+  color: #2c2f35 !important;
+}
+
+.btn-card-delete {
+  background: rgba(44, 47, 53, 0.4) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.14) !important;
+  color: #a4a4a4 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-card-delete:hover {
+  background: rgba(239, 68, 68, 0.25) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  color: #fca5a5 !important;
+}
+
+/* Universal Translucent Frosted Glass Scrollbars Matching #2c2f35 Tint */
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(229, 229, 229, 0.22) transparent !important;
+}
+
+*::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(229, 229, 229, 0.18) !important;
+  border-radius: 9999px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: background 0.2s ease !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(229, 229, 229, 0.38) !important;
+}
+
+*::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+
+/* Generative URL Input Container with Harmonious Spacing */
+.input-with-icon {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  background: rgba(44, 47, 53, 0.28) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.15) !important;
+  border-radius: 12px !important;
+  padding: 0.45rem 0.65rem 0.45rem 1.15rem !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.input-with-icon:focus-within {
+  border-color: rgba(201, 154, 37, 0.6) !important;
+  box-shadow: 0 0 16px rgba(201, 154, 37, 0.25) !important;
+}
+
+.input-icon {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.input-icon svg {
+  display: block !important;
+}
+
+#yt-url,
+.card-generator input[type="url"]#yt-url {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+  padding: 0.65rem 0.5rem 0.65rem 0.15rem !important;
+  margin: 0 !important;
+  background: transparent !important;
+  color: #e5e5e5 !important;
+  border: none !important;
+  outline: none !important;
+  font-size: 0.96rem !important;
+  line-height: 1.4 !important;
+}
+
+#btn-paste-url {
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(201, 154, 37, 0.16) !important;
+  border: 1px solid rgba(201, 154, 37, 0.42) !important;
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  padding: 0.5rem 1.15rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  margin: 0 0 0 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+#btn-paste-url:hover {
+  background: rgba(201, 154, 37, 0.32) !important;
+  border-color: hsl(45 68% 47%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(201, 154, 37, 0.4) !important;
+}
+
+.main-container { padding-top: 5.5rem !important; }
+</style>
 </head>
 <body class="landing-body">
+  <!-- High-Velocity Dynamic Constellation Mesh Canvas -->
+  <canvas id="constellation-bg-canvas" class="constellation-bg-canvas"></canvas>
 
-  <!-▶ ECOSYSTEM NAVIGATION TOPBAR -->
-  <header class="ecosystem-header">
+
+  <!-- ECOSYSTEM NAVIGATION TOPBAR -->
+  <header class="ecosystem-header" id="ecosystem-header">
     <div class="logo-area">
-      <img src="/static/images/logo.png" alt="4U BY U Official Logo" class="brand-logo-img">
-      <div class="brand-text">
-        <span class="brand-name">4U BY U</span>
-        <span class="brand-tagline">FOR YOU BY YOU</span>
+      <a href="/" class="brand-link" style="text-decoration: none; display: flex; flex-direction: column;">
+        <span class="brand-title-animated">4U BY U</span>
+        <span class="brand-subtitle-animated">FOR YOU BY YOU</span>
+      </a>
+    </div>
+
+    <!-- Floating Glass Capsule Navbar (Pill shape on right) -->
+    <nav class="header-nav-capsule" id="header-nav-capsule" aria-label="Primary Navigation">
+      <!-- 1. Search Workspaces Link / Button -->
+      <button type="button" class="nav-capsule-link" id="nav-btn-workspaces" onclick="scrollToWorkspaces()" title="Search & Browse Your Workspaces">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon-search">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span>Search Workspaces</span>
+      </button>
+
+      <!-- 2. R-Prep CTA Pill Button (Exact shape to reference image) -->
+      <a href="https://rprep-ai.vercel.app/" target="_blank" rel="noopener noreferrer" class="nav-capsule-cta" id="nav-rprep-link" title="Resume Suite & Career Preparation">
+        <span>R-Prep</span>
+        <span class="nav-cta-arrow">&#8599;</span>
+      </a>
+
+      <!-- 3. Animated Settings Gear -->
+      <div class="settings-profile-container" id="settings-profile-container">
+        <button type="button" id="btn-animated-settings" class="animated-settings-btn" onclick="openSettingsModal()" title="Settings &amp; Profile" aria-label="Settings and Profile">
+          <svg class="animated-gear-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+
+        <!-- Hover Tooltip: "My Profile" -->
+        <div class="profile-hover-tooltip" id="profile-hover-tooltip">
+          <div class="tooltip-heading">My Profile &amp; Settings</div>
+          <div class="tooltip-sub" id="tooltip-user-email">Sign in to view</div>
+        </div>
       </div>
-    </div>
-    <nav class="ecosystem-nav">
-      <a href="/" class="nav-item active">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-        <span>4 U By U (Notes Workspace)</span>
-      </a>
-      <a href="https://r-prep.vercel.app" target="_blank" rel="noopener noreferrer" class="nav-item">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-        <span>R-Prep (Resume Suite) &#8599;</span>
-      </a>
+
+      <!-- Hidden legacy hooks for JS compatibility -->
+      <div id="auth-guest-bar" class="hidden">
+        <button type="button" id="btn-open-login" class="hidden"></button>
+        <button type="button" id="btn-open-register" class="hidden"></button>
+      </div>
+      <div id="auth-user-bar" class="hidden">
+        <span id="user-email-badge" class="hidden"></span>
+        <button type="button" id="btn-open-settings" class="hidden"></button>
+        <button type="button" id="btn-logout" class="hidden"></button>
+      </div>
     </nav>
-    <div class="header-status">
-      <span class="badge-mode {{ app_mode }}">{{ app_mode | upper }} MODE</span>
-      <span class="badge-zero-cost">100% Free Guaranteed</span>
-    </div>
   </header>
 
   <main class="main-container">
 
-    <!-▶ HERO & GENERATOR SECTION -->
+    <!-- HERO & GENERATOR SECTION -->
     <section class="hero-section">
-      <div class="hero-badge">AI-Synthesized Interactive Study Handbooks</div>
-      <h1 class="hero-title">Turn Any Technical Video into a <br><span class="gradient-text">Side-by-Side Study Workspace</span></h1>
-      <p class="hero-subtitle">
-        3-Pane Synchronized Workspace: Grounded &amp; Open AI Assistant + Predictive Topic Search + YouTube Frame Alignment.
-      </p>
+      <!-- Concentric Ambient Halo & Illuminated Glow Text (Exact match to Image 1) -->
+      <div class="hero-glow-container">
+        <div class="ambient-glow-ring ring-1"></div>
+        <div class="ambient-glow-ring ring-2"></div>
+        
+        <div class="hero-text-intro">Introducing</div>
+        <h1 class="hero-spotlight-headline">
+          <span class="spotlight-glow-text">Interactive Study Handbooks.</span>
+        </h1>
+        <div class="hero-focus-subtext">
+          Turn any video lecture into <span class="text-subtle-white">a side-by-side workspace.</span>
+        </div>
+        <p class="hero-lead-description">
+          Autonomous multi-agent synthesis that transforms YouTube lectures into publication-grade handbooks &mdash; anchored to exact frame timestamps, mathematical formulas, clean code models, and live grounded tutoring.
+        </p>
+      </div>
 
-      <!-▶ CREATION FORM -->
+      <!-- ELONGATED HERO GENERATOR CARD (Structured like Image 2 Payment Details) -->
       <div class="card-generator">
+
         <form id="generate-form">
-          
-          <!-▶ URL Input -->
-          <div class="form-group">
-            <label for="yt-url">YouTube Video URL</label>
+          <!-- Simplified URL Input -->
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="yt-url" style="font-size: 0.92rem; font-weight: 700; margin-bottom: 0.55rem; display: block; color: #e5e5e5;">
+              <span>Target Lecture or Technical Video</span>
+            </label>
             <div class="input-with-icon">
-              <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
-              <input type="url" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." required>
+              <span class="input-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#ef4444"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
+              <input type="url" id="yt-url" placeholder="Paste YouTube link (e.g. https://youtube.com/watch?v=...)" required>
+              <button type="button" id="btn-paste-url" title="Paste from clipboard">Paste</button>
             </div>
           </div>
 
-          <!-▶ BYOK Key Input -->
-          <div class="form-group">
-            <div class="label-row">
-              <label for="api-key">LLM API Key (Optional / BYOK)</label>
-              <span id="key-provider-badge" class="provider-badge hidden">Detecting...</span>
-            </div>
-            <input type="password" id="api-key" placeholder="Paste Free Groq or Gemini Key (Leave blank to use our built-in zero-cost tier)">
-            <p class="input-hint">100% Free Tier Only: Built-in Groq 120B & Gemini 2.0 Flash active with zero debit risk.</p>
-          </div>
-
-          <div class="form-group">
-            <div class="label-row">
-              <label for="eraser-key">Eraser.io Diagram Key (Optional)</label>
-              <span class="provider-badge">AI Schematics</span>
-            </div>
-            <input type="password" id="eraser-key" placeholder="Paste Eraser API key for AI diagrams (or leave blank for local SVG/Mermaid)">
-            <p class="input-hint">Leave blank to use zero-cost dynamic SVGs, interactive Mermaid charts, and lecture keyframe slides.</p>
-          </div>
-
-          <!-▶ Model & Theme Row -->
-          <div class="form-row">
-            <div class="form-group col-half">
-              <label for="model-select">Target Model</label>
-              <select id="model-select">
-                <optgroup label="Groq Cloud (100% Free Tier • Sub-Second)">
-                  <option value="openai/gpt-oss-120b" selected>Groq: GPT-OSS 120B [100% FREE • Flagship Reasoning]</option>
-                  <option value="openai/gpt-oss-20b">Groq: GPT-OSS 20B [100% FREE • Ultra Fast Sub-Second]</option>
-                  <option value="qwen/qwen3.8-27b">Groq: Qwen 2.5 27B [100% FREE • High Context]</option>
-                </optgroup>
-                <optgroup label="Google DeepMind (100% Free Tier • AI Studio)">
-                  <option value="gemini-2.0-flash">Gemini 2.0 Flash [100% FREE • 1M Context Window]</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash [100% FREE • Multimodal]</option>
-                </optgroup>
-                <optgroup label="OpenRouter Free Tier (Zero Cost :free)">
-                  <option value="meta-llama/llama-3.3-70b-instruct:free">Meta LLaMA 3.3 70B [:free Tier]</option>
-                  <option value="google/gemini-2.0-flash-exp:free">Google Gemini 2.0 Flash Exp [:free Tier]</option>
-                </optgroup>
-              </select>
-            </div>
-
-            <div class="form-group col-half">
-              <label for="theme-select">Visual Theme</label>
-              <select id="theme-select">
-                <option value="dark_academic">Dark Academic (Default)</option>
-                <option value="light_minimal">Light Minimalist</option>
-                <option value="vibrant">Vibrant Cyberpunk</option>
-              </select>
-            </div>
-          </div>
-
-          <!-▶ Options Row -->
-          <div class="form-row">
-            <div class="form-group col-half">
-              <label for="visual-pref">Architecture Diagrams</label>
-              <select id="visual-pref">
-                <option value="auto">Auto-Detect & Slide Keyframe (Recommended)</option>
-                <option value="force">Force Diagrams on All Chapters</option>
-                <option value="disabled">Text & Code Only (No Images)</option>
-              </select>
-            </div>
-
-            <div class="form-group col-half">
-              <label for="format-select">Output Format</label>
-              <select id="format-select">
-                <option value="html">Interactive 3-Pane Workspace (HTML)</option>
-                <option value="pdf">Structured Printable PDF</option>
-              </select>
-            </div>
-          </div>
-
-          <!-▶ Submit Button -->
-          <button type="submit" id="btn-generate" class="btn-primary">
+          <!-- Submit Button (Tactile White/Silver Finish like Image 2) -->
+          <button type="submit" id="btn-generate" class="btn-primary" style="padding: 1.05rem; font-size: 1.05rem;">
             <span class="btn-text">Generate Educational Handbook</span>
             <span class="btn-spinner hidden"></span>
           </button>
+
+          <!-- Vault Status Helper -->
+          <div style="text-align: center; margin-top: 1rem;">
+            <div id="hero-vault-chip" class="hero-vault-chip">
+              <span id="hero-vault-icon">⚡</span>
+              <span id="hero-vault-text">Model: Groq 120B • Encrypted Vault</span>
+              <a href="#" id="hero-change-settings-link">Change in Settings ⚙</a>
+            </div>
+          </div>
         </form>
 
-        <!-▶ Generation Progress Bar -->
+        <!-- Generation Progress Bar -->
         <div id="progress-container" class="progress-box hidden">
           <div class="progress-header">
             <span id="progress-step-text">Ingesting YouTube audio and metadata...</span>
@@ -146,218 +1244,391 @@
           </div>
         </div>
 
+        <!-- Trust Footer (Image 2) -->
+        <div class="card-trust-footer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Deterministic Timestamp Grounding &bull; Encrypted Storage &bull; Zero Hallucinations</span>
+        </div>
       </div>
     </section>
 
-    <!-▶ PERSONAL STUDY LIBRARY SECTION -->
+    <!-- PERSONAL STUDY WORKSPACES SECTION -->
     <section class="library-section">
       <div class="section-header">
         <div>
-          <h2 class="section-title">Your Study Library</h2>
-          <p class="section-subtitle">All interactive handbooks generated on your system. Sub-50ms instant local launch.</p>
+          <h2 class="section-title" id="workspaces-heading">My Workspaces</h2>
+          <p class="section-subtitle" id="workspaces-subheading">Private educational handbooks saved exclusively to your account.</p>
         </div>
-        <div class="library-stats">
-          <span id="total-handbooks-badge" class="stat-pill">{{ library_entries | length }} Handbooks</span>
-          <span class="stat-pill">Saved to your PC</span>
-          <button class="stat-pill" onclick="if(window.LocalLibrary) window.LocalLibrary.exportLocalBackup()" style="cursor:pointer; background:rgba(99,102,241,0.2); border:1px solid #6366f1; color:#c7d2fe; transition:0.2s;">Export Backup (JSON)</button>
+        <div class="library-stats" style="display: flex; align-items: center; gap: 0.85rem;">
+          <!-- Live Workspaces Filter Input -->
+          <div class="workspaces-search-wrap" style="position: relative; display: inline-flex; align-items: center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; color: rgba(249, 246, 238, 0.45); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="workspaces-filter-input" placeholder="Search saved workspaces..." oninput="filterWorkspaces(this.value)" style="background: rgba(44, 47, 53, 0.4); border: 1px solid rgba(249, 246, 238, 0.12); border-radius: 9999px; padding: 0.45rem 1rem 0.45rem 2.2rem; color: hsl(45 40% 97%); font-size: 0.85rem; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; outline: none; width: 220px; transition: all 0.25s ease;" onfocus="this.style.borderColor='rgba(201, 154, 37, 0.6)'; this.style.boxShadow='0 0 12px rgba(201, 154, 37, 0.25)';" onblur="this.style.borderColor='rgba(249, 246, 238, 0.12)'; this.style.boxShadow='none';">
+          </div>
+          <span id="total-workspaces-badge" class="stat-pill">0 Workspaces</span>
+          <span class="stat-pill">Encrypted Cloud &amp; Local</span>
         </div>
       </div>
 
+      <!-- Guest Prompt Banner (Displayed when not signed in) -->
+      <div id="guest-prompt-banner" class="guest-prompt-banner">
+        <h4>🔒 Private User Workspaces</h4>
+        <p>Sign in or create an account to save your generated interactive workspaces securely to your personal vault.</p>
+        <button type="button" class="btn-header-action btn-highlight" onclick="document.getElementById('btn-open-register').click()">Create Free Account</button>
+      </div>
+
+      <!-- Dynamic Workspaces Grid -->
       <div class="handbook-grid" id="handbook-grid">
-        {% if library_entries %}
-          {% for h in library_entries %}
-          <div class="handbook-card" id="card-{{ h.id }}">
-            <div class="card-thumb-wrap">
-              <img src="{{ h.thumbnail }}" alt="{{ h.title }}" class="card-thumb" onerror="this.src='https://placehold.co/600x400/1e1e24/fff•text=4+U+By+U'">
-              <span class="card-duration">{{ h.duration }}</span>
-            </div>
-            <div class="card-content">
-              <h3 class="card-title">{{ h.title }}</h3>
-              <div class="card-meta">
-                <span>{{ h.channel }}</span> •
-                <span>{{ h.chapters_count }} Chapters</span>
-              </div>
-              <div class="card-actions">
-                <a href="/output/{{ h.file_name }}" target="_blank" class="btn-card-open">Open Workspace</a>
-                <button class="btn-card-del" onclick="deleteHandbook('{{ h.id }}')">Delete</button>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-library">
-            <div class="empty-icon">&#128214;</div>
-            <h3>No Handbooks Created Yet</h3>
-            <p>Paste a YouTube tutorial URL above to synthesize your first interactive study workspace.</p>
-          </div>
-        {% endif %}
+        <!-- Rendered dynamically via JS from /api/workspaces -->
       </div>
     </section>
 
-  
-  <!-- PHASE 3: Human-in-the-Loop Review Modal -->
-  <div id="hitl-modal" class="hitl-modal-overlay hidden">
-    <div class="hitl-modal-card">
-      <div class="hitl-modal-header">
-        <div class="hitl-badge-row">
-          <span class="hitl-badge">Phase 3 • Human-in-the-Loop Checkpoint</span>
-          <span class="hitl-status-pill">Awaiting Your Review</span>
-        </div>
-        <h2 class="hitl-title">Curate & Approve Course Syllabus</h2>
-        <p class="hitl-subtitle">Our ingestion engine extracted the following chapters and timestamps. Review, toggle, or edit topic titles below before activating the multi-agent synthesis swarm.</p>
-      </div>
-
-      <div class="hitl-video-strip" id="hitl-video-strip">
-        <img id="hitl-video-thumb" src="" alt="Thumbnail" class="hitl-thumb">
-        <div class="hitl-video-details">
-          <h4 id="hitl-video-title" class="hitl-video-title"></h4>
-          <div class="hitl-video-meta">
-            <span id="hitl-video-channel" class="meta-tag"></span>
-            <span id="hitl-video-duration" class="meta-tag"></span>
-            <span id="hitl-video-count" class="meta-tag accent"></span>
+    <!-- AUTHENTICATION MODAL (LOGIN / REGISTER) -->
+    <div id="auth-modal" class="custom-modal-overlay hidden">
+      <div class="custom-modal-card">
+        <div class="modal-header-banner">
+          <div class="modal-header-title">
+            
+            <span id="auth-modal-title">Welcome to 4 U By U</span>
           </div>
+          <button type="button" class="modal-close-btn" id="btn-close-auth-modal">&times;</button>
         </div>
-      </div>
 
-      <div class="hitl-list-header">
-        <div class="hitl-select-all">
-          <input type="checkbox" id="hitl-select-all-cb" checked>
-          <label for="hitl-select-all-cb">Select All Chapters</label>
+        <div class="auth-tab-row">
+          <button type="button" class="auth-tab-btn active" id="tab-login">Sign In</button>
+          <button type="button" class="auth-tab-btn" id="tab-register">Create Account</button>
         </div>
-        <button type="button" id="hitl-add-topic-btn" class="hitl-btn-sm">+ Add Custom Topic</button>
-      </div>
 
-      <div class="hitl-chapters-list" id="hitl-chapters-container">
-        <!-- Rendered dynamically -->
-      </div>
+        <div class="modal-body">
+          <div id="auth-error-box" class="modal-error-alert hidden"></div>
+          <div id="auth-success-box" class="modal-success-alert hidden"></div>
 
-      <div class="hitl-modal-footer">
-        <div class="hitl-selection-summary">
-          <span id="hitl-selected-count">0 of 0</span> topics approved for synthesis
-        </div>
-        <div class="hitl-footer-actions">
-          <button type="button" id="hitl-cancel-btn" class="hitl-btn-secondary">Cancel</button>
-          <button type="button" id="hitl-approve-btn" class="hitl-btn-primary">
-            <span>Approve Syllabus & Synthesize Notes</span>
-            <span class="hitl-btn-arrow">→</span>
-          </button>
+          <form id="auth-form">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="auth-email">Email Address</label>
+              <input type="email" id="auth-email" placeholder="name@example.com" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label for="auth-password">Password</label>
+              <input type="password" id="auth-password" placeholder="At least 6 characters" required minlength="6">
+            </div>
+
+            <div class="form-group hidden" id="group-confirm-password" style="margin-bottom: 1.25rem;">
+              <label for="auth-confirm-password">Confirm Password</label>
+              <input type="password" id="auth-confirm-password" placeholder="Repeat your password">
+            </div>
+
+            <button type="submit" id="btn-submit-auth" class="btn-primary" style="width:100%; padding:0.85rem;">
+              <span id="btn-auth-text">Sign In</span>
+              <span id="btn-auth-spinner" class="btn-spinner hidden"></span>
+            </button>
+          </form>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- PHASE 4-8: Translucent Swarm Synthesis Workplace Modal -->
-  <div id="workplace-modal" class="workplace-modal-overlay hidden">
-    <div class="workplace-modal-card">
-      <div class="workplace-modal-header">
-        <div class="workplace-header-left">
-          <div class="workplace-badge-row">
-            <span class="workplace-badge">Multi-Agent Swarm Orchestration</span>
-            <span class="workplace-pulse-dot"></span>
-            <span id="workplace-live-timer" class="workplace-timer">00:00</span>
+    <!-- SETTINGS & API KEY VAULT MODAL -->
+    <div id="settings-modal" class="custom-modal-overlay hidden">
+      <div class="custom-modal-card settings-card">
+        <div class="modal-header-banner">
+          <div class="modal-header-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>AI Model &amp; Encrypted Vault Settings</span>
           </div>
-          <h2 id="workplace-title" class="workplace-title">Synthesizing Interactive Educational Handbook</h2>
-          <p id="workplace-subtitle" class="workplace-subtitle">Multi-Agent Swarm actively processing transcript clusters, extracting code, querying GitHub repositories, and compiling deep notes.</p>
-        </div>
-        <div class="workplace-header-right">
-          <div class="workplace-stat-badge">
-            <span class="stat-label">Model Engine</span>
-            <span id="workplace-model-badge" class="stat-val">Groq 120B</span>
-          </div>
-          <div class="workplace-stat-badge">
-            <span class="stat-label">Chapters</span>
-            <span id="workplace-chapter-counter" class="stat-val">0 / 0</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dynamic Agent Pipeline Cards -->
-      <div class="swarm-agent-grid">
-        <div class="agent-card" id="agent-card-cluster"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg></div>
-          <div class="agent-card-info">
-            <span class="agent-role">Clustering &amp; Threshold Agent</span>
-            <span class="agent-status" id="status-agent-cluster">Standby</span>
-          </div>
-          <span class="agent-indicator"></span>
+          <button type="button" class="modal-close-btn" id="btn-close-settings-modal">&times;</button>
         </div>
 
-        <div class="agent-card" id="agent-card-code"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></div>
-          <div class="agent-card-info">
-            <span class="agent-role">Code Cleaning &amp; Repo Agent</span>
-            <span class="agent-status" id="status-agent-code">Standby</span>
+        <div class="modal-body">
+          <div id="settings-feedback-box" class="modal-success-alert hidden"></div>
+
+          <!-- USER PROFILE CARD IN DIALOGUE -->
+          <div class="dialog-profile-card">
+            <div class="dialog-profile-avatar" id="dialog-user-avatar">U</div>
+            <div class="dialog-profile-info">
+              <div class="dialog-profile-email" id="dialog-user-email">guest@session.local</div>
+              <div class="dialog-profile-status">
+                <span class="status-indicator-dot"></span>
+                <span id="dialog-account-tier">Personal Study Vault</span>
+              </div>
+            </div>
+            <div class="dialog-profile-action" id="dialog-auth-actions">
+              <!-- Dynamically populated via JS -->
+            </div>
           </div>
-          <span class="agent-indicator"></span>
-        </div>
 
-        <div class="agent-card" id="agent-card-theory"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
-          <div class="agent-card-info">
-            <span class="agent-role">Deep Technical Theory Agent</span>
-            <span class="agent-status" id="status-agent-theory">Standby</span>
-          </div>
-          <span class="agent-indicator"></span>
-        </div>
+          <form id="settings-form">
+            <!-- Model & Theme Row -->
+            <div class="form-row">
+              <div class="form-group col-half">
+                <label for="settings-model-select">Target AI Reasoning Model</label>
+                <select id="settings-model-select">
+                  <optgroup label="Groq Cloud (100% Free Tier &bull; Sub-Second)">
+                    <option value="openai/gpt-oss-120b" selected>Groq: GPT-OSS 120B [Flagship Reasoning]</option>
+                    <option value="openai/gpt-oss-20b">Groq: GPT-OSS 20B [Ultra Fast Sub-Second]</option>
+                    <option value="qwen/qwen3.8-27b">Groq: Qwen 2.5 27B [High Context]</option>
+                  </optgroup>
+                  <optgroup label="Google DeepMind (100% Free Tier &bull; AI Studio)">
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash [1M Context Window]</option>
+                    <option value="gemini-1.5-flash">Gemini 1.5 Flash [Multimodal]</option>
+                  </optgroup>
+                  <optgroup label="OpenRouter Free Tier (Zero Cost :free)">
+                    <option value="meta-llama/llama-3.3-70b-instruct:free">Meta LLaMA 3.3 70B [:free Tier]</option>
+                    <option value="google/gemini-2.0-flash-exp:free">Google Gemini 2.0 Flash Exp [:free Tier]</option>
+                  </optgroup>
+                </select>
+              </div>
 
-        <div class="agent-card" id="agent-card-visual"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
-          <div class="agent-card-info">
-            <span class="agent-role">Visual Architect Agent</span>
-            <span class="agent-status" id="status-agent-visual">Standby</span>
-          </div>
-          <span class="agent-indicator"></span>
-        </div>
+              <div class="form-group col-half">
+                <label for="settings-theme-select">Visual Palette Theme</label>
+                <select id="settings-theme-select">
+                  <option value="dark_academic" selected>Dark Academic (Default)</option>
+                  <option value="light_minimal">Light Minimalist</option>
+                  <option value="vibrant">Vibrant Cyberpunk</option>
+                </select>
+              </div>
+            </div>
 
-        <div class="agent-card" id="agent-card-compiler"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
-          <div class="agent-card-info">
-            <span class="agent-role">Tri-Pane Compiler &amp; RAG Vector</span>
-            <span class="agent-status" id="status-agent-compiler">Standby</span>
-          </div>
-          <span class="agent-indicator"></span>
-        </div>
-      </div>
+            <!-- Groq API Key -->
+            <div class="form-group">
+              <div class="label-row">
+                <label for="settings-groq-key">Groq Cloud API Key</label>
+                <span id="badge-groq-status" class="key-status-pill unconfigured">Not Set (Uses Built-in)</span>
+              </div>
+              <input type="password" id="settings-groq-key" placeholder="Enter new gsk_... key or leave blank to keep current">
+              <p class="input-hint">Symmetrically encrypted with AES-128-CBC before database storage.</p>
+            </div>
 
-      <!-- Overall Swarm Progress -->
-      <div class="workplace-progress-wrap">
-        <div class="workplace-progress-meta">
-          <span id="workplace-current-task">Initializing multi-agent pipeline...</span>
-          <span id="workplace-pct-text">0%</span>
-        </div>
-        <div class="workplace-progress-bar">
-          <div id="workplace-progress-fill" class="workplace-progress-fill" style="width: 0%;"></div>
-        </div>
-      </div>
+            <!-- Gemini API Key -->
+            <div class="form-group">
+              <div class="label-row">
+                <label for="settings-gemini-key">Google Gemini API Key</label>
+                <span id="badge-gemini-status" class="key-status-pill unconfigured">Not Set</span>
+              </div>
+              <input type="password" id="settings-gemini-key" placeholder="Enter new AIza... key or leave blank to keep current">
+            </div>
 
-      <!-- Live Streaming Swarm Console -->
-      <div class="workplace-terminal-container">
-        <div class="terminal-bar">
-          <div class="terminal-dots">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-          </div>
-          <span class="terminal-title">LIVE MULTI-AGENT SYNTHESIS STREAM</span>
-          <span class="terminal-tag">Real-Time Event Bus</span>
-        </div>
-        <div id="workplace-terminal" class="workplace-terminal">
-          <div class="log-line system">[SYSTEM] Swarm workplace initialized. Awaiting pipeline start...</div>
-        </div>
-      </div>
+            <!-- Eraser Diagram Key -->
+            <div class="form-group">
+              <div class="label-row">
+                <label for="settings-eraser-key">Eraser.io Architecture Diagram Key</label>
+                <span id="badge-eraser-status" class="key-status-pill unconfigured">Optional</span>
+              </div>
+              <input type="password" id="settings-eraser-key" placeholder="Paste Eraser API key (leave blank for local SVG/Mermaid charts)">
+            </div>
 
-      <div class="workplace-modal-footer">
-        <div class="workplace-footer-left">
-          <span class="pulse-indicator">●</span>
-          <span id="workplace-footer-status">Autonomous agents executing in parallel. Please keep this tab open.</span>
-        </div>
-        <div class="workplace-footer-right">
-          <span class="badge-accent">Zero Content Sparks Policy Active</span>
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+              <button type="button" class="btn-header-action" id="btn-cancel-settings">Cancel</button>
+              <button type="submit" class="btn-primary" style="padding:0.65rem 1.4rem;">
+                <span>Save Vault Settings</span>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- PHASE 3: Human-in-the-Loop Review Modal -->
+    <div id="hitl-modal" class="hitl-modal-overlay hidden">
+      <div class="hitl-modal-card">
+        <div class="hitl-modal-header">
+          <div class="hitl-badge-row">
+            <span class="hitl-badge">Phase 3 &bull; Human-in-the-Loop Checkpoint</span>
+            <span class="hitl-status-pill">Awaiting Your Review</span>
+          </div>
+          <h2 class="hitl-title">Curate &amp; Approve Course Syllabus</h2>
+          <p class="hitl-subtitle">Our ingestion engine extracted the following chapters and timestamps. Review, toggle, or edit topic titles below before activating the multi-agent synthesis swarm.</p>
+        </div>
+
+        <div class="hitl-video-strip" id="hitl-video-strip">
+          <img id="hitl-video-thumb" src="" alt="Thumbnail" class="hitl-thumb">
+          <div class="hitl-video-details">
+            <h4 id="hitl-video-title" class="hitl-video-title"></h4>
+            <div class="hitl-video-meta">
+              <span id="hitl-video-channel" class="meta-tag"></span>
+              <span id="hitl-video-duration" class="meta-tag"></span>
+              <span id="hitl-video-count" class="meta-tag accent"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hitl-list-header">
+          <div class="hitl-select-all">
+            <input type="checkbox" id="hitl-select-all-cb" checked>
+            <label for="hitl-select-all-cb">Select All Chapters</label>
+          </div>
+          <button type="button" id="hitl-add-topic-btn" class="hitl-btn-sm">+ Add Custom Topic</button>
+        </div>
+
+        <div class="hitl-chapters-list" id="hitl-chapters-container">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="hitl-modal-footer">
+          <div class="hitl-selection-summary">
+            <span id="hitl-selected-count">0 of 0</span> topics approved for synthesis
+          </div>
+          <div class="hitl-footer-actions">
+            <button type="button" id="hitl-cancel-btn" class="hitl-btn-secondary">Cancel</button>
+            <button type="button" id="hitl-approve-btn" class="hitl-btn-primary">
+              <span>Approve Syllabus &amp; Synthesize Notes</span>
+              <span class="hitl-btn-arrow">&rarr;</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 4-8: Translucent Swarm Synthesis Workplace Modal -->
+    <div id="workplace-modal" class="workplace-modal-overlay hidden">
+      <div class="workplace-modal-card">
+        <div class="workplace-modal-header">
+          <div class="workplace-header-left">
+            <div class="workplace-badge-row">
+              <span class="workplace-badge">Multi-Agent Swarm Orchestration</span>
+              <span class="workplace-pulse-dot"></span>
+              <span id="workplace-live-timer" class="workplace-timer">00:00</span>
+            </div>
+            <h2 id="workplace-title" class="workplace-title">Synthesizing Interactive Educational Handbook</h2>
+            <p id="workplace-subtitle" class="workplace-subtitle">Multi-Agent Swarm actively processing transcript clusters, extracting code, querying GitHub repositories, and compiling deep notes.</p>
+          </div>
+          <div class="workplace-header-right">
+            <div class="workplace-stat-badge">
+              <span class="stat-label">Model Engine</span>
+              <span id="workplace-model-badge" class="stat-val">Groq 120B</span>
+            </div>
+            <div class="workplace-stat-badge">
+              <span class="stat-label">Chapters</span>
+              <span id="workplace-chapter-counter" class="stat-val">0 / 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Agent Pipeline Cards -->
+        <div class="swarm-agent-grid">
+          <div class="agent-card" id="agent-card-cluster"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="hsl(45 68% 47%)" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><circle cx="5" cy="6" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg></div>
+            <div class="agent-card-info">
+              <span class="agent-role">Clustering &amp; Threshold Agent</span>
+              <span class="agent-status" id="status-agent-cluster">Standby</span>
+            </div>
+            <span class="agent-indicator"></span>
+          </div>
+
+          <div class="agent-card" id="agent-card-code"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="hsl(45 40% 97%)" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></div>
+            <div class="agent-card-info">
+              <span class="agent-role">Code Cleaning &amp; Repo Agent</span>
+              <span class="agent-status" id="status-agent-code">Standby</span>
+            </div>
+            <span class="agent-indicator"></span>
+          </div>
+
+          <div class="agent-card" id="agent-card-theory"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
+            <div class="agent-card-info">
+              <span class="agent-role">Deep Technical Theory Agent</span>
+              <span class="agent-status" id="status-agent-theory">Standby</span>
+            </div>
+            <span class="agent-indicator"></span>
+          </div>
+
+          <div class="agent-card" id="agent-card-visual"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
+            <div class="agent-card-info">
+              <span class="agent-role">Visual Architect Agent</span>
+              <span class="agent-status" id="status-agent-visual">Standby</span>
+            </div>
+            <span class="agent-indicator"></span>
+          </div>
+
+          <div class="agent-card" id="agent-card-compiler"><div class="agent-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
+            <div class="agent-card-info">
+              <span class="agent-role">Tri-Pane Compiler &amp; RAG Vector</span>
+              <span class="agent-status" id="status-agent-compiler">Standby</span>
+            </div>
+            <span class="agent-indicator"></span>
+          </div>
+        </div>
+
+        <!-- Overall Swarm Progress -->
+        <div class="workplace-progress-wrap">
+          <div class="workplace-progress-meta">
+            <span id="workplace-current-task">Initializing multi-agent pipeline...</span>
+            <span id="workplace-pct-text">0%</span>
+          </div>
+          <div class="workplace-progress-bar">
+            <div id="workplace-progress-fill" class="workplace-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Live Streaming Swarm Console -->
+        <div class="workplace-terminal-container">
+          <div class="terminal-bar">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <span class="terminal-title">LIVE MULTI-AGENT SYNTHESIS STREAM</span>
+            <span class="terminal-tag">Real-Time Event Bus</span>
+          </div>
+          <div id="workplace-terminal" class="workplace-terminal">
+            <div class="log-line system">[SYSTEM] Swarm workplace initialized. Awaiting pipeline start...</div>
+          </div>
+        </div>
+
+        <div class="workplace-modal-footer">
+          <div class="workplace-footer-left">
+            <span class="pulse-indicator">&bull;</span>
+            <span id="workplace-footer-status">Autonomous agents executing in parallel. Please keep this tab open.</span>
+          </div>
+          <div class="workplace-footer-right">
+            <span class="badge-accent">Zero Content Sparks Policy Active</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </main>
 
-  <footer class="landing-footer"><p>4 U By U &bull; Agentic AI Educational Engineering System &bull; Grounded in LangGraph Handbooks</p></footer>
+  <footer class="landing-footer">
+    <p>4 U By U &bull; Agentic AI Educational Engineering System &bull; Grounded in LangGraph Handbooks</p>
+  </footer>
 
-  <script src="/static/js/local_storage_db.js"></script>
   <script src="/static/js/landing.js"></script>
+  <script src="/static/js/constellation_grid.js"></script>
+
+  <script id="navbar-interactive-helper">
+    function scrollToWorkspaces() {
+      const target = document.getElementById('workspaces-heading') || document.querySelector('.library-section');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const input = document.getElementById('workspaces-filter-input');
+        if (input) {
+          setTimeout(() => input.focus(), 600);
+        }
+      }
+    }
+
+    function filterWorkspaces(query) {
+      const term = (query || '').toLowerCase().trim();
+      const cards = document.querySelectorAll('.handbook-card');
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (!term || text.includes(term)) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    window.addEventListener('scroll', function() {
+      const header = document.querySelector('.ecosystem-header');
+      if (!header) return;
+      if (window.scrollY > 40) {
+        header.classList.add('header-scrolled');
+      } else {
+        header.classList.remove('header-scrolled');
+      }
+    }, { passive: true });
+  </script>
 </body>
 </html>

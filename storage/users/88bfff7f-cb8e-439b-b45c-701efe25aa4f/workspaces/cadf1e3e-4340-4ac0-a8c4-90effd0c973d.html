@@ -1,0 +1,402 @@
+<html><body><h1>User A Private Notes</h1>
+
+
+<script>
+// High-performance scroll listener to minimize workspace navbar
+(function initNavbarMinimizeOnScroll() {
+  function setupListener() {
+    const pane = document.getElementById("handbook-pane");
+    const header = document.querySelector(".handbook-header");
+    if (!pane || !header) return;
+
+    let ticking = false;
+    function updateNavbar() {
+      const st = pane.scrollTop;
+      if (st > 40) {
+        if (!header.classList.contains("minimized")) {
+          header.classList.add("minimized");
+        }
+      } else {
+        if (header.classList.contains("minimized")) {
+          header.classList.remove("minimized");
+        }
+      }
+      ticking = false;
+    }
+
+    pane.addEventListener("scroll", function() {
+      if (!ticking) {
+        window.requestAnimationFrame(updateNavbar);
+        ticking = true;
+      }
+    }, { passive: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupListener);
+  } else {
+    setupListener();
+  }
+})();
+</script>
+
+
+</body></html>
+<style id="white-notes-enforcement">
+/* ==========================================================================
+   GENERATED NOTES COMPONENT ONLY - PRISTINE WHITE SCHOLARLY THEME
+   ========================================================================== */
+#handbook-chapters,
+.handbook-chapters {
+  background: transparent !important;
+}
+
+#handbook-chapters .chapter-card,
+.handbook-chapters .chapter-card,
+article.chapter-card {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 1.6rem 1.75rem !important;
+  margin-bottom: 1.75rem !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  color: #1e293b !important;
+}
+
+#handbook-chapters .chapter-card:hover,
+.handbook-chapters .chapter-card:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Theory Block */
+#handbook-chapters .theory-block,
+.chapter-card .theory-block,
+.theory-block {
+  background: #f8fafc !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 4px solid #0284c7 !important;
+  border-radius: 10px !important;
+  padding: 1.25rem 1.4rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+  color: #1e293b !important;
+}
+
+#handbook-chapters .theory-content,
+.chapter-card .theory-content,
+.theory-content {
+  color: #1e293b !important;
+}
+
+#handbook-chapters .theory-content p,
+.chapter-card .theory-content p,
+.theory-content p {
+  color: #334155 !important;
+  line-height: 1.72 !important;
+  font-size: 0.96rem !important;
+  margin-bottom: 0.85rem !important;
+}
+
+#handbook-chapters .theory-content strong,
+.chapter-card .theory-content strong,
+.theory-content strong {
+  color: #0369a1 !important;
+  background: #e0f2fe !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 1px 5px !important;
+  font-weight: 700 !important;
+}
+
+#handbook-chapters .theory-content h3,
+#handbook-chapters .theory-content h4,
+.chapter-card .theory-content h3,
+.chapter-card .theory-content h4 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-weight: 700 !important;
+  margin: 1.1rem 0 0.5rem 0 !important;
+}
+
+/* Analogy Card (Mental Model & Intuition) */
+#handbook-chapters .analogy-card,
+.chapter-card .analogy-card,
+.analogy-card {
+  background: #fffbeb !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #fde68a !important;
+  border-left: 4px solid #f59e0b !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+#handbook-chapters .analogy-title,
+.chapter-card .analogy-title,
+.analogy-title {
+  color: #92400e !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.98rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+#handbook-chapters .analogy-text,
+#handbook-chapters .analogy-body,
+.chapter-card .analogy-text,
+.chapter-card .analogy-body,
+.analogy-text,
+.analogy-body {
+  color: #78350f !important;
+  line-height: 1.65 !important;
+  font-size: 0.94rem !important;
+}
+
+/* Keypoints Card */
+#handbook-chapters .keypoints-card,
+.chapter-card .keypoints-card,
+.keypoints-card {
+  background: #f0fdf4 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #bbf7d0 !important;
+  border-left: 4px solid #16a34a !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+  color: #14532d !important;
+}
+
+#handbook-chapters .keypoints-card li,
+#handbook-chapters .keypoints-card p,
+.chapter-card .keypoints-card li,
+.chapter-card .keypoints-card p {
+  color: #166534 !important;
+  font-size: 0.93rem !important;
+  line-height: 1.6 !important;
+}
+
+/* Example Card */
+#handbook-chapters .example-card,
+.chapter-card .example-card,
+.example-card {
+  background: #f5f3ff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #ddd6fe !important;
+  border-left: 4px solid #8b5cf6 !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+#handbook-chapters .example-text,
+.chapter-card .example-text,
+.example-text {
+  color: #4c1d95 !important;
+  line-height: 1.65 !important;
+  font-size: 0.94rem !important;
+}
+
+/* Section Blocks */
+#handbook-chapters .section-block,
+.chapter-card .section-block,
+.section-block {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1.2rem 1.35rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+#handbook-chapters .section-heading,
+.chapter-card .section-heading,
+.section-heading {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.65rem 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Code Cards (High Contrast Dark Box on White) */
+#handbook-chapters .code-card,
+.chapter-card .code-card,
+.chapter-card pre {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 10px !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+  overflow: hidden !important;
+}
+
+#handbook-chapters .code-header,
+.chapter-card .code-header,
+.code-header {
+  background: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+  padding: 0.5rem 1rem !important;
+}
+
+#handbook-chapters .code-card pre,
+.chapter-card .code-card pre {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 1rem !important;
+}
+
+#handbook-chapters .code-card code,
+.chapter-card .code-card code,
+.chapter-card pre code {
+  color: #f8fafc !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+}
+
+/* Visual Diagram & Media */
+#handbook-chapters .visual-diagram-card,
+#handbook-chapters .visual-media-wrapper,
+#handbook-chapters .mermaid-box,
+.chapter-card .visual-diagram-card,
+.chapter-card .visual-media-wrapper,
+.chapter-card .mermaid-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1rem !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+#handbook-chapters .diagram-caption,
+#handbook-chapters .caption-text,
+#handbook-chapters .code-caption,
+.chapter-card .diagram-caption,
+.chapter-card .caption-text,
+.chapter-card .code-caption {
+  color: #64748b !important;
+  font-size: 0.85rem !important;
+  margin-top: 0.4rem !important;
+}
+
+/* Headings & Badges */
+#handbook-chapters .chapter-heading,
+.chapter-card .chapter-heading,
+.chapter-card h2 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.3 !important;
+}
+
+#handbook-chapters .chapter-num,
+.chapter-card .chapter-num {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+}
+
+/* Chapter Overview & Paragraphs */
+#handbook-chapters p,
+.chapter-card p,
+.chapter-card .chapter-overview,
+.chapter-card .section-narrative,
+.chapter-card .step-text,
+.chapter-card .example-text {
+  color: #334155 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.68 !important;
+}
+
+#handbook-chapters strong,
+.chapter-card strong,
+.chapter-card b {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+#handbook-chapters ul,
+#handbook-chapters ol,
+.chapter-card ul,
+.chapter-card ol {
+  color: #334155 !important;
+}
+
+#handbook-chapters li,
+.chapter-card li {
+  color: #334155 !important;
+}
+
+/* Timestamp Jump Pills */
+#handbook-chapters .ts-pill,
+#handbook-chapters .ts-pill-sm,
+#handbook-chapters .timestamp-pill,
+#handbook-chapters .diagram-time-pill,
+.chapter-card .ts-pill,
+.chapter-card .ts-pill-sm,
+.chapter-card .timestamp-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  border-radius: 9999px !important;
+  padding: 3px 9px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+#handbook-chapters .ts-pill:hover,
+#handbook-chapters .ts-pill-sm:hover,
+.chapter-card .ts-pill:hover,
+.chapter-card .ts-pill-sm:hover {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+#handbook-chapters .btn-ask-ai,
+.chapter-card .btn-ask-ai {
+  background: #fef3c7 !important;
+  border: 1px solid #fde68a !important;
+  color: #92400e !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  cursor: pointer !important;
+}
+
+#handbook-chapters .chapter-summary-footer,
+.chapter-card .chapter-summary-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  padding: 1rem 1.25rem !important;
+  margin: 1.25rem -1.75rem -1.6rem -1.75rem !important;
+  border-radius: 0 0 14px 14px !important;
+  color: #334155 !important;
+}
+</style>

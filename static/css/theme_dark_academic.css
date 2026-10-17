@@ -1,41 +1,1253 @@
 /* ========================================================================= */
-/* 4 U By U ? OFFICIAL BRAND THEME: EMERALD OBSIDIAN & 3D METALLIC GOLD      */
-/* Designed directly from the official 4U BY U / FOR YOU BY YOU 3D Emblem    */
-/* Canvas: #060B08 | Deep Emerald: #09130E | Header: #0D1A14                */
-/* Jewel Emerald: #10B981 / #059669 | Metallic Gold Trim: #D4AF37 / #F59E0B  */
+/* 4 U By U — GLASSMORPHIC NOIR & AMBER GOLD THEME                           */
+/* Color Palette: #2c2f35 (Espresso Noir) | #211a1a (Dark Card)             */
+/* Primary Gold: 45 68% 47% | Foreground: 45 40% 97% (Champagne Ivory)       */
+/* Typography: Instrument Serif, Amiri, IBM Plex Mono, Noto Naskh Arabic     */
 /* ========================================================================= */
 
-@font-face {
-  font-family: 'Gagalin';
-  src: url('/static/fonts/gagalin-regular.woff2') format('woff2'),
-       url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
+
+:root {
+  --card: #2b2b2b;
+  --ring: #e5e5e5;
+  --star: #e5e5e5;
+  --input: 45 40% 97% / 0.07;
+  --muted: #a4a4a4;
+  --accent: #000000;
+  --border: 45 40% 97% / 0.07;
+  --radius: 0px;
+  --thread: 44 63% 33%;
+  --chart-1: hsl(12 76% 61%);
+  --chart-2: hsl(173 58% 39%);
+  --chart-3: hsl(197 37% 24%);
+  --chart-4: hsl(43 74% 66%);
+  --chart-5: hsl(27 87% 67%);
+  --font-en: "Instrument Serif", serif;
+  --popover: 0 0% 4%;
+  --primary: #e5e5e5;
+  --sidebar: hsl(0 0% 100%);
+  --spacing: 0.25rem;
+  --font-body: "Noto Naskh Arabic", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --secondary: #0d0c0c;
+  --background: #2c2f35;
+  --font-serif: ui-serif, Georgia, serif;
+  --foreground: #e5e5e5;
+  --destructive: 0 84% 60%;
+  --shadow-blur: 8px;
+  --font-display: "Amiri", serif;
+  --shadow-color: hsl(0 0% 0%);
+  --sidebar-ring: hsl(222.2 84% 4.9%);
+  --shadow-spread: -1px;
+  --letter-spacing: 0em;
+  --shadow-opacity: 0.1;
+  --sidebar-accent: hsl(210 40% 96%);
+  --sidebar-border: hsl(214.3 31.8% 91.4%);
+  --card-foreground: 45 40% 97%;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 4px;
+  --sidebar-primary: hsl(222.2 47.4% 11.2%);
+  --muted-foreground: 0 0% 55%;
+  --accent-foreground: 45 40% 97%;
+  --popover-foreground: 45 40% 97%;
+  --primary-foreground: 0 0% 2%;
+  --sidebar-foreground: hsl(222.2 84% 4.9%);
+  --secondary-foreground: 45 40% 97%;
+  --destructive-foreground: 0 0% 2%;
+  --sidebar-accent-foreground: hsl(222.2 84% 4.9%);
+  --sidebar-primary-foreground: hsl(210 40% 98%);
+
+  /* Resolved Glassmorphism Tokens */
+  --c-primary: hsl(45 68% 47%);
+  --c-primary-light: hsl(43 74% 66%);
+  --c-primary-glow: hsla(45, 68%, 47%, 0.35);
+  --c-foreground: hsl(45 40% 97%);
+  --c-foreground-muted: hsla(45, 40%, 97%, 0.65);
+  --c-border: hsl(45 40% 97% / 0.08);
+  --c-border-gold: hsla(45, 68%, 47%, 0.45);
+  --c-bg: #2c2f35;
+
+  --glass-surface-1: rgba(44, 47, 53, 0.32);
+  --glass-surface-2: rgba(22, 16, 16, 0.72);
+  --glass-surface-3: rgba(13, 12, 12, 0.85);
+  --glass-surface-hover: rgba(48, 38, 38, 0.75);
+  --glass-input: hsl(45 40% 97% / 0.07);
+  --glass-blur: blur(20px) saturate(180%);
+  --glass-specular: inset 0 1px 1px 0 rgba(249, 246, 238, 0.15);
+  --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.55), inset 0 1px 1px 0 rgba(249, 246, 238, 0.12);
+  --glass-shadow-gold: 0 0 25px rgba(201, 154, 37, 0.25), inset 0 1px 1px 0 rgba(249, 246, 238, 0.2);
+
+  /* Legacy Theme Compatibility */
+  --theme-bg: var(--c-bg);
+  --theme-pane-bg: var(--glass-surface-2);
+  --theme-header-bg: rgba(44, 47, 53, 0.85);
+  --theme-card-bg: var(--glass-surface-1);
+  --theme-toc-bg: var(--glass-surface-2);
+  --theme-border: var(--c-border);
+  --theme-border-gold: var(--c-border-gold);
+  --theme-text: var(--c-foreground);
+  --theme-muted: var(--c-foreground-muted);
+  --theme-accent: var(--c-primary);
+  --theme-accent-hover: var(--c-primary-light);
+  --theme-accent-glow: var(--c-primary-glow);
+  --theme-gold: var(--c-primary);
+  --theme-gold-light: var(--c-primary-light);
+  --theme-gold-glow: var(--c-primary-glow);
+  --theme-code-bg: var(--glass-surface-3);
+
+  --font-heading: var(--font-en), var(--font-display), Georgia, serif;
+  --splitter-size: 6px;
+  --splitter-hover: var(--c-primary);
 }
 
-:root, [data-theme="dark_academic"] {
-  --theme-bg: #060b08;
-  --theme-pane-bg: #09130e;
-  --theme-header-bg: #0d1a14;
-  --theme-card-bg: #ffffff;
-  --theme-toc-bg: #ffffff;
-  --theme-border: #183325;
-  --theme-border-gold: rgba(212, 175, 55, 0.4);
-  --theme-text: #f1f5f9;
-  --theme-muted: #86efac;
-  --theme-accent: #10b981;
-  --theme-accent-hover: #059669;
-  --theme-accent-glow: rgba(16, 185, 129, 0.35);
-  --theme-gold: #d4af37;
-  --theme-gold-light: #fbbf24;
-  --theme-gold-glow: rgba(212, 175, 55, 0.35);
-  --theme-code-bg: #0a1410;
+.dark, [data-theme="dark_academic"], [data-theme="dark"] {
+  --card: 0 0% 4%;
+  --ring: #e5e5e5;
+  --star: #e5e5e5;
+  --input: 45 40% 97% / 0.07;
+  --muted: #a4a4a4;
+  --accent: 45 68% 47% / 0.12;
+  --border: 45 40% 97% / 0.07;
+  --radius: 0px;
+  --thread: 44 63% 33%;
+  --chart-1: hsl(12 76% 61%);
+  --chart-2: hsl(173 58% 39%);
+  --chart-3: hsl(197 37% 24%);
+  --chart-4: hsl(43 74% 66%);
+  --chart-5: hsl(27 87% 67%);
+  --font-en: "Instrument Serif", serif;
+  --popover: 0 0% 4%;
+  --primary: #e5e5e5;
+  --sidebar: hsl(222.2 84% 4.9%);
+  --spacing: 0.25rem;
+  --font-body: "Noto Naskh Arabic", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --secondary: 0 0% 10%;
+  --background: #2c2f35;
+  --font-serif: ui-serif, Georgia, serif;
+  --foreground: #e5e5e5;
+  --destructive: 0 84% 60%;
+  --shadow-blur: 8px;
+  --font-display: "Amiri", serif;
+  --shadow-color: hsl(0 0% 0%);
+  --sidebar-ring: hsl(222.2 84% 4.9%);
+  --shadow-spread: -1px;
+  --letter-spacing: 0em;
+  --shadow-opacity: 0.1;
+  --sidebar-accent: hsl(217.2 32.6% 17.5%);
+  --sidebar-border: hsl(217.2 32.6% 17.5%);
+  --card-foreground: 45 40% 97%;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 4px;
+  --sidebar-primary: hsl(210 40% 98%);
+  --muted-foreground: 0 0% 55%;
+  --accent-foreground: 45 40% 97%;
+  --popover-foreground: 45 40% 97%;
+  --primary-foreground: 0 0% 2%;
+  --sidebar-foreground: hsl(210 40% 98%);
+  --secondary-foreground: 45 40% 97%;
+  --destructive-foreground: 0 0% 2%;
+  --sidebar-accent-foreground: hsl(210 40% 98%);
+  --sidebar-primary-foreground: hsl(222.2 47.4% 11.2%);
+}
 
-  --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-heading: 'Gagalin', 'Gagalin-Regular', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'Roboto Mono', 'JetBrains Mono', monospace;
+@theme inline {
+  --color-card: var(--card);
+  --color-ring: var(--ring);
+  --color-star: var(--star);
+  --color-input: var(--input);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-radius: var(--radius);
+  --color-thread: var(--thread);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-font-en: var(--font-en);
+  --color-popover: var(--popover);
+  --color-primary: var(--primary);
+  --color-sidebar: var(--sidebar);
+  --color-spacing: var(--spacing);
+  --color-font-body: var(--font-body);
+  --color-font-mono: var(--font-mono);
+  --color-font-sans: var(--font-sans);
+  --color-secondary: var(--secondary);
+  --color-background: var(--background);
+  --color-font-serif: var(--font-serif);
+  --color-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-shadow-blur: var(--shadow-blur);
+  --color-font-display: var(--font-display);
+  --color-shadow-color: var(--shadow-color);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-shadow-spread: var(--shadow-spread);
+  --color-letter-spacing: var(--letter-spacing);
+  --color-shadow-opacity: var(--shadow-opacity);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-card-foreground: var(--card-foreground);
+  --color-shadow-offset-x: var(--shadow-offset-x);
+  --color-shadow-offset-y: var(--shadow-offset-y);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+}
 
-  --splitter-size: 6px;
-  --splitter-hover: #10b981;
+
+/* ========================================================================= */
+/* ALL WORKSPACE OPERATIONAL COMPONENTS INTO FROSTED GLASS                   */
+/* ========================================================================= */
+
+/* 1. Handbook Header & Top Navbar */
+.handbook-header {
+  background: rgba(44, 47, 53, 0.85) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.12) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+}
+
+/* 2. Table of Contents (TOC) Navigator */
+.handbook-toc {
+  background: rgba(44, 47, 53, 0.32) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(229, 229, 229, 0.11) !important;
+  border-radius: 14px !important;
+  padding: 1.25rem 1.5rem !important;
+  margin-bottom: 2rem !important;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+  color: hsl(45 40% 97%) !important;
+}
+
+.handbook-toc:hover {
+  border-color: rgba(201, 154, 37, 0.35) !important;
+}
+
+.toc-header {
+  color: hsl(45 40% 97%) !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.08) !important;
+  padding-bottom: 0.65rem !important;
+}
+
+.toc-header h3 {
+  color: hsl(43 74% 66%) !important;
+  font-family: var(--font-en), Georgia, serif !important;
+  font-size: 1.25rem !important;
+  letter-spacing: 0.3px !important;
+}
+
+.toc-count {
+  background: rgba(201, 154, 37, 0.18) !important;
+  border: 1px solid rgba(201, 154, 37, 0.4) !important;
+  color: #fbbf24 !important;
+  border-radius: 9999px !important;
+  padding: 2px 10px !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+}
+
+.toc-list li a.toc-link {
+  color: rgba(249, 246, 238, 0.82) !important;
+  border-radius: 8px !important;
+  padding: 0.35rem 0.65rem !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.toc-list li a.toc-link:hover {
+  background: rgba(201, 154, 37, 0.16) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(201, 154, 37, 0.2) !important;
+}
+
+.toc-order {
+  color: hsl(45 68% 47%) !important;
+  font-weight: 700 !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+.toc-ts {
+  background: rgba(201, 154, 37, 0.15) !important;
+  border: 1px solid rgba(201, 154, 37, 0.35) !important;
+  color: #fbbf24 !important;
+  border-radius: 9999px !important;
+  padding: 1px 8px !important;
+  font-size: 0.72rem !important;
+  font-family: var(--font-mono), monospace !important;
+  margin-left: auto !important;
+}
+
+/* 3. Search Bar & AI Topic Suggestions */
+.search-input-wrapper {
+  background: rgba(44, 47, 53, 0.28) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.15) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: hsl(45 68% 47% / 0.6) !important;
+  box-shadow: 0 0 20px rgba(201, 154, 37, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+#notes-search {
+  background: transparent !important;
+  color: #ffffff !important;
+  border: none !important;
+  outline: none !important;
+}
+
+#notes-search::placeholder {
+  color: rgba(229, 229, 229, 0.5) !important;
+}
+
+.search-suggestions-dropdown {
+  background: rgba(44, 47, 53, 0.60) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(201, 154, 37, 0.35) !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 25px rgba(201, 154, 37, 0.15) !important;
+  border-radius: 12px !important;
+}
+
+.suggestions-header {
+  border-bottom: 1px solid rgba(229, 229, 229, 0.08) !important;
+  color: #fbbf24 !important;
+}
+
+.suggestion-item {
+  color: hsl(45 40% 97%) !important;
+  border-radius: 6px !important;
+  transition: all 0.18s ease !important;
+}
+
+.suggestion-item:hover {
+  background: rgba(201, 154, 37, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* 4. Toolbar Operational Controls & Buttons */
+.time-pill {
+  background: rgba(201, 154, 37, 0.15) !important;
+  border: 1px solid rgba(201, 154, 37, 0.4) !important;
+  color: #fbbf24 !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-radius: 9999px !important;
+  padding: 3px 10px !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+}
+
+.btn-tool-sm, .btn-frame-sync, .btn-sidebar-toggle {
+  background: rgba(249, 246, 238, 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.12) !important;
+  color: #e5e5e5 !important;
+  border-radius: 8px !important;
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-tool-sm:hover, .btn-frame-sync:hover, .btn-sidebar-toggle:hover {
+  background: rgba(201, 154, 37, 0.18) !important;
+  border-color: hsl(45 68% 47% / 0.5) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(201, 154, 37, 0.25) !important;
+}
+
+.btn-toggle.btn-sync-toggle.active {
+  background: rgba(201, 154, 37, 0.25) !important;
+  border: 1px solid hsl(45 68% 47% / 0.7) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(201, 154, 37, 0.35) !important;
+}
+
+/* 5. Timestamp Jump Pills (Everywhere in Chapters) */
+.ts-pill-sm, .timestamp-pill {
+  background: rgba(201, 154, 37, 0.16) !important;
+  border: 1px solid rgba(201, 154, 37, 0.42) !important;
+  color: #fbbf24 !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-radius: 9999px !important;
+  padding: 2px 9px !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+}
+
+.ts-pill-sm:hover, .timestamp-pill:hover {
+  background: hsl(45 68% 47%) !important;
+  border-color: hsl(45 68% 47%) !important;
+  color: #2c2f35 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 14px rgba(201, 154, 37, 0.5) !important;
+}
+
+/* 6. Resizers & Dividers */
+.resizer.h-resizer, .resizer.v-resizer, #v-resizer, #h-resizer {
+  background: rgba(44, 47, 53, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.08) !important;
+  transition: background 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.resizer.h-resizer:hover, .resizer.v-resizer:hover, #v-resizer:hover, #h-resizer:hover {
+  background: hsl(45 68% 47% / 0.7) !important;
+  box-shadow: 0 0 16px rgba(201, 154, 37, 0.55) !important;
+}
+
+/* 7. Floating Restore Companion FAB */
+.floating-companion-fab, #floating-companion-fab {
+  background: rgba(44, 47, 53, 0.60) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(201, 154, 37, 0.45) !important;
+  color: #fbbf24 !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(201, 154, 37, 0.25) !important;
+  transition: all 0.2s ease !important;
+}
+
+.floating-companion-fab:hover, #floating-companion-fab:hover {
+  background: hsl(45 68% 47%) !important;
+  color: #2c2f35 !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 25px rgba(201, 154, 37, 0.5) !important;
+}
+
+/* 8. Chat Quick Chips & Input Bar */
+.chat-quick-chips .chip-btn {
+  background: rgba(249, 246, 238, 0.06) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.14) !important;
+  color: #e5e5e5 !important;
+  border-radius: 9999px !important;
+  padding: 0.35rem 0.85rem !important;
+  font-size: 0.76rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.chat-quick-chips .chip-btn:hover {
+  background: rgba(201, 154, 37, 0.22) !important;
+  border-color: hsl(45 68% 47% / 0.6) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(201, 154, 37, 0.3) !important;
+}
+
+.chat-input-bar {
+  background: rgba(44, 47, 53, 0.28) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid rgba(229, 229, 229, 0.15) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+  padding: 0.35rem 0.5rem !important;
+}
+
+.chat-input-bar:focus-within {
+  border-color: hsl(45 68% 47% / 0.6) !important;
+  box-shadow: 0 0 20px rgba(201, 154, 37, 0.25) !important;
+}
+
+.chat-input-bar input {
+  background: transparent !important;
+  color: #ffffff !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.chat-input-bar input::placeholder {
+  color: rgba(229, 229, 229, 0.5) !important;
+}
+
+#chat-submit-btn, .btn-send-sym {
+  background: hsl(45 68% 47%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.5rem !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 16px rgba(201, 154, 37, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+#chat-submit-btn:hover, .btn-send-sym:hover {
+  background: hsl(43 74% 66%) !important;
+  box-shadow: 0 0 24px rgba(201, 154, 37, 0.6) !important;
+  transform: scale(1.05) !important;
+}
+
+/* 9. Mobile Tabs Navigation Bar */
+.mobile-nav-bar {
+  background: rgba(44, 47, 53, 0.60) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border-top: 1px solid rgba(229, 229, 229, 0.12) !important;
+}
+
+.mobile-tab-btn {
+  background: transparent !important;
+  color: #a4a4a4 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mobile-tab-btn.active {
+  background: rgba(201, 154, 37, 0.22) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(201, 154, 37, 0.45) !important;
+}
+
+/* 10. Diagram Lightbox Modal */
+.lightbox-modal {
+  background: rgba(0, 0, 0, 0.82) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+}
+
+.lightbox-card {
+  background: rgba(44, 47, 53, 0.60) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(201, 154, 37, 0.35) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(201, 154, 37, 0.15) !important;
+  border-radius: 14px !important;
+}
+
+
+/* ==========================================================================
+   SCROLL-TO-MINIMIZE NAVBAR FOR WORKSPACE / STUDY HANDBOOK
+   ========================================================================== */
+.handbook-header {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+  background: rgba(34, 38, 45, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.12) !important;
+  padding: 0.75rem 1rem 0.65rem 1rem !important;
+  margin: 0 -0.75rem 1rem -0.75rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-sizing: border-box !important;
+}
+
+/* Minimized state triggered on scroll down */
+.handbook-header.minimized {
+  padding: 0.35rem 0.85rem !important;
+  margin-bottom: 0.75rem !important;
+  background: rgba(28, 31, 37, 0.97) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.18) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65) !important;
+}
+
+.handbook-header.minimized .header-top {
+  display: none !important;
+}
+
+.handbook-header.minimized .video-meta {
+  display: none !important;
+}
+
+.handbook-header.minimized .video-title {
+  font-size: 0.94rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin: 0 0 0.35rem 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #fbbf24 !important;
+}
+
+.handbook-header.minimized .minimal-toolbar {
+  padding: 0.15rem 0 !important;
+  gap: 0.35rem !important;
+}
+
+.handbook-header.minimized .search-input-wrapper {
+  padding: 0.2rem 0.55rem !important;
+  height: 29px !important;
+}
+
+.handbook-header.minimized .toolbar-actions {
+  gap: 0.35rem !important;
+}
+
+.handbook-header.minimized .btn-tool-sm,
+.handbook-header.minimized .btn-toggle,
+.handbook-header.minimized .time-pill {
+  padding: 0.2rem 0.55rem !important;
+  font-size: 0.74rem !important;
+}
+
+/* ==========================================================================
+   GENERATED NOTES COMPONENT ONLY - WHITE BACKGROUND & SCHOLARLY TYPOGRAPHY
+   ========================================================================== */
+.chapter-card,
+#handbook-chapters .chapter-card,
+article.chapter-card {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 1.6rem 1.75rem !important;
+  margin-bottom: 1.75rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  color: #1e293b !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.chapter-card:hover,
+#handbook-chapters .chapter-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+.chapter-card.active-reading,
+#handbook-chapters .chapter-card.active-reading {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35), 0 8px 25px rgba(0, 0, 0, 0.14) !important;
+}
+
+/* Chapter Header & Heading inside white notes */
+.chapter-card .chapter-header {
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding-bottom: 0.85rem !important;
+  margin-bottom: 1.1rem !important;
+}
+
+.chapter-card .chapter-heading,
+.chapter-card h2 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.3 !important;
+  margin: 0.25rem 0 0 0 !important;
+}
+
+.chapter-card .chapter-num {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Chapter Overview & Paragraphs in white notes */
+.chapter-card p,
+.chapter-card .chapter-overview,
+.chapter-card .section-narrative,
+.chapter-card .step-text,
+.chapter-card .example-text {
+  color: #334155 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.68 !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.chapter-card strong,
+.chapter-card b,
+.chapter-card .section-block strong {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.chapter-card ul,
+.chapter-card ol {
+  color: #334155 !important;
+  margin: 0.5rem 0 1rem 1.4rem !important;
+  padding-left: 0.5rem !important;
+}
+
+.chapter-card li {
+  color: #334155 !important;
+  line-height: 1.65 !important;
+  margin-bottom: 0.45rem !important;
+  font-size: 0.93rem !important;
+}
+
+/* Section Blocks Inside Chapter Card */
+.chapter-card .section-block {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.15rem 0 !important;
+}
+
+.chapter-card .section-heading,
+.chapter-card .section-block h3 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.65rem 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Timestamp Jump Pills Inside Notes */
+.chapter-card .ts-pill,
+.chapter-card .ts-pill-sm,
+.chapter-card .timestamp-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  border-radius: 9999px !important;
+  padding: 3px 9px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.chapter-card .ts-pill:hover,
+.chapter-card .ts-pill-sm:hover,
+.chapter-card .timestamp-pill:hover {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Callout Info Boxes & Quotes Inside Notes */
+.chapter-card blockquote,
+.chapter-card .callout-box,
+.chapter-card .key-takeaway {
+  background: #fefce8 !important;
+  border-left: 4px solid #f59e0b !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 0.85rem 1.1rem !important;
+  margin: 1rem 0 !important;
+  color: #78350f !important;
+}
+
+/* Code Blocks Inside White Notes (Dark high-contrast syntax container) */
+.chapter-card pre,
+.chapter-card .section-block pre {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 8px !important;
+  padding: 1rem !important;
+  overflow-x: auto !important;
+}
+
+.chapter-card pre code,
+.chapter-card .section-block pre code {
+  color: #e2e8f0 !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.chapter-card code:not(pre code) {
+  background: #f1f5f9 !important;
+  color: #b45309 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 0.85em !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+/* Diagrams and Images in Notes */
+.chapter-card img {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+}
+
+
+/* ==========================================================================
+   1. SCROLL-TO-MINIMIZE WORKSPACE NAVBAR
+   ========================================================================== */
+.handbook-header {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+  background: rgba(34, 38, 45, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.12) !important;
+  padding: 0.75rem 1rem 0.65rem 1rem !important;
+  margin: 0 -0.75rem 1rem -0.75rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-sizing: border-box !important;
+}
+
+.handbook-header .header-top,
+.handbook-header .video-meta {
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease !important;
+  overflow: hidden !important;
+  max-height: 80px;
+  opacity: 1;
+}
+
+.handbook-header .video-title {
+  transition: font-size 0.25s ease, margin 0.25s ease, color 0.25s ease !important;
+}
+
+/* Minimized state smoothly triggered as user scrolls down */
+.handbook-header.minimized {
+  padding: 0.35rem 0.85rem !important;
+  margin-bottom: 0.75rem !important;
+  background: rgba(28, 31, 37, 0.97) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.18) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65) !important;
+}
+
+.handbook-header.minimized .header-top {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+.handbook-header.minimized .video-meta {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+.handbook-header.minimized .video-title {
+  font-size: 0.94rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin: 0 0 0.35rem 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #fbbf24 !important;
+}
+
+.handbook-header.minimized .minimal-toolbar {
+  padding: 0.15rem 0 !important;
+  gap: 0.35rem !important;
+}
+
+.handbook-header.minimized .search-input-wrapper {
+  padding: 0.2rem 0.55rem !important;
+  height: 29px !important;
+}
+
+.handbook-header.minimized .toolbar-actions {
+  gap: 0.35rem !important;
+}
+
+.handbook-header.minimized .btn-tool-sm,
+.handbook-header.minimized .btn-toggle,
+.handbook-header.minimized .time-pill {
+  padding: 0.2rem 0.55rem !important;
+  font-size: 0.74rem !important;
+}
+
+/* ==========================================================================
+   2. GENERATED NOTES COMPONENT ONLY - PRISTINE WHITE BACKGROUND & TYPOGRAPHY
+   ========================================================================== */
+.chapter-card,
+#handbook-chapters .chapter-card,
+article.chapter-card {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 1.6rem 1.75rem !important;
+  margin-bottom: 1.75rem !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  color: #1e293b !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.chapter-card:hover,
+#handbook-chapters .chapter-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+.chapter-card.active-reading,
+#handbook-chapters .chapter-card.active-reading {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35), 0 8px 25px rgba(0, 0, 0, 0.14) !important;
+}
+
+/* Chapter Heading & Badge */
+.chapter-card .chapter-header {
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding-bottom: 0.85rem !important;
+  margin-bottom: 1.1rem !important;
+}
+
+.chapter-card .chapter-heading,
+.chapter-card h2,
+#handbook-chapters h2 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.3 !important;
+  margin: 0.25rem 0 0 0 !important;
+}
+
+.chapter-card .chapter-num {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Theory Blocks inside White Notes */
+.chapter-card .theory-block {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 4px solid #0284c7 !important;
+  border-radius: 10px !important;
+  color: #1e293b !important;
+  padding: 1.25rem 1.4rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+.chapter-card .theory-content {
+  color: #1e293b !important;
+}
+
+.chapter-card .theory-content p,
+.chapter-card .theory-content li {
+  color: #334155 !important;
+  line-height: 1.7 !important;
+  font-size: 0.95rem !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.chapter-card .theory-content strong {
+  color: #0369a1 !important;
+  background: #e0f2fe !important;
+  border-radius: 4px !important;
+  padding: 1px 5px !important;
+  font-weight: 700 !important;
+}
+
+.chapter-card .theory-content h3,
+.chapter-card .theory-content h4 {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  margin: 1.1rem 0 0.5rem 0 !important;
+}
+
+/* Section Blocks */
+.chapter-card .section-block {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1.15rem 1.3rem !important;
+  margin: 1.2rem 0 !important;
+}
+
+.chapter-card .section-heading,
+.chapter-card .section-block h3 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.12rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.65rem 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Analogy, Keypoints & Example Cards */
+.chapter-card .analogy-card {
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  border-left: 4px solid #f59e0b !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+}
+
+.chapter-card .analogy-title {
+  color: #92400e !important;
+  font-weight: 700 !important;
+  font-size: 0.98rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.chapter-card .analogy-text,
+.chapter-card .analogy-body {
+  color: #78350f !important;
+  line-height: 1.65 !important;
+  font-size: 0.94rem !important;
+}
+
+.chapter-card .keypoints-card {
+  background: #f0fdf4 !important;
+  border: 1px solid #bbf7d0 !important;
+  border-left: 4px solid #16a34a !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+  color: #14532d !important;
+}
+
+.chapter-card .keypoints-card li,
+.chapter-card .keypoints-card p {
+  color: #166534 !important;
+  font-size: 0.93rem !important;
+  line-height: 1.6 !important;
+}
+
+.chapter-card .example-card {
+  background: #f5f3ff !important;
+  border: 1px solid #ddd6fe !important;
+  border-left: 4px solid #8b5cf6 !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+}
+
+.chapter-card .example-text {
+  color: #4c1d95 !important;
+  line-height: 1.65 !important;
+  font-size: 0.94rem !important;
+}
+
+/* Code Cards inside White Notes (Dark high-contrast syntax box) */
+.chapter-card .code-card,
+.chapter-card pre {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 10px !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+  overflow: hidden !important;
+}
+
+.chapter-card .code-header {
+  background: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.chapter-card .code-lang-badge {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  font-size: 0.72rem !important;
+}
+
+.chapter-card .code-card pre {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 1rem !important;
+}
+
+.chapter-card .code-card code,
+.chapter-card pre code {
+  color: #f8fafc !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+  background: transparent !important;
+}
+
+.chapter-card code:not(pre code) {
+  background: #f1f5f9 !important;
+  color: #b45309 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 0.86em !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+/* Diagrams & Visual Media in White Notes */
+.chapter-card .visual-diagram-card,
+.chapter-card .visual-media-wrapper,
+.chapter-card .mermaid-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1rem !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.chapter-card .diagram-caption,
+.chapter-card .caption-text,
+.chapter-card .code-caption {
+  color: #64748b !important;
+  font-size: 0.85rem !important;
+  margin-top: 0.4rem !important;
+}
+
+/* Timestamp Jump Pills Inside Notes */
+.chapter-card .ts-pill,
+.chapter-card .ts-pill-sm,
+.chapter-card .timestamp-pill,
+.chapter-card .diagram-time-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  border-radius: 9999px !important;
+  padding: 3px 9px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.chapter-card .ts-pill:hover,
+.chapter-card .ts-pill-sm:hover,
+.chapter-card .timestamp-pill:hover {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+.chapter-card .btn-ask-ai {
+  background: #fef3c7 !important;
+  border: 1px solid #fde68a !important;
+  color: #92400e !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  cursor: pointer !important;
+}
+
+.chapter-card .btn-ask-ai:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+}
+
+.chapter-card .chapter-summary-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  padding: 1rem 1.25rem !important;
+  margin: 1.25rem -1.75rem -1.6rem -1.75rem !important;
+  border-radius: 0 0 14px 14px !important;
+  color: #334155 !important;
+}
+
+/* Ensure all generic paragraphs and text inside white notes are dark readable charcoal */
+.chapter-card p,
+.chapter-card .chapter-overview,
+.chapter-card .section-narrative,
+.chapter-card .step-text,
+.chapter-card .example-text {
+  color: #334155 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.68 !important;
+}
+
+.chapter-card strong,
+.chapter-card b,
+.chapter-card .section-block strong {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.chapter-card ul,
+.chapter-card ol {
+  color: #334155 !important;
+}
+
+.chapter-card li {
+  color: #334155 !important;
+}
+
+.toc-title {
+  flex: 1 !important;
+  font-weight: 500 !important;
+  color: #f8fafc !important;
+  font-size: 0.92rem !important;
+  line-height: 1.4 !important;
+}
+
+.toc-list li a.toc-link:hover .toc-title {
+  color: #ffffff !important;
+}
+
+.toc-order {
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+.toc-ts {
+  background: rgba(251, 191, 36, 0.12) !important;
+  border: 1px solid rgba(251, 191, 36, 0.35) !important;
+  color: #fbbf24 !important;
+  border-radius: 9999px !important;
+  padding: 2px 9px !important;
+  font-size: 0.74rem !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 600 !important;
+  margin-left: auto !important;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.12) !important;
 }

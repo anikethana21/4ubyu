@@ -1,0 +1,4809 @@
+<!DOCTYPE html>
+
+<html data-theme="dark_academic" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Complete Machine Learning Course for Beginners | Part 1- Foundation | Sheryians AI School — 4 U By U Workspace</title>
+<!-- CSS Stylesheets -->
+<!-- Gagalin Font & Fonts -->
+<link href="/static/fonts/gagalin-regular.woff2" rel="preload" as="font" type="font/woff2" crossorigin>
+<link href="https://db.onlinewebfonts.com/c/240a7cb10b49b02c94ceddc459d385a9?family=Gagalin-Regular" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/gagalin" rel="stylesheet">
+<link href="/static/css/workspace_layout.css" rel="stylesheet"/>
+<link href="/static/css/theme_dark_academic.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&family=Roboto+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.1/marked.min.js"></script>
+<style id="custom-dark-scrollbars">
+/* UNIVERSAL SLEEK SCROLLBARS - SLIM & DARK */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(118, 171, 174, 0.4) transparent;
+}
+*::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+*::-webkit-scrollbar:horizontal {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 0;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(118, 171, 174, 0.35);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #76ABAE;
+}
+
+.handbook-pane, #handbook-pane {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(118, 171, 174, 0.35) rgba(25, 30, 37, 0.5);
+}
+.handbook-pane::-webkit-scrollbar, #handbook-pane::-webkit-scrollbar {
+  width: 5px;
+}
+.handbook-pane::-webkit-scrollbar-track, #handbook-pane::-webkit-scrollbar-track {
+  background: rgba(25, 30, 37, 0.5);
+}
+.handbook-pane::-webkit-scrollbar-thumb, #handbook-pane::-webkit-scrollbar-thumb {
+  background-color: rgba(118, 171, 174, 0.35);
+  border-radius: 9999px;
+}
+
+.chat-message-list, #chat-messages, .chat-pane {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(118, 171, 174, 0.35) transparent;
+  overflow-x: hidden !important;
+}
+.chat-message-list::-webkit-scrollbar, #chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-message-list::-webkit-scrollbar-thumb, #chat-messages::-webkit-scrollbar-thumb {
+  background-color: rgba(118, 171, 174, 0.35);
+  border-radius: 9999px;
+}
+
+.chat-pane *::-webkit-scrollbar:horizontal,
+#chat-messages *::-webkit-scrollbar:horizontal,
+.chat-message-list *::-webkit-scrollbar:horizontal {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+  /* ========================================================================= */
+  /* DOCKED RAG CHAT ASSISTANT: SLEEK NAVBAR, PROPER GAP & HIGH-CONTRAST TEXT   */
+  /* ========================================================================= */
+  .chat-pane {
+    background: #181d24 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .chat-minimal-navbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.45rem 0.85rem !important;
+    background: #202630 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    flex-shrink: 0 !important;
+    min-height: 38px !important;
+    margin-bottom: 0.45rem !important; /* Visual gap between chatbot navbar and body */
+  }
+
+  .chat-nav-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .chat-status-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 50% !important;
+    background: #10b981 !important;
+    display: inline-block !important;
+    box-shadow: 0 0 7px rgba(16, 185, 129, 0.8) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .chat-nav-title {
+    font-family: 'Roboto', -apple-system, sans-serif !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+    letter-spacing: 0.3px !important;
+  }
+
+  .chat-nav-pill {
+    font-family: 'Roboto Mono', monospace !important;
+    font-size: 0.65rem !important;
+    font-weight: 600 !important;
+    color: #34d399 !important;
+    background: rgba(16, 185, 129, 0.12) !important;
+    border: 1px solid rgba(16, 185, 129, 0.25) !important;
+    padding: 1px 7px !important;
+    border-radius: 9999px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .chat-nav-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .chat-nav-clear {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #94a3b8 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    padding: 3px 10px !important;
+    border-radius: 6px !important;
+    font-size: 0.72rem !important;
+    font-family: 'Roboto', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    line-height: 1.3 !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .chat-nav-clear:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+  }
+
+  /* Chat Headings Override (Remove chunky Gagalin from chatbot responses) */
+  .chat-pane h1,
+  .chat-pane h2,
+  .chat-pane h3,
+  .chat-pane h4,
+  .chat-pane h5,
+  .chat-pane h6 {
+    font-family: 'Roboto', -apple-system, sans-serif !important;
+    color: #f8fafc !important;
+    font-weight: 700 !important;
+    letter-spacing: normal !important;
+    margin: 0.6rem 0 0.3rem 0 !important;
+    font-size: 0.95rem !important;
+    text-transform: none !important;
+  }
+
+  /* High-contrast typography inside Chatbot */
+  .chat-pane,
+  .chat-pane p,
+  .chat-pane li,
+  .chat-pane span,
+  .chat-pane div {
+    color: #e2e8f0 !important;
+  }
+
+  .chat-message-list {
+    flex: 1 1 auto !important;
+    padding: 0.25rem 0.85rem 0.65rem 0.85rem !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+  }
+
+  .chat-msg {
+    padding: 0.65rem 0.9rem !important;
+    border-radius: 10px !important;
+    font-size: 0.85rem !important;
+    line-height: 1.55 !important;
+    max-width: 92% !important;
+    word-break: break-word !important;
+  }
+
+  .ai-msg {
+    background: #222934 !important;
+    color: #f1f5f9 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    align-self: flex-start !important;
+    border-bottom-left-radius: 3px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .ai-msg,
+  .ai-msg p,
+  .ai-msg li,
+  .ai-msg span {
+    color: #e2e8f0 !important;
+  }
+
+  .ai-msg strong {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+  }
+
+  .ai-msg code {
+    color: #38bdf8 !important;
+    background: rgba(15, 23, 42, 0.6) !important;
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
+    font-family: 'Roboto Mono', monospace !important;
+    font-size: 0.82rem !important;
+  }
+
+  .user-msg {
+    background: #0f766e !important;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    align-self: flex-end !important;
+    border-bottom-right-radius: 3px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .user-msg,
+  .user-msg * {
+    color: #ffffff !important;
+  }
+
+  /* Suggestion chips */
+  .reply-chips-container {
+    margin-top: 0.65rem !important;
+    padding-top: 0.5rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .reply-chips-label {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    color: #94a3b8 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .reply-chips-wrap {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .reply-chip-btn {
+    background: #191e25 !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+    font-size: 0.74rem !important;
+    font-family: 'Roboto', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .reply-chip-btn:hover {
+    background: rgba(56, 189, 248, 0.15) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+  }
+
+  /* Timestamp pill in AI message */
+  .chat-pane .ts-pill-sm {
+    background: rgba(15, 118, 110, 0.25) !important;
+    color: #2dd4bf !important;
+    border: 1px solid rgba(15, 118, 110, 0.45) !important;
+    border-radius: 4px !important;
+    padding: 1px 6px !important;
+    font-family: 'Roboto Mono', monospace !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .chat-pane .ts-pill-sm:hover {
+    background: #0f766e !important;
+    color: #ffffff !important;
+  }
+
+
+  /* ========================================================================= */
+  /* PREMIUM 4 U BY U WORKSPACE BRAND LOGO                                    */
+  /* ========================================================================= */
+  .header-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .workspace-brand-area {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.65rem !important;
+  }
+
+  .workspace-brand-area .brand-symbol {
+    width: 36px !important;
+    height: 36px !important;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%) !important;
+    border-radius: 11px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    font-weight: 800 !important;
+    font-size: 1.05rem !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4) !important;
+    flex-shrink: 0 !important;
+    letter-spacing: -0.5px !important;
+  }
+
+  .workspace-brand-area .brand-text {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+
+  .workspace-brand-area .brand-name {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.3px !important;
+    color: #ffffff !important;
+    line-height: 1.15 !important;
+  }
+
+  .workspace-brand-area .brand-tagline {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+    line-height: 1.15 !important;
+    margin-top: 1px !important;
+  }
+
+  .btn-back-home {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    padding: 4px 10px !important;
+    border-radius: 6px !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .btn-back-home:hover {
+    background: #0f766e !important;
+    color: #ffffff !important;
+    border-color: #0f766e !important;
+  }
+
+  /* Stable brand presentation */
+
+/* ========================================================================= */
+  /* OFFICIAL 4U BY U BRAND: 3D EMERALD GREEN & METALLIC GOLD THEME STYLING   */
+  /* ========================================================================= */
+  .brand-logo-img {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 9px !important;
+    object-fit: cover !important;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.4), 0 0 4px rgba(212, 175, 55, 0.6) !important;
+    border: 1.5px solid rgba(212, 175, 55, 0.6) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .brand-name {
+    font-weight: 800 !important;
+    font-size: 1.15rem !important;
+    background: linear-gradient(135deg, #fde68a 0%, #d4af37 50%, #f59e0b 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    letter-spacing: -0.3px !important;
+  }
+
+  .brand-tagline {
+    font-size: 0.6rem !important;
+    letter-spacing: 2px !important;
+    color: #10b981 !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+  }
+
+  /* Dual-Mode Chat Toggle */
+  .chat-mode-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: rgba(6, 78, 59, 0.5) !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+    border-radius: 999px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    margin-left: 8px !important;
+  }
+
+  .mode-toggle-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    border: none !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    line-height: 1.2 !important;
+  }
+
+  .mode-toggle-btn:hover {
+    color: #f1f5f9 !important;
+  }
+
+  .mode-toggle-btn.active#mode-grounded-btn {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
+    border: 1px solid #10b981 !important;
+  }
+
+  .mode-toggle-btn.active#mode-open-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #060b08 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.45) !important;
+    border: 1px solid #fbbf24 !important;
+  }
+
+  /* AI Search Input & Autocomplete Dropdown */
+  .search-input-wrapper {
+    position: relative !important;
+  }
+
+  .search-clear-btn {
+    background: none !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    padding: 0 6px !important;
+    line-height: 1 !important;
+    transition: color 0.15s ease !important;
+  }
+
+  .search-clear-btn:hover {
+    color: #f1f5f9 !important;
+  }
+
+  .search-suggestions-dropdown {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #09130e !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(16, 185, 129, 0.2) !important;
+    z-index: 1000 !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    backdrop-filter: blur(12px) !important;
+  }
+
+  .suggestions-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.2) !important;
+    font-size: 11px !important;
+    color: #10b981 !important;
+    font-weight: 600 !important;
+  }
+
+  .suggestions-hint {
+    color: #94a3b8 !important;
+    font-size: 10px !important;
+    font-weight: 400 !important;
+  }
+
+  .suggestion-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+    cursor: pointer !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .suggestion-item:last-child {
+    border-bottom: none !important;
+  }
+
+  .suggestion-item:hover, .suggestion-item.active {
+    background: rgba(16, 185, 129, 0.15) !important;
+  }
+
+  .suggestion-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .suggestion-badge {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .badge-chapter {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  }
+
+  .badge-section {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  }
+
+  .badge-code {
+    background: rgba(139, 92, 246, 0.2) !important;
+    color: #c084fc !important;
+    border: 1px solid rgba(139, 92, 246, 0.4) !important;
+  }
+
+  .badge-ai {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(16, 185, 129, 0.3)) !important;
+    color: #fde68a !important;
+    border: 1px solid #fbbf24 !important;
+  }
+
+  .suggestion-texts {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+  }
+
+  .suggestion-title {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: #f8fafc !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .suggestion-ch {
+    font-size: 10px !important;
+    color: #86efac !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .suggestion-right {
+    flex-shrink: 0 !important;
+    margin-left: 8px !important;
+  }
+
+  .suggestion-ts {
+    font-size: 10px !important;
+    font-family: 'Roboto Mono', monospace !important;
+    color: #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.12) !important;
+    padding: 2px 5px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(245, 158, 11, 0.25) !important;
+  }
+
+  .suggestion-key {
+    font-size: 10px !important;
+    color: #94a3b8 !important;
+  }
+
+  .match-mark {
+    background: rgba(16, 185, 129, 0.35) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 2px !important;
+    padding: 0 1px !important;
+  }
+
+  .suggestion-ai-ask {
+    background: rgba(16, 185, 129, 0.05) !important;
+    border-top: 1px solid rgba(16, 185, 129, 0.2) !important;
+  }
+
+  /* Pulse animation on section jump */
+  @keyframes pulseHighlight {
+    0% { outline: 3px solid #10b981; box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
+    50% { outline: 3px solid #fbbf24; box-shadow: 0 0 35px rgba(245, 158, 11, 0.7); }
+    100% { outline: 1px solid rgba(16, 185, 129, 0.2); box-shadow: none; }
+  }
+
+  .highlight-pulse {
+    animation: pulseHighlight 2.5s ease-out !important;
+    border-color: #10b981 !important;
+  }
+/* 4U BY U ? FOLDABLE & COLLAPSIBLE WORKSPACE & MOBILE RESPONSIVE ENGINE      */
+/* ========================================================================= */
+
+/* 1. SIDEBAR COLLAPSED (DESKTOP FOCUS / ZEN READING MODE) */
+.workspace-container.sidebar-collapsed #handbook-pane {
+  flex: 1 1 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  border-right: none !important;
+}
+
+.workspace-container.sidebar-collapsed #v-resizer,
+.workspace-container.sidebar-collapsed #right-column {
+  display: none !important;
+}
+
+/* Sidebar Toggle Button in Toolbar */
+.btn-sidebar-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  color: #34d399 !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+}
+
+.btn-sidebar-toggle:hover {
+  background: rgba(16, 185, 129, 0.25) !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35) !important;
+}
+
+.workspace-container.sidebar-collapsed .btn-sidebar-toggle {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(212, 175, 55, 0.25)) !important;
+  border-color: #fbbf24 !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Floating Companion FAB (When Sidebar is Collapsed on Desktop) */
+.floating-companion-fab {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  background: linear-gradient(135deg, #059669 0%, #047857 50%, #064e3b 100%);
+  color: #ffffff;
+  border: 1.5px solid #10b981;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 18px rgba(16, 185, 129, 0.45);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.workspace-container.sidebar-collapsed .floating-companion-fab {
+  display: inline-flex !important;
+}
+
+.floating-companion-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 25px rgba(16, 185, 129, 0.6);
+  border-color: #34d399;
+}
+
+/* 2. CHAT MINIMIZATION */
+.chat-nav-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.chat-nav-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+
+.chat-nav-btn:hover {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.chat-pane.chat-minimized {
+  flex: 0 0 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  height: 38px !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  border-top: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.chat-pane.chat-minimized #chat-messages,
+.chat-pane.chat-minimized .chat-quick-chips,
+.chat-pane.chat-minimized #chat-form,
+.chat-pane.chat-minimized .chat-mode-toggle {
+  display: none !important;
+}
+
+.chat-pane.chat-minimized .chat-minimal-navbar {
+  margin-bottom: 0 !important;
+  border-bottom: none !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+  cursor: pointer !important;
+}
+
+.chat-pane.chat-minimized:hover .chat-minimal-navbar {
+  background: rgba(16, 185, 129, 0.22) !important;
+}
+
+.chat-pane.chat-minimized .chat-nav-title::after {
+  content: " (Minimized ? Click to Expand)";
+  font-size: 11px;
+  font-weight: 400;
+  color: #86efac;
+}
+
+.right-column:has(.chat-pane.chat-minimized) #h-resizer {
+  display: none !important;
+}
+
+.right-column:has(.chat-pane.chat-minimized) #video-pane {
+  flex: 1 1 100% !important;
+  max-height: calc(100% - 38px) !important;
+  border-bottom: none !important;
+}
+
+/* 3. TABLE OF CONTENTS FOLDING */
+.toc-header {
+  user-select: none !important;
+  transition: background 0.15s ease !important;
+  border-radius: 6px !important;
+  padding: 6px 8px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  cursor: pointer !important;
+}
+
+.toc-header:hover {
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+
+.toc-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.toc-header-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.toc-fold-icon {
+  transition: transform 0.25s ease !important;
+  color: #10b981 !important;
+  flex-shrink: 0 !important;
+}
+
+.handbook-toc.toc-folded .toc-fold-icon {
+  transform: rotate(-90deg) !important;
+}
+
+.handbook-toc.toc-folded .toc-list {
+  display: none !important;
+}
+
+.handbook-toc.toc-folded {
+  padding-bottom: 0.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.toc-fold-hint {
+  font-size: 10px !important;
+  color: #94a3b8 !important;
+  margin-left: 6px !important;
+  font-weight: 400 !important;
+}
+
+
+
+/* ==========================================================================
+   SCROLL-TO-MINIMIZE NAVBAR FOR WORKSPACE / STUDY HANDBOOK
+   ========================================================================== */
+.handbook-header {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+  background: rgba(34, 38, 45, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.12) !important;
+  padding: 0.75rem 1rem 0.65rem 1rem !important;
+  margin: 0 -0.75rem 1rem -0.75rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-sizing: border-box !important;
+}
+
+/* Minimized state triggered on scroll down */
+.handbook-header.minimized {
+  padding: 0.35rem 0.85rem !important;
+  margin-bottom: 0.75rem !important;
+  background: rgba(28, 31, 37, 0.97) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.18) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65) !important;
+}
+
+.handbook-header.minimized .header-top {
+  display: none !important;
+}
+
+.handbook-header.minimized .video-meta {
+  display: none !important;
+}
+
+.handbook-header.minimized .video-title {
+  font-size: 0.94rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin: 0 0 0.35rem 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #fbbf24 !important;
+}
+
+.handbook-header.minimized .minimal-toolbar {
+  padding: 0.15rem 0 !important;
+  gap: 0.35rem !important;
+}
+
+.handbook-header.minimized .search-input-wrapper {
+  padding: 0.2rem 0.55rem !important;
+  height: 29px !important;
+}
+
+.handbook-header.minimized .toolbar-actions {
+  gap: 0.35rem !important;
+}
+
+.handbook-header.minimized .btn-tool-sm,
+.handbook-header.minimized .btn-toggle,
+.handbook-header.minimized .time-pill {
+  padding: 0.2rem 0.55rem !important;
+  font-size: 0.74rem !important;
+}
+
+/* ==========================================================================
+   GENERATED NOTES COMPONENT ONLY - WHITE BACKGROUND & SCHOLARLY TYPOGRAPHY
+   ========================================================================== */
+.chapter-card,
+#handbook-chapters .chapter-card,
+article.chapter-card {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 1.6rem 1.75rem !important;
+  margin-bottom: 1.75rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  color: #1e293b !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.chapter-card:hover,
+#handbook-chapters .chapter-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+.chapter-card.active-reading,
+#handbook-chapters .chapter-card.active-reading {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35), 0 8px 25px rgba(0, 0, 0, 0.14) !important;
+}
+
+/* Chapter Header & Heading inside white notes */
+.chapter-card .chapter-header {
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding-bottom: 0.85rem !important;
+  margin-bottom: 1.1rem !important;
+}
+
+.chapter-card .chapter-heading,
+.chapter-card h2 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.3 !important;
+  margin: 0.25rem 0 0 0 !important;
+}
+
+.chapter-card .chapter-num {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Chapter Overview & Paragraphs in white notes */
+.chapter-card p,
+.chapter-card .chapter-overview,
+.chapter-card .section-narrative,
+.chapter-card .step-text,
+.chapter-card .example-text {
+  color: #334155 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.68 !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.chapter-card strong,
+.chapter-card b,
+.chapter-card .section-block strong {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.chapter-card ul,
+.chapter-card ol {
+  color: #334155 !important;
+  margin: 0.5rem 0 1rem 1.4rem !important;
+  padding-left: 0.5rem !important;
+}
+
+.chapter-card li {
+  color: #334155 !important;
+  line-height: 1.65 !important;
+  margin-bottom: 0.45rem !important;
+  font-size: 0.93rem !important;
+}
+
+/* Section Blocks Inside Chapter Card */
+.chapter-card .section-block {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.15rem 0 !important;
+}
+
+.chapter-card .section-heading,
+.chapter-card .section-block h3 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.65rem 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Timestamp Jump Pills Inside Notes */
+.chapter-card .ts-pill,
+.chapter-card .ts-pill-sm,
+.chapter-card .timestamp-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  border-radius: 9999px !important;
+  padding: 3px 9px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.chapter-card .ts-pill:hover,
+.chapter-card .ts-pill-sm:hover,
+.chapter-card .timestamp-pill:hover {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Callout Info Boxes & Quotes Inside Notes */
+.chapter-card blockquote,
+.chapter-card .callout-box,
+.chapter-card .key-takeaway {
+  background: #fefce8 !important;
+  border-left: 4px solid #f59e0b !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 0.85rem 1.1rem !important;
+  margin: 1rem 0 !important;
+  color: #78350f !important;
+}
+
+/* Code Blocks Inside White Notes (Dark high-contrast syntax container) */
+.chapter-card pre,
+.chapter-card .section-block pre {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 8px !important;
+  padding: 1rem !important;
+  overflow-x: auto !important;
+}
+
+.chapter-card pre code,
+.chapter-card .section-block pre code {
+  color: #e2e8f0 !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.chapter-card code:not(pre code) {
+  background: #f1f5f9 !important;
+  color: #b45309 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 0.85em !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+/* Diagrams and Images in Notes */
+.chapter-card img {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+}
+
+
+
+/* ==========================================================================
+   1. SCROLL-TO-MINIMIZE WORKSPACE NAVBAR
+   ========================================================================== */
+.handbook-header {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+  background: rgba(34, 38, 45, 0.94) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.12) !important;
+  padding: 0.75rem 1rem 0.65rem 1rem !important;
+  margin: 0 -0.75rem 1rem -0.75rem !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-sizing: border-box !important;
+}
+
+.handbook-header .header-top,
+.handbook-header .video-meta {
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease !important;
+  overflow: hidden !important;
+  max-height: 80px;
+  opacity: 1;
+}
+
+.handbook-header .video-title {
+  transition: font-size 0.25s ease, margin 0.25s ease, color 0.25s ease !important;
+}
+
+/* Minimized state smoothly triggered as user scrolls down */
+.handbook-header.minimized {
+  padding: 0.35rem 0.85rem !important;
+  margin-bottom: 0.75rem !important;
+  background: rgba(28, 31, 37, 0.97) !important;
+  border-bottom: 1px solid rgba(229, 229, 229, 0.18) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65) !important;
+}
+
+.handbook-header.minimized .header-top {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+.handbook-header.minimized .video-meta {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+}
+
+.handbook-header.minimized .video-title {
+  font-size: 0.94rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin: 0 0 0.35rem 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: #fbbf24 !important;
+}
+
+.handbook-header.minimized .minimal-toolbar {
+  padding: 0.15rem 0 !important;
+  gap: 0.35rem !important;
+}
+
+.handbook-header.minimized .search-input-wrapper {
+  padding: 0.2rem 0.55rem !important;
+  height: 29px !important;
+}
+
+.handbook-header.minimized .toolbar-actions {
+  gap: 0.35rem !important;
+}
+
+.handbook-header.minimized .btn-tool-sm,
+.handbook-header.minimized .btn-toggle,
+.handbook-header.minimized .time-pill {
+  padding: 0.2rem 0.55rem !important;
+  font-size: 0.74rem !important;
+}
+
+/* ==========================================================================
+   2. GENERATED NOTES COMPONENT ONLY - PRISTINE WHITE BACKGROUND & TYPOGRAPHY
+   ========================================================================== */
+.chapter-card,
+#handbook-chapters .chapter-card,
+article.chapter-card {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 1.6rem 1.75rem !important;
+  margin-bottom: 1.75rem !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  color: #1e293b !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.chapter-card:hover,
+#handbook-chapters .chapter-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+.chapter-card.active-reading,
+#handbook-chapters .chapter-card.active-reading {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35), 0 8px 25px rgba(0, 0, 0, 0.14) !important;
+}
+
+/* Chapter Heading & Badge */
+.chapter-card .chapter-header {
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding-bottom: 0.85rem !important;
+  margin-bottom: 1.1rem !important;
+}
+
+.chapter-card .chapter-heading,
+.chapter-card h2,
+#handbook-chapters h2 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.3 !important;
+  margin: 0.25rem 0 0 0 !important;
+}
+
+.chapter-card .chapter-num {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Theory Blocks inside White Notes */
+.chapter-card .theory-block {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 4px solid #0284c7 !important;
+  border-radius: 10px !important;
+  color: #1e293b !important;
+  padding: 1.25rem 1.4rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+.chapter-card .theory-content {
+  color: #1e293b !important;
+}
+
+.chapter-card .theory-content p,
+.chapter-card .theory-content li {
+  color: #334155 !important;
+  line-height: 1.7 !important;
+  font-size: 0.95rem !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.chapter-card .theory-content strong {
+  color: #0369a1 !important;
+  background: #e0f2fe !important;
+  border-radius: 4px !important;
+  padding: 1px 5px !important;
+  font-weight: 700 !important;
+}
+
+.chapter-card .theory-content h3,
+.chapter-card .theory-content h4 {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  margin: 1.1rem 0 0.5rem 0 !important;
+}
+
+/* Section Blocks */
+.chapter-card .section-block {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1.15rem 1.3rem !important;
+  margin: 1.2rem 0 !important;
+}
+
+.chapter-card .section-heading,
+.chapter-card .section-block h3 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.12rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.65rem 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Analogy, Keypoints & Example Cards */
+.chapter-card .analogy-card {
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  border-left: 4px solid #f59e0b !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+}
+
+.chapter-card .analogy-title {
+  color: #92400e !important;
+  font-weight: 700 !important;
+  font-size: 0.98rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.chapter-card .analogy-text,
+.chapter-card .analogy-body {
+  color: #78350f !important;
+  line-height: 1.65 !important;
+  font-size: 0.94rem !important;
+}
+
+.chapter-card .keypoints-card {
+  background: #f0fdf4 !important;
+  border: 1px solid #bbf7d0 !important;
+  border-left: 4px solid #16a34a !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+  color: #14532d !important;
+}
+
+.chapter-card .keypoints-card li,
+.chapter-card .keypoints-card p {
+  color: #166534 !important;
+  font-size: 0.93rem !important;
+  line-height: 1.6 !important;
+}
+
+.chapter-card .example-card {
+  background: #f5f3ff !important;
+  border: 1px solid #ddd6fe !important;
+  border-left: 4px solid #8b5cf6 !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+}
+
+.chapter-card .example-text {
+  color: #4c1d95 !important;
+  line-height: 1.65 !important;
+  font-size: 0.94rem !important;
+}
+
+/* Code Cards inside White Notes (Dark high-contrast syntax box) */
+.chapter-card .code-card,
+.chapter-card pre {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 10px !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+  overflow: hidden !important;
+}
+
+.chapter-card .code-header {
+  background: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.chapter-card .code-lang-badge {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  font-size: 0.72rem !important;
+}
+
+.chapter-card .code-card pre {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 1rem !important;
+}
+
+.chapter-card .code-card code,
+.chapter-card pre code {
+  color: #f8fafc !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+  background: transparent !important;
+}
+
+.chapter-card code:not(pre code) {
+  background: #f1f5f9 !important;
+  color: #b45309 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 0.86em !important;
+  font-family: var(--font-mono), monospace !important;
+}
+
+/* Diagrams & Visual Media in White Notes */
+.chapter-card .visual-diagram-card,
+.chapter-card .visual-media-wrapper,
+.chapter-card .mermaid-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1rem !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.chapter-card .diagram-caption,
+.chapter-card .caption-text,
+.chapter-card .code-caption {
+  color: #64748b !important;
+  font-size: 0.85rem !important;
+  margin-top: 0.4rem !important;
+}
+
+/* Timestamp Jump Pills Inside Notes */
+.chapter-card .ts-pill,
+.chapter-card .ts-pill-sm,
+.chapter-card .timestamp-pill,
+.chapter-card .diagram-time-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  border-radius: 9999px !important;
+  padding: 3px 9px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.chapter-card .ts-pill:hover,
+.chapter-card .ts-pill-sm:hover,
+.chapter-card .timestamp-pill:hover {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+.chapter-card .btn-ask-ai {
+  background: #fef3c7 !important;
+  border: 1px solid #fde68a !important;
+  color: #92400e !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  cursor: pointer !important;
+}
+
+.chapter-card .btn-ask-ai:hover {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+}
+
+.chapter-card .chapter-summary-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  padding: 1rem 1.25rem !important;
+  margin: 1.25rem -1.75rem -1.6rem -1.75rem !important;
+  border-radius: 0 0 14px 14px !important;
+  color: #334155 !important;
+}
+
+/* Ensure all generic paragraphs and text inside white notes are dark readable charcoal */
+.chapter-card p,
+.chapter-card .chapter-overview,
+.chapter-card .section-narrative,
+.chapter-card .step-text,
+.chapter-card .example-text {
+  color: #334155 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.68 !important;
+}
+
+.chapter-card strong,
+.chapter-card b,
+.chapter-card .section-block strong {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.chapter-card ul,
+.chapter-card ol {
+  color: #334155 !important;
+}
+
+.chapter-card li {
+  color: #334155 !important;
+}
+
+</style>
+
+<style id="theme-slate-teal-master">
+@font-face {
+  font-family: 'Gagalin';
+  src: url('/static/fonts/gagalin-regular.woff2') format('woff2'),
+       url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root, [data-theme="dark_academic"] {
+  --theme-bg: #1e242c !important;
+  --theme-pane-bg: #1e242c !important;
+  --theme-header-bg: #222831 !important;
+  --theme-card-bg: #ffffff !important;
+  --theme-border: #384352 !important;
+  --theme-text: #eeeeee !important;
+  --theme-text-muted: #9ba5b1 !important;
+  --theme-accent: #76ABAE !important;
+  --theme-accent-hover: #5d999d !important;
+  --theme-code-bg: #181c22 !important;
+  --splitter-hover: #76ABAE !important;
+}
+
+body, html, .workspace-body {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  background-color: #1e242c !important;
+  color: #eeeeee !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Headings with Gagalin */
+h1, h2, h3, h4, 
+.video-title, 
+.chapter-heading, 
+.section-heading, 
+.toc-header h3, 
+.handbook-badge, 
+.header-top .handbook-badge,
+.pane-title {
+  font-family: 'Gagalin', 'Gagalin-Regular', -apple-system, sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* ========================================================================= */
+/* 1. COMPACT MARGINS SYSTEM: SIGNIFICANTLY REDUCED MARGINS ACROSS THE BOARD  */
+/* ========================================================================= */
+
+
+@media (min-width: 961px) {
+  html, body.workspace-body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .workspace-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .handbook-pane, #handbook-pane {
+    background: #1e242c !important;
+    padding: 0 0.75rem 2.5rem 0.75rem !important;
+    position: relative !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+  }
+}
+
+
+@media (max-width: 960px) {
+  html {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  body.workspace-body,
+  body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    position: static !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .workspace-container,
+  #app-workspace {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    position: relative !important;
+  }
+
+  #v-resizer, #h-resizer {
+    display: none !important;
+  }
+
+  /* Mobile Tabs Navigation Bar */
+  .mobile-nav-bar {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 60px !important;
+    background: rgba(6, 11, 8, 0.96) !important;
+    backdrop-filter: blur(16px) !important;
+    border-top: 1px solid rgba(16, 185, 129, 0.3) !important;
+    z-index: 9999 !important;
+    padding: 6px 12px !important;
+    gap: 8px !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .mobile-tab-btn {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 8px !important;
+    color: #94a3b8 !important;
+    padding: 4px 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    position: relative !important;
+  }
+
+  .mobile-tab-btn .tab-icon {
+    font-size: 16px !important;
+    line-height: 1.1 !important;
+  }
+
+  .mobile-tab-btn .tab-label {
+    margin-top: 2px !important;
+  }
+
+  .mobile-tab-btn.active {
+    background: rgba(16, 185, 129, 0.16) !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    color: #f8fafc !important;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2) !important;
+  }
+
+  .mobile-tab-btn.active .tab-icon {
+    transform: scale(1.15) !important;
+  }
+
+  .tab-badge {
+    position: absolute !important;
+    top: 4px !important;
+    right: 12px !important;
+    background: rgba(245, 158, 11, 0.25) !important;
+    color: #fbbf24 !important;
+    font-size: 8px !important;
+    padding: 1px 4px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    font-family: monospace !important;
+  }
+
+  .tab-badge-ai {
+    position: absolute !important;
+    top: 4px !important;
+    right: 16px !important;
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: #ffffff !important;
+    font-size: 8px !important;
+    font-weight: 800 !important;
+    padding: 1px 4px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Default State: Mobile Notes Active - Fluid Document-Level Native Scrolling */
+  .handbook-pane,
+  #handbook-pane {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 100% !important;
+    padding: 0.75rem 0.85rem 90px 0.85rem !important;
+    border-right: none !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .handbook-header {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    margin: 0 0 1rem 0 !important;
+    padding: 0.75rem 0.85rem !important;
+    z-index: 10 !important;
+  }
+
+  .right-column {
+    display: none !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    height: calc(100vh - 60px) !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 60px !important;
+    z-index: 5000 !important;
+    background: #060b08 !important;
+    overflow: hidden !important;
+  }
+
+  /* When Mobile Video Tab Active */
+  .workspace-container[data-mobile-view="video"] .handbook-pane {
+    display: none !important;
+  }
+
+  .workspace-container[data-mobile-view="video"] .right-column {
+    display: flex !important;
+  }
+
+  .workspace-container[data-mobile-view="video"] #video-pane {
+    flex: 1 1 100% !important;
+    max-height: 100% !important;
+    height: 100% !important;
+  }
+
+  .workspace-container[data-mobile-view="video"] #chat-pane {
+    display: none !important;
+  }
+
+  /* When Mobile Chat Tab Active */
+  .workspace-container[data-mobile-view="chat"] .handbook-pane {
+    display: none !important;
+  }
+
+  .workspace-container[data-mobile-view="chat"] .right-column {
+    display: flex !important;
+  }
+
+  .workspace-container[data-mobile-view="chat"] #video-pane {
+    display: none !important;
+  }
+
+  .workspace-container[data-mobile-view="chat"] #chat-pane {
+    flex: 1 1 100% !important;
+    max-height: 100% !important;
+    height: 100% !important;
+  }
+
+  .video-title {
+    font-size: 1.15rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .video-meta {
+    font-size: 0.72rem !important;
+    gap: 0.5rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .handbook-controls.minimal-toolbar {
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+
+  .search-input-wrapper {
+    width: 100% !important;
+  }
+
+  .toolbar-actions {
+    justify-content: space-between !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+  }
+
+  .btn-sidebar-toggle {
+    display: none !important;
+  }
+
+  .chapter-card {
+    padding: 1.25rem 1rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .chapter-heading {
+    font-size: 1.15rem !important;
+  }
+
+  pre, .code-block {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  pre code {
+    font-size: 0.78rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-top {
+    gap: 6px !important;
+  }
+  .brand-name {
+    font-size: 1rem !important;
+  }
+  .brand-logo-img {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
+
+/* Header: Sleek & Compact */
+.handbook-header {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+  background: #222831 !important;
+  border-bottom: 1px solid #384352 !important;
+  padding: 0.75rem 1rem 0.65rem 1rem !important;
+  margin: 0 -0.75rem 1rem -0.75rem !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+}
+
+.header-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.btn-back-home {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: rgba(118, 171, 174, 0.16) !important;
+  color: #eeeeee !important; /* STRICT LIGHT */
+  border: 1px solid rgba(118, 171, 174, 0.35) !important;
+  padding: 3px 10px !important;
+  border-radius: 5px !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-back-home:hover {
+  background: #76ABAE !important;
+  color: #1e242c !important;
+  border-color: #76ABAE !important;
+}
+
+.handbook-badge {
+  background: rgba(118, 171, 174, 0.16) !important;
+  color: #76ABAE !important; /* STRICT LIGHT TEAL */
+  border: 1px solid rgba(118, 171, 174, 0.35) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  padding: 2px 7px !important;
+  border-radius: 5px !important;
+}
+
+.video-title {
+  font-size: 1.45rem !important;
+  color: #ffffff !important; /* STRICT LIGHT */
+  margin: 0.15rem 0 0.35rem 0 !important;
+  line-height: 1.25 !important;
+}
+
+.video-meta {
+  font-size: 0.8rem !important;
+  color: #9ba5b1 !important; /* STRICT LIGHT MUTED */
+  margin-bottom: 0.55rem !important;
+}
+
+.handbook-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.search-input-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  flex: 1 !important;
+}
+
+.search-icon {
+  color: #9ba5b1 !important;
+  flex-shrink: 0 !important;
+  font-size: 0.8rem !important;
+}
+
+input#notes-search {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #ffffff !important; /* STRICT LIGHT */
+  font-size: 0.8rem !important;
+  width: 100% !important;
+}
+
+input#notes-search::placeholder {
+  color: #9ba5b1 !important;
+}
+
+.toolbar-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.time-pill {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #76ABAE !important; /* STRICT LIGHT TEAL */
+  font-size: 0.72rem !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-family: monospace !important;
+}
+
+.btn-tool-sm, .btn-frame-sync {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #eeeeee !important; /* STRICT LIGHT */
+  font-size: 0.72rem !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-sync-toggle {
+  background: #76ABAE !important;
+  border: 1px solid #76ABAE !important;
+  color: #1e242c !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+}
+
+/* Stable Sticky Header - Zero Layout Shift */
+
+/* ========================================================================= */
+/* 2. STRICT CONTRAST RULES:                                                */
+/*    - LIGHT BACKGROUND = STRICT DARK TEXT                                 */
+/*    - DARK BACKGROUND = STRICT LIGHT TEXT                                 */
+/* ========================================================================= */
+
+/* Table of Contents Sheet (Light Background -> Dark Text) */
+.handbook-toc {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  padding: 1rem 1.25rem !important;
+  margin: 0 0 1rem 0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22) !important;
+}
+
+.toc-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  padding-bottom: 0.45rem !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.toc-header h3 {
+  color: #0f172a !important; /* STRICT DARK */
+  font-size: 1.2rem !important;
+  margin: 0 !important;
+}
+
+.toc-badge {
+  background: #0f766e !important;
+  color: #ffffff !important;
+  font-size: 0.72rem !important;
+  padding: 2px 8px !important;
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+}
+
+.toc-list {
+  margin: 0 !important;
+  padding-left: 0 !important;
+  list-style: none !important;
+}
+
+.toc-list li {
+  margin-bottom: 0.35rem !important;
+}
+
+.toc-list li a {
+  color: #1e293b !important; /* STRICT DARK */
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.toc-list li a:hover {
+  color: #0f766e !important;
+  transform: translateX(4px) !important;
+}
+
+.toc-list .toc-ts {
+  background: #f1f5f9 !important;
+  color: #334155 !important; /* STRICT DARK */
+  border: 1px solid #cbd5e1 !important;
+  font-size: 0.72rem !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  font-family: monospace !important;
+}
+
+/* Chapter "Page" Sheets (Light Background -> Dark Text) */
+.chapter-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  padding: 1.25rem 1.5rem !important;
+  margin: 1.25rem 0 !important; /* REDUCED COMPACT MARGIN */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.24) !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.chapter-card:hover {
+  border-color: #76ABAE !important;
+}
+
+.chapter-card.active-reading {
+  border-color: #0f766e !important;
+  box-shadow: 0 0 18px rgba(15, 118, 110, 0.28), 0 4px 20px rgba(0, 0, 0, 0.24) !important;
+}
+
+.chapter-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 0.65rem !important;
+  padding-bottom: 0.4rem !important;
+  border-bottom: 2px solid #f1f5f9 !important;
+}
+
+.chapter-heading {
+  color: #0f172a !important; /* STRICT DARK */
+  font-size: 1.45rem !important;
+  margin: 0 !important;
+}
+
+.chapter-overview {
+  color: #334155 !important; /* STRICT DARK */
+  font-size: 0.94rem !important;
+  line-height: 1.55 !important;
+  margin-bottom: 0.85rem !important;
+}
+
+.chapter-num {
+  color: #0f766e !important;
+  background: rgba(15, 118, 110, 0.12) !important;
+  padding: 2px 7px !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  font-size: 0.74rem !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+}
+
+/* Sections: Flat Continuous Flow Inside Chapter Page (No Double Margins) */
+.section-block {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 1.15rem 0 0.65rem 0 !important; /* REDUCED TIGHT MARGIN */
+  box-shadow: none !important;
+}
+
+.section-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  padding-bottom: 0.35rem !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.section-heading {
+  color: #0f766e !important; /* STRICT DARK TEAL */
+  font-size: 1.2rem !important;
+  margin: 0 !important;
+}
+
+.handbook-pane p, .handbook-pane .section-narrative, .handbook-pane .step-text, .handbook-pane .example-text {
+  font-size: 0.94rem !important;
+  line-height: 1.6 !important;
+  color: #1e293b !important; /* STRICT DARK ON LIGHT CHAPTER CARDS */
+  margin-bottom: 0.65rem !important;
+}
+
+.handbook-pane .section-block strong {
+  color: #0f172a !important; /* STRICT DARK BOLD */
+}
+
+.handbook-pane ul, .handbook-pane ol {
+  margin: 0 0 0.65rem 0 !important;
+  padding-left: 1.25rem !important;
+}
+
+.handbook-pane li {
+  color: #1e293b !important; /* STRICT DARK */
+  margin-bottom: 0.35rem !important;
+  line-height: 1.55 !important;
+  font-size: 0.92rem !important;
+}
+
+/* ==/* ==/* ========================================================================= */
+/* STRICT DARK CONTRAST GUARANTEE ON LIGHT CHAPTER SHEETS & CARDS            */
+/* ========================================================================= */
+
+/* Time Pill (Image 1: ▶ 00:00 button next to Ask AI) */
+.ts-pill, .ts-pill-sm, .diagram-time-pill {
+  background: #f1f5f9 !important;
+  color: #0f172a !important; /* STRICT DARK NAVY - 100% VISIBLE */
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 4px !important;
+  padding: 2px 7px !important;
+  font-family: 'Roboto Mono', monospace !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.ts-pill:hover, .ts-pill-sm:hover, .diagram-time-pill:hover {
+  background: #0f766e !important;
+  color: #ffffff !important;
+  border-color: #0f766e !important;
+}
+
+.btn-ask-ai {
+  background: rgba(15, 118, 110, 0.12) !important;
+  color: #0f766e !important; /* STRICT DARK TEAL - 100% VISIBLE */
+  border: 1px solid rgba(15, 118, 110, 0.45) !important;
+  border-radius: 4px !important;
+  padding: 2px 8px !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-ask-ai:hover {
+  background: #0f766e !important;
+  color: #ffffff !important;
+}
+
+/* Analogy Card (Image 2) */
+.analogy-card,
+.analogy-card *,
+.analogy-card span,
+.analogy-card p,
+.analogy-card div {
+  color: #0f172a !important; /* STRICT DARK NAVY - 100% VISIBLE */
+}
+
+.analogy-card {
+  background: #f0fdfa !important;
+  border-left: 4px solid #0f766e !important;
+  border-top: 1px solid #ccfbf1 !important;
+  border-right: 1px solid #ccfbf1 !important;
+  border-bottom: 1px solid #ccfbf1 !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  margin: 0.75rem 0 !important;
+  font-size: 0.94rem !important;
+  line-height: 1.65 !important;
+  display: flex !important;
+  gap: 0.5rem !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Summary Footer (Image 3) */
+.chapter-summary-footer,
+.chapter-summary-footer *,
+.chapter-summary-footer strong,
+.chapter-summary-footer p {
+  color: #0f172a !important; /* STRICT DARK NAVY - 100% VISIBLE */
+}
+
+.chapter-summary-footer {
+  background: #f8fafc !important;
+  border-top: 2px solid #e2e8f0 !important;
+  padding: 0.75rem 1rem !important;
+  margin-top: 1.25rem !important;
+  font-size: 0.92rem !important;
+  line-height: 1.6 !important;
+  border-radius: 0 0 10px 10px !important;
+}
+
+.chapter-summary-footer strong {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+/* Universal Catch-All on Chapter Cards */
+.chapter-card p,
+.chapter-card span:not(.code-lang):not(.diagram-tag):not(.chapter-num),
+.chapter-card li,
+.theory-text,
+.example-text {
+  color: #1e293b !important; /* DARK CHARCOAL - 100% VISIBLE */
+}
+
+.chapter-card strong {
+  color: #0f172a !important; /* DARK BOLD */
+}
+
+/* ========================================================================= */
+/* CLEAN IN-PAGE DIAGRAMS (NORMAL SIZE, CLICK TO POP OUT BIG)                */
+/* ========================================================================= */
+.visual-diagram-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  padding: 0.65rem 0.85rem !important;
+  margin: 0.75rem 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+.visual-card-topbar {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.visual-card-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.visual-btn-seek {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+}
+
+.visual-btn-seek:hover {
+  background: #e2e8f0 !important;
+}
+
+.visual-btn-popout {
+  background: rgba(15, 118, 110, 0.12) !important;
+  color: #0f766e !important;
+  border: 1px solid rgba(15, 118, 110, 0.45) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.visual-btn-popout:hover {
+  background: #0f766e !important;
+  color: #ffffff !important;
+}
+
+/* In-Page Media Wrapper: Clean Normal Size, Click to Pop Out */
+.visual-media-wrapper {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  max-height: 280px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+  padding: 0.4rem !important;
+  cursor: zoom-in !important;
+  transition: all 0.18s ease !important;
+}
+
+.visual-media-wrapper:hover {
+  border-color: #76ABAE !important;
+  box-shadow: 0 4px 14px rgba(118, 171, 174, 0.15) !important;
+}
+
+.visual-hover-hint {
+  position: absolute !important;
+  bottom: 6px !important;
+  right: 6px !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  color: #ffffff !important;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transition: opacity 0.15s ease !important;
+}
+
+.visual-media-wrapper:hover .visual-hover-hint {
+  opacity: 1 !important;
+}
+
+.diagram-img,
+.handbook-pane img,
+.chapter-card img {
+  background: #ffffff !important;
+  max-width: 100% !important;
+  max-height: 270px !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: auto !important;
+  border-radius: 6px !important;
+  pointer-events: none !important;
+}
+
+.mermaid-box {
+  background: #ffffff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 0.25rem !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.mermaid-box svg {
+  background: #ffffff !important;
+  max-width: 100% !important;
+  max-height: 265px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: auto !important;
+  pointer-events: none !important;
+}
+
+/* ========================================================================= */
+/* FULLSCREEN POP-OUT MODAL (PAN & ZOOM + CLICK OUTSIDE TO RETURN)           */
+/* ========================================================================= */
+.lightbox-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.78) !important;
+  backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 99999 !important;
+  transition: opacity 0.18s ease !important;
+}
+
+.lightbox-modal.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.lightbox-content {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5) !important;
+  width: 92vw !important;
+  height: 88vh !important;
+  max-width: 1400px !important;
+  max-height: 900px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.lightbox-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0.55rem 1rem !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  flex-shrink: 0 !important;
+}
+
+.lightbox-title-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.lightbox-badge {
+  background: rgba(15, 118, 110, 0.12) !important;
+  color: #0f766e !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.lightbox-caption {
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.lightbox-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.pz-btn {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  font-size: 0.85rem !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.pz-btn:hover {
+  background: #0f766e !important;
+  color: #ffffff !important;
+  border-color: #0f766e !important;
+}
+
+.pz-scale-label {
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  min-width: 42px !important;
+  text-align: center !important;
+  font-family: monospace !important;
+  user-select: none !important;
+}
+
+.lightbox-close {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  margin-left: 6px !important;
+  transition: all 0.15s ease !important;
+}
+
+.lightbox-close:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+}
+
+/* Viewport for pan & zoom */
+.lightbox-viewport {
+  flex: 1 1 auto !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  position: relative !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  cursor: grab !important;
+  user-select: none !important;
+}
+
+.lightbox-stage {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  transform-origin: center center !important;
+  transition: transform 0.05s ease-out !important;
+  pointer-events: auto !important;
+}
+
+#lightbox-body {
+  background: #ffffff !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.lightbox-full-img {
+  width: min(980px, 88vw) !important;
+  height: auto !important;
+  max-height: 76vh !important;
+  object-fit: contain !important;
+  display: block !important;
+  pointer-events: none !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+.lightbox-svg-wrap {
+  background: #ffffff !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: min(980px, 88vw) !important;
+  height: auto !important;
+  max-height: 76vh !important;
+  padding: 1rem !important;
+  border-radius: 8px !important;
+}
+
+.lightbox-svg-wrap svg {
+  background: #ffffff !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 74vh !important;
+  height: auto !important;
+  pointer-events: none !important;
+}
+
+.lightbox-hint {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: rgba(15, 23, 42, 0.72) !important;
+  color: #ffffff !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  padding: 3px 12px !important;
+  border-radius: 999px !important;
+  pointer-events: none !important;
+  letter-spacing: 0.4px !important;
+}
+</style>
+
+<style id="white-notes-enforcement">
+/* ==========================================================================
+   GENERATED NOTES COMPONENT ONLY - PRISTINE WHITE SCHOLARLY THEME
+   ========================================================================== */
+#handbook-chapters,
+.handbook-chapters {
+  background: transparent !important;
+}
+
+#handbook-chapters .chapter-card,
+.handbook-chapters .chapter-card,
+article.chapter-card {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  padding: 1.6rem 1.75rem !important;
+  margin-bottom: 1.75rem !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  color: #1e293b !important;
+}
+
+#handbook-chapters .chapter-card:hover,
+.handbook-chapters .chapter-card:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Theory Block */
+#handbook-chapters .theory-block,
+.chapter-card .theory-block,
+.theory-block {
+  background: #f8fafc !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 4px solid #0284c7 !important;
+  border-radius: 10px !important;
+  padding: 1.25rem 1.4rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+  color: #1e293b !important;
+}
+
+#handbook-chapters .theory-content,
+.chapter-card .theory-content,
+.theory-content {
+  color: #1e293b !important;
+}
+
+#handbook-chapters .theory-content p,
+.chapter-card .theory-content p,
+.theory-content p {
+  color: #334155 !important;
+  line-height: 1.72 !important;
+  font-size: 0.96rem !important;
+  margin-bottom: 0.85rem !important;
+}
+
+#handbook-chapters .theory-content strong,
+.chapter-card .theory-content strong,
+.theory-content strong {
+  color: #0369a1 !important;
+  background: #e0f2fe !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 1px 5px !important;
+  font-weight: 700 !important;
+}
+
+#handbook-chapters .theory-content h3,
+#handbook-chapters .theory-content h4,
+.chapter-card .theory-content h3,
+.chapter-card .theory-content h4 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-weight: 700 !important;
+  margin: 1.1rem 0 0.5rem 0 !important;
+}
+
+/* Analogy Card (Mental Model & Intuition) */
+#handbook-chapters .analogy-card,
+.chapter-card .analogy-card,
+.analogy-card {
+  background: #fffbeb !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #fde68a !important;
+  border-left: 4px solid #f59e0b !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+#handbook-chapters .analogy-title,
+.chapter-card .analogy-title,
+.analogy-title {
+  color: #92400e !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 0.98rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+#handbook-chapters .analogy-text,
+#handbook-chapters .analogy-body,
+.chapter-card .analogy-text,
+.chapter-card .analogy-body,
+.analogy-text,
+.analogy-body {
+  color: #78350f !important;
+  line-height: 1.65 !important;
+  font-size: 0.94rem !important;
+}
+
+/* Keypoints Card */
+#handbook-chapters .keypoints-card,
+.chapter-card .keypoints-card,
+.keypoints-card {
+  background: #f0fdf4 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #bbf7d0 !important;
+  border-left: 4px solid #16a34a !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+  color: #14532d !important;
+}
+
+#handbook-chapters .keypoints-card li,
+#handbook-chapters .keypoints-card p,
+.chapter-card .keypoints-card li,
+.chapter-card .keypoints-card p {
+  color: #166534 !important;
+  font-size: 0.93rem !important;
+  line-height: 1.6 !important;
+}
+
+/* Example Card */
+#handbook-chapters .example-card,
+.chapter-card .example-card,
+.example-card {
+  background: #f5f3ff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #ddd6fe !important;
+  border-left: 4px solid #8b5cf6 !important;
+  border-radius: 10px !important;
+  padding: 1.1rem 1.25rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+#handbook-chapters .example-text,
+.chapter-card .example-text,
+.example-text {
+  color: #4c1d95 !important;
+  line-height: 1.65 !important;
+  font-size: 0.94rem !important;
+}
+
+/* Section Blocks */
+#handbook-chapters .section-block,
+.chapter-card .section-block,
+.section-block {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1.2rem 1.35rem !important;
+  margin: 1.2rem 0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+#handbook-chapters .section-heading,
+.chapter-card .section-heading,
+.section-heading {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.65rem 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* Code Cards (High Contrast Dark Box on White) */
+#handbook-chapters .code-card,
+.chapter-card .code-card,
+.chapter-card pre {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 10px !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+  overflow: hidden !important;
+}
+
+#handbook-chapters .code-header,
+.chapter-card .code-header,
+.code-header {
+  background: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+  color: #e2e8f0 !important;
+  padding: 0.5rem 1rem !important;
+}
+
+#handbook-chapters .code-card pre,
+.chapter-card .code-card pre {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 1rem !important;
+}
+
+#handbook-chapters .code-card code,
+.chapter-card .code-card code,
+.chapter-card pre code {
+  color: #f8fafc !important;
+  font-family: var(--font-mono), monospace !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+}
+
+/* Visual Diagram & Media */
+#handbook-chapters .visual-diagram-card,
+#handbook-chapters .visual-media-wrapper,
+#handbook-chapters .mermaid-box,
+.chapter-card .visual-diagram-card,
+.chapter-card .visual-media-wrapper,
+.chapter-card .mermaid-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 1rem !important;
+  margin: 1.25rem 0 !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+#handbook-chapters .diagram-caption,
+#handbook-chapters .caption-text,
+#handbook-chapters .code-caption,
+.chapter-card .diagram-caption,
+.chapter-card .caption-text,
+.chapter-card .code-caption {
+  color: #64748b !important;
+  font-size: 0.85rem !important;
+  margin-top: 0.4rem !important;
+}
+
+/* Headings & Badges */
+#handbook-chapters .chapter-heading,
+.chapter-card .chapter-heading,
+.chapter-card h2 {
+  color: #0f172a !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.3 !important;
+}
+
+#handbook-chapters .chapter-num,
+.chapter-card .chapter-num {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border: 1px solid #fde68a !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+}
+
+/* Chapter Overview & Paragraphs */
+#handbook-chapters p,
+.chapter-card p,
+.chapter-card .chapter-overview,
+.chapter-card .section-narrative,
+.chapter-card .step-text,
+.chapter-card .example-text {
+  color: #334155 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.68 !important;
+}
+
+#handbook-chapters strong,
+.chapter-card strong,
+.chapter-card b {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+#handbook-chapters ul,
+#handbook-chapters ol,
+.chapter-card ul,
+.chapter-card ol {
+  color: #334155 !important;
+}
+
+#handbook-chapters li,
+.chapter-card li {
+  color: #334155 !important;
+}
+
+/* Timestamp Jump Pills */
+#handbook-chapters .ts-pill,
+#handbook-chapters .ts-pill-sm,
+#handbook-chapters .timestamp-pill,
+#handbook-chapters .diagram-time-pill,
+.chapter-card .ts-pill,
+.chapter-card .ts-pill-sm,
+.chapter-card .timestamp-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-family: var(--font-mono), monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.74rem !important;
+  border-radius: 9999px !important;
+  padding: 3px 9px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+#handbook-chapters .ts-pill:hover,
+#handbook-chapters .ts-pill-sm:hover,
+.chapter-card .ts-pill:hover,
+.chapter-card .ts-pill-sm:hover {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+#handbook-chapters .btn-ask-ai,
+.chapter-card .btn-ask-ai {
+  background: #fef3c7 !important;
+  border: 1px solid #fde68a !important;
+  color: #92400e !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  cursor: pointer !important;
+}
+
+#handbook-chapters .chapter-summary-footer,
+.chapter-card .chapter-summary-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  padding: 1rem 1.25rem !important;
+  margin: 1.25rem -1.75rem -1.6rem -1.75rem !important;
+  border-radius: 0 0 14px 14px !important;
+  color: #334155 !important;
+}
+</style>
+</head>
+<body class="workspace-body">
+<div class="workspace-container" id="app-workspace">
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- PANE 1: LEFT HANDBOOK (ACROSS FULL HEIGHT 100vh)                    -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<main class="handbook-pane" id="handbook-pane">
+<!-- Sticky Handbook Navigation & Search Bar -->
+<header class="handbook-header">
+<div class="header-top">
+  <div class="workspace-brand-area">
+    <img src="/static/images/logo.png" alt="4U BY U Official Logo" class="brand-logo-img">
+    <div class="brand-text">
+      <span class="brand-name">4U BY U</span>
+      <span class="brand-tagline">FOR YOU BY YOU</span>
+    </div>
+  </div>
+  <a class="btn-back-home" href="/" title="Return to Study Library">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    <span>Home</span>
+  </a>
+</div>
+<h1 class="video-title">Complete Machine Learning Course for Beginners | Part 1- Foundation | Sheryians AI School</h1>
+<div class="video-meta">
+<span>Instructor: Sheryians AI School</span> 
+          <span>Duration: 02:43:08</span> 
+          <span>8 Chapters</span>
+</div>
+<div class="handbook-controls minimal-toolbar">
+  <div class="search-input-wrapper" id="search-input-wrapper">
+    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input id="notes-search" oninput="handleSearchInput(this.value)" onfocus="handleSearchFocus()" placeholder="Search concepts, topics, or code..." type="text" autocomplete="off"/>
+    <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearHandbookSearch()" style="display: none;" title="Clear Search">&times;</button>
+    <!-- AI Topic Suggestions Dropdown -->
+    <div class="search-suggestions-dropdown" id="search-suggestions-dropdown" style="display: none;">
+      <div class="suggestions-header">
+        <span class="suggestions-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg> AI Suggested Topics</span>
+        <span class="suggestions-hint">Click to jump or ask</span>
+      </div>
+      <div class="suggestions-list" id="suggestions-list"></div>
+    </div>
+  </div>
+  <div class="toolbar-actions">
+    <span id="current-playback-time" class="time-pill" title="Live Video Playback Time">00:00</span>
+    <button class="btn-tool-sm btn-frame-sync" onclick="askCurrentMoment()" title="Query AI for current video moment">Current Frame</button>
+    <button class="btn-toggle active btn-sync-toggle" id="toggle-autofollow" onclick="toggleAutoSync()" title="Toggle Video & Handbook Sync">Auto-Sync</button>
+    <button type="button" class="btn-tool-sm btn-sidebar-toggle" id="btn-toggle-sidebar" onclick="toggleSidebar()" title="Toggle Sidebar (Expand Notes to Fullscreen)">
+      <svg class="sidebar-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+      <span id="sidebar-toggle-text">Focus Mode</span>
+    </button>
+  </div>
+</div>
+</header>
+<!-- Table of Contents Navigator -->
+<nav class="handbook-toc" id="handbook-toc">
+<div class="toc-header" onclick="toggleTocFold()" title="Click to Fold / Expand Table of Contents">
+  <div class="toc-header-left">
+    <svg class="toc-fold-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    <h3>Table of Contents</h3>
+  </div>
+  <div class="toc-header-right">
+    <span class="toc-count">8 Chapters</span>
+    <span class="toc-fold-hint" id="toc-fold-hint">(Click to fold)</span>
+  </div>
+</div>
+<ol class="toc-list">
+          
+          <li>
+<a class="toc-link" href="#ch_01" onclick="seekVideo(0)">
+<span class="toc-order">1.</span>
+<span class="toc-title">Introduction to Machine Learning & Paradigms</span>
+<span class="toc-ts">[00:00]</span>
+</a>
+</li>
+          
+          <li>
+<a class="toc-link" href="#ch_02" onclick="seekVideo(600)">
+<span class="toc-order">2.</span>
+<span class="toc-title">Data Ingestion, Architecture & EDA Essentials</span>
+<span class="toc-ts">[10:00]</span>
+</a>
+</li>
+          
+          <li>
+<a class="toc-link" href="#ch_03" onclick="seekVideo(1800)">
+<span class="toc-order">3.</span>
+<span class="toc-title">Data Preprocessing, Missing Imputation & Encoding</span>
+<span class="toc-ts">[30:00]</span>
+</a>
+</li>
+          
+          <li>
+<a class="toc-link" href="#ch_04" onclick="seekVideo(3000)">
+<span class="toc-order">4.</span>
+<span class="toc-title">Feature Engineering & Mathematical Scaling</span>
+<span class="toc-ts">[50:00]</span>
+</a>
+</li>
+          
+          <li>
+<a class="toc-link" href="#ch_05" onclick="seekVideo(4200)">
+<span class="toc-order">5.</span>
+<span class="toc-title">Supervised Learning: Linear Regression & Gradient Descent</span>
+<span class="toc-ts">[01:10:00]</span>
+</a>
+</li>
+          
+          <li>
+<a class="toc-link" href="#ch_06" onclick="seekVideo(5400)">
+<span class="toc-order">6.</span>
+<span class="toc-title">Classification: Logistic Regression & Decision Boundaries</span>
+<span class="toc-ts">[01:30:00]</span>
+</a>
+</li>
+          
+          <li>
+<a class="toc-link" href="#ch_07" onclick="seekVideo(6600)">
+<span class="toc-order">7.</span>
+<span class="toc-title">Model Evaluation, Bias-Variance Tradeoff & Cross Validation</span>
+<span class="toc-ts">[01:50:00]</span>
+</a>
+</li>
+          
+          <li>
+<a class="toc-link" href="#ch_08" onclick="seekVideo(7800)">
+<span class="toc-order">8.</span>
+<span class="toc-title">End-to-End Production ML Pipeline Project</span>
+<span class="toc-ts">[02:10:00]</span>
+</a>
+</li>
+          
+        </ol>
+</nav>
+<!-- Rendered Chapters Container -->
+<div class="handbook-chapters" id="handbook-chapters">
+        
+        <article class="chapter-card" data-chapter-title="Introduction to Machine Learning & Paradigms" data-timestamp-seconds="0" id="ch_01">
+<div class="chapter-header">
+<div class="chapter-title-group">
+<span class="chapter-num">Chapter 1</span>
+<h2 class="chapter-heading">Introduction to Machine Learning & Paradigms</h2>
+</div>
+<button class="ts-pill" data-seconds="0" onclick="seekVideo(0)">
+              ▶ 00:00
+            </button>
+</div>
+<p class="chapter-overview">Comprehensive architectural breakdown of Introduction to Machine Learning & Paradigms.</p>
+<!-- Chapter Sections -->
+<div class="sections-list">
+            
+            <section class="section-block" data-chapter-title="Course Welcome, Prerequisites & Machine Learning Foundations" data-timestamp-seconds="0" id="ch_01_s01">
+<div class="section-header">
+<h3 class="section-heading">Course Welcome, Prerequisites & Machine Learning Foundations</h3>
+<div class="section-tools">
+<button class="ts-pill-sm" data-seconds="0" onclick="seekVideo(0)">
+                    ▶ 00:00
+                  </button>
+<button class="btn-ask-ai" onclick="askAboutSection('Course Welcome, Prerequisites & Machine Learning Foundations', '00:00')">
+                    Ask AI
+                  </button>
+</div>
+</div>
+<!-- Theory Block -->
+              
+              <div class="theory-block">
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Course Welcome, Prerequisites & Machine Learning Foundations**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
+
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
+
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
+                
+                <div class="analogy-card">
+
+<span>Think of Course Welcome, Prerequisites & Machine Learning Foundations like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
+</div>
+                
+              </div>
+              
+
+                            <!-- Visual Diagram Blocks (Eraser.io / Vector SVG / Mermaid / Lecture Keyframe) -->
+              
+              <!-- Code Blocks -->
+              
+              <div class="code-card">
+<div class="code-header">
+  <span class="code-caption">Course Welcome, Prerequisites & Machine Learning Foundations — Synthesized & Cleaned from Lecture Audio + Repo Assets</span>
+  <div class="code-header-actions">
+    <span class="code-lang-badge">PYTHON</span>
+    <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
+      <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+</div>
+<pre><code class="language-python"># -------------------------------------------------------------
+# Machine Learning Foundations Demo
+# ---------------------------------------------
+# This script walks through the core steps of a typical ML workflow:
+#   1. Load data
+#   2. Exploratory Data Analysis (EDA)
+#   3. Data cleaning & preprocessing
+#   4. Feature engineering & selection
+#   5. Train a simple model
+# -------------------------------------------------------------
+
+# =========================
+# Step 1: Imports
+# =========================
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Scikit‑learn utilities
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+# Ensure plots are displayed inline (useful in notebooks)
+# %matplotlib inline  # Uncomment if running in Jupyter
+
+# =========================
+# Step 2: Load dataset
+# =========================
+# Using seaborn's Titanic dataset for a realistic classification example
+df = sns.load_dataset('titanic')
+print("Dataset shape:", df.shape)
+print("\nFirst 5 rows:\n", df.head())
+
+# =========================
+# Step 3: Basic EDA
+# =========================
+print("\nData types:\n", df.dtypes)
+print("\nMissing values per column:\n", df.isnull().sum())
+
+# Summary statistics for numeric columns
+print("\nNumeric summary:\n", df.describe())
+
+# Visualize target distribution
+sns.countplot(x='survived', data=df)
+plt.title('Survival Count')
+plt.show()
+
+# Correlation heatmap (numeric features only)
+numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+plt.figure(figsize=(8,6))
+sns.heatmap(df[numeric_cols].corr(), annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
+
+# =========================
+# Step 4: Data cleaning
+# =========================
+# 4.1 Handle missing values
+#   - Numerical columns: median imputation (robust to outliers)
+#   - Categorical columns: most frequent category
+numeric_features = ['age', 'fare']
+categorical_features = ['embarked', 'sex', 'class', 'who', 'adult_male',
+                        'deck', 'embark_town', 'alone']
+
+numeric_imputer = SimpleImputer(strategy='median')
+categorical_imputer = SimpleImputer(strategy='most_frequent')
+
+# 4.2 Encode categorical variables
+#   - OneHotEncoder with handle_unknown='ignore' to avoid errors on unseen categories
+ohe = OneHotEncoder(handle_unknown='ignore', sparse=False)
+
+# 4.3 Build a ColumnTransformer to apply the above steps
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_imputer, numeric_features),
+        ('cat', Pipeline(steps=[
+            ('imputer', categorical_imputer),
+            ('encoder', ohe)
+        ]), categorical_features)
+    ],
+    remainder='drop'  # drop any remaining columns (e.g., 'survived')
+)
+
+# =========================
+# Step 5: Feature engineering
+# =========================
+# Create new features that may help the model
+df['family_size'] = df['sibsp'] + df['parch'] + 1  # +1 for the passenger themselves
+df['is_alone'] = (df['family_size'] == 1).astype(int)
+
+# Update feature lists to include engineered features
+numeric_features += ['family_size', 'is_alone']
+
+# =========================
+# Step 6: Feature selection
+# =========================
+# After preprocessing, we will select the top k features based on ANOVA F-test
+# This helps reduce dimensionality and remove irrelevant features
+k_best = SelectKBest(score_func=f_classif, k=10)  # keep top 10 features
+
+# =========================
+# Step 7: Train-test split
+# =========================
+X = df.drop(columns=['survived'])
+y = df['survived']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# =========================
+# Step 8: Build pipeline
+# =========================
+# The pipeline ensures that all preprocessing steps are applied consistently
+pipeline = Pipeline(steps=[
+    ('preprocess', preprocessor),
+    ('select', k_best),
+    ('scale', StandardScaler()),  # scale numeric features for better convergence
+    ('clf', LogisticRegression(max_iter=1000, random_state=42))
+])
+
+# =========================
+# Step 9: Train the model
+# =========================
+pipeline.fit(X_train, y_train)
+
+# =========================
+# Step 10: Evaluate
+# =========================
+y_pred = pipeline.predict(X_test)
+print("\nAccuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+
+# Visualize feature importances (coefficients of logistic regression)
+# Note: After one-hot encoding, feature names are available via get_feature_names_out
+feature_names = pipeline.named_steps['preprocess'].named_transformers_['cat'].named_steps['encoder'].get_feature_names_out(categorical_features)
+numeric_names = numeric_features
+all_feature_names = np.concatenate([numeric_names, feature_names])
+
+# Get coefficients from the trained logistic regression
+coefficients = pipeline.named_steps['clf'].coef_[0]
+# Map coefficients to feature names
+coef_df = pd.DataFrame({
+    'feature': all_feature_names,
+    'coefficient': coefficients
+}).sort_values(by='coefficient', key=abs, ascending=False)
+
+print("\nTop 10 features by absolute coefficient value:\n", coef_df.head(10))</code></pre>
+</div>
+              
+
+              <!-- Key Takeaways -->
+              
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>The course is divided into four distinct parts; completing all four is essential to build functional ML models.</li>
+                  
+                  <li>Content is intentionally split into manageable chunks rather than one long video, making it easier to absorb and apply concepts.</li>
+                  
+                  <li>Machine learning is fundamentally about teaching computers to learn from data, mirroring how humans learn from experience.</li>
+                  
+                  <li>The curriculum focuses on core ML concepts and hands‑on model building, ensuring you gain practical skills alongside theory.</li>
+                  
+                  <li>The instructor has curated the material after extensive research, providing a streamlined, effective learning path tailored to beginners.</li>
+                  
+                </ul>
+</div>
+              
+
+              <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">Production Pattern: In Course Welcome, Prerequisites & Machine Learning Foundations, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference.</span>
+</div>
+              
+
+              <!-- Supplement Block -->
+              
+
+            </section>
+            
+          </div>
+<div class="chapter-summary-footer">
+<strong>Summary:</strong> In Introduction to Machine Learning & Paradigms, key concepts and implementation techniques are systematically explained and demonstrated.
+          </div>
+</article>
+        
+        <article class="chapter-card" data-chapter-title="Data Ingestion, Architecture & EDA Essentials" data-timestamp-seconds="600" id="ch_02">
+<div class="chapter-header">
+<div class="chapter-title-group">
+<span class="chapter-num">Chapter 2</span>
+<h2 class="chapter-heading">Data Ingestion, Architecture & EDA Essentials</h2>
+</div>
+<button class="ts-pill" data-seconds="600" onclick="seekVideo(600)">
+              ▶ 10:00
+            </button>
+</div>
+<p class="chapter-overview">Comprehensive architectural breakdown of Data Ingestion, Architecture & EDA Essentials.</p>
+<!-- Chapter Sections -->
+<div class="sections-list">
+            
+            <section class="section-block" data-chapter-title="Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics" data-timestamp-seconds="600" id="ch_02_s01">
+<div class="section-header">
+<h3 class="section-heading">Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics</h3>
+<div class="section-tools">
+<button class="ts-pill-sm" data-seconds="600" onclick="seekVideo(600)">
+                    ▶ 10:00
+                  </button>
+<button class="btn-ask-ai" onclick="askAboutSection('Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics', '10:00')">
+                    Ask AI
+                  </button>
+</div>
+</div>
+<!-- Theory Block -->
+              
+              <div class="theory-block">
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
+
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
+
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
+                
+                <div class="analogy-card">
+
+<span>Think of Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
+</div>
+                
+              </div>
+              
+
+                            <!-- Visual Diagram Blocks (Eraser.io / Vector SVG / Mermaid / Lecture Keyframe) -->
+              
+              
+              <div class="visual-diagram-card" data-seconds="600">
+<div class="visual-card-topbar">
+<div class="diagram-type-badges">
+                    
+                      <span class="diagram-tag tag-flow">REACTIVE FLOWCHART</span>
+                    
+                    <span class="diagram-time-pill" onclick="seekVideo(600)">▶ 10:00</span>
+</div>
+<div class="visual-card-actions">
+  <button class="visual-btn-seek" onclick="seekVideo(600)" title="Jump video to this lecture moment">
+    ▶ Play at 10:00
+  </button>
+  <button class="visual-btn-popout" onclick="openVisualLightbox(this)" title="Pop Out Big (Pan & Zoom)">
+    Pop Out ⤢
+  </button>
+</div>
+</div>
+                  <div class="visual-media-wrapper" onclick="openVisualLightbox(this)" title="Click to pop out big (Pan & Zoom)">
+                    
+                      <div class="mermaid-box">
+                        <pre class="mermaid">graph TD
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
+    RawData(["Raw Dataset"]):::start --> Inspect["Inspect df.info(), df.describe() & Null Matrix"]:::proc
+    Inspect --> Missing{"Missing Values Detected?"}:::decision
+    Missing -->|"Numerical Features"| ImputeNum["Median / Iterative Imputer"]:::proc
+    Missing -->|"Categorical Features"| ImputeCat["Mode / Missing Category Flag"]:::proc
+    Missing -->|"Zero Missing"| Outliers{"Outlier Anomaly Check"}:::decision
+    ImputeNum --> Outliers
+    ImputeCat --> Outliers
+    Outliers -->|"IQR / Z-Score Extremes"| Winsorize["Winsorization / Clipping"]:::proc
+    Outliers -->|"Normal Distributions"| CleanReady(["Clean Data Matrix Ready"]):::finish
+    Winsorize --> CleanReady</pre>
+                      </div>
+                    
+                    <div class="visual-hover-hint">🔍 Click to Pop Out Big</div>
+                  </div>
+                  <div class="diagram-caption">
+
+<span class="caption-text">Architecture Flowchart: Data Ingestion, Architecture & EDA Essentials (10:00)</span>
+</div>
+</div>
+              <!-- Code Blocks -->
+              
+              <div class="code-card">
+<div class="code-header">
+  <span class="code-caption">Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics — Production Implementation & Code Walkthrough</span>
+  <div class="code-header-actions">
+    <span class="code-lang-badge">PYTHON</span>
+    <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
+      <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+</div>
+<pre><code class="language-python"># ==============================================================================
+# Chapter 09: Exploratory Data Analysis (EDA): Statistical Distributions & Matrix Inspection
+# ==============================================================================
+import pandas as pd
+import numpy as np
+
+# Step 1: Load Raw Dataset & Inspect High-Level Structural Metadata
+df = pd.read_csv("dataset.csv")
+
+print("--- Structural Shape & Dimensionality ---")
+print(f"Total Observations (Rows): {df.shape[0]}")
+print(f"Total Attributes (Columns): {df.shape[1]}")
+print("
+--- Column Schema & Data Types ---")
+df.info()
+
+# Step 2: Statistical Summaries & Quartile Metrics for Numerical Features
+print("
+--- Five-Number Summary & Distribution Metrics ---")
+print(df.describe(percentiles=[0.25, 0.50, 0.75, 0.90, 0.99]).T)
+
+# Step 3: Systematic Missing Value Audit
+print("
+--- Missing Value Counts per Feature ---")
+missing_series = df.isnull().sum()
+missing_pct = (missing_series / len(df)) * 100
+missing_audit = pd.DataFrame({"Missing_Count": missing_series, "Missing_Pct": missing_pct})
+print(missing_audit[missing_audit["Missing_Count"] > 0])
+
+# Step 4: Pearson Correlation Matrix Analysis (Detect Multicollinearity)
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+if len(numeric_cols) > 1:
+    corr_matrix = df[numeric_cols].corr()
+    print("
+--- Top Correlated Feature Pairs ---")
+    corr_unstacked = corr_matrix.unstack().sort_values(ascending=False).drop_duplicates()
+    print(corr_unstacked[corr_unstacked < 1.0].head(8))</code></pre>
+</div>
+              
+
+              <!-- Key Takeaways -->
+              
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>Verify feature distributions, null ratios, and skewness prior to selecting algorithmic model families.</li>
+                  
+                  <li>All transformation steps (imputation, scaling, encoding) must fit strictly on training splits to prevent data leakage.</li>
+                  
+                  <li>Select task-appropriate evaluation metrics (Precision-Recall AUC, F1-Score, RMSE) rather than relying solely on raw accuracy.</li>
+                  
+                  <li>Leverage Scikit-Learn Pipelines and ColumnTransformers to encapsulate preprocessing with estimators for production reproducibility.</li>
+                  
+                </ul>
+</div>
+              
+
+              <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">Production Pattern: In Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference.</span>
+</div>
+              
+
+              <!-- Supplement Block -->
+              
+
+            </section>
+            
+          </div>
+<div class="chapter-summary-footer">
+<strong>Summary:</strong> In Data Ingestion, Architecture & EDA Essentials, key concepts and implementation techniques are systematically explained and demonstrated.
+          </div>
+</article>
+        
+        <article class="chapter-card" data-chapter-title="Data Preprocessing, Missing Imputation & Encoding" data-timestamp-seconds="1800" id="ch_03">
+<div class="chapter-header">
+<div class="chapter-title-group">
+<span class="chapter-num">Chapter 3</span>
+<h2 class="chapter-heading">Data Preprocessing, Missing Imputation & Encoding</h2>
+</div>
+<button class="ts-pill" data-seconds="1800" onclick="seekVideo(1800)">
+              ▶ 30:00
+            </button>
+</div>
+<p class="chapter-overview">Comprehensive architectural breakdown of Data Preprocessing, Missing Imputation & Encoding.</p>
+<!-- Chapter Sections -->
+<div class="sections-list">
+            
+            <section class="section-block" data-chapter-title="Data Preprocessing: Categorical Feature Encoding & Feature Scaling" data-timestamp-seconds="1800" id="ch_03_s01">
+<div class="section-header">
+<h3 class="section-heading">Data Preprocessing: Categorical Feature Encoding & Feature Scaling</h3>
+<div class="section-tools">
+<button class="ts-pill-sm" data-seconds="1800" onclick="seekVideo(1800)">
+                    ▶ 30:00
+                  </button>
+<button class="btn-ask-ai" onclick="askAboutSection('Data Preprocessing: Categorical Feature Encoding & Feature Scaling', '30:00')">
+                    Ask AI
+                  </button>
+</div>
+</div>
+<!-- Theory Block -->
+              
+              <div class="theory-block">
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Data Preprocessing: Categorical Feature Encoding & Feature Scaling**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
+
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
+
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
+                
+                <div class="analogy-card">
+
+<span>Think of Data Preprocessing: Categorical Feature Encoding & Feature Scaling like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
+</div>
+                
+              </div>
+              
+
+                            <!-- Visual Diagram Blocks (Eraser.io / Vector SVG / Mermaid / Lecture Keyframe) -->
+              
+              
+              <div class="visual-diagram-card" data-seconds="1800">
+<div class="visual-card-topbar">
+<div class="diagram-type-badges">
+                    
+                      <span class="diagram-tag tag-flow">REACTIVE FLOWCHART</span>
+                    
+                    <span class="diagram-time-pill" onclick="seekVideo(1800)">▶ 30:00</span>
+</div>
+<div class="visual-card-actions">
+  <button class="visual-btn-seek" onclick="seekVideo(1800)" title="Jump video to this lecture moment">
+    ▶ Play at 30:00
+  </button>
+  <button class="visual-btn-popout" onclick="openVisualLightbox(this)" title="Pop Out Big (Pan & Zoom)">
+    Pop Out ⤢
+  </button>
+</div>
+</div>
+                  <div class="visual-media-wrapper" onclick="openVisualLightbox(this)" title="Click to pop out big (Pan & Zoom)">
+                    
+                      <div class="mermaid-box">
+                        <pre class="mermaid">graph TD
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
+    CleanData(["Cleaned Dataset"]):::start --> SplitCols["Split Feature Types"]:::proc
+    SplitCols -->|"Nominal Categoricals"| OHE["OneHotEncoder(handle_unknown='ignore')"]:::proc
+    SplitCols -->|"Ordinal Categoricals"| Ord["OrdinalEncoder()"]:::proc
+    SplitCols -->|"Numerical Features"| Scale["StandardScaler() / RobustScaler()"]:::proc
+    OHE --> ColumnTrans["ColumnTransformer Pipeline Integration"]:::proc
+    Ord --> ColumnTrans
+    Scale --> ColumnTrans
+    ColumnTrans --> ModelPrep(["Transformed Feature Matrix X"]):::finish</pre>
+                      </div>
+                    
+                    <div class="visual-hover-hint">🔍 Click to Pop Out Big</div>
+                  </div>
+                  <div class="diagram-caption">
+
+<span class="caption-text">Architecture Flowchart: Data Preprocessing, Missing Imputation & Encoding (30:00)</span>
+</div>
+</div>
+              <!-- Code Blocks -->
+              
+              <div class="code-card">
+<div class="code-header">
+  <span class="code-caption">Data Preprocessing: Categorical Feature Encoding & Feature Scaling — Production Implementation & Code Walkthrough</span>
+  <div class="code-header-actions">
+    <span class="code-lang-badge">PYTHON</span>
+    <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
+      <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+</div>
+<pre><code class="language-python"># ==============================================================================
+# Chapter 10: Data Cleaning: Missing Value Imputation & Outlier Remediation
+# ==============================================================================
+import pandas as pd
+import numpy as np
+from sklearn.impute import SimpleImputer
+
+df = pd.read_csv("raw_data.csv")
+
+# Step 1: Identify and Purge Duplicate Records
+initial_rows = len(df)
+df.drop_duplicates(inplace=True)
+print(f"Purged {initial_rows - len(df)} duplicate observations.")
+
+# Step 2: Partition Columns by Type for Specialized Imputation Strategies
+num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+
+# Median imputation for numerical features (robust to heavy skewness)
+if num_cols:
+    num_imputer = SimpleImputer(strategy="median")
+    df[num_cols] = num_imputer.fit_transform(df[num_cols])
+
+# Mode / Most frequent imputation for categorical attributes
+if cat_cols:
+    cat_imputer = SimpleImputer(strategy="most_frequent")
+    df[cat_cols] = cat_imputer.fit_transform(df[cat_cols])
+
+# Step 3: Detect and Cap Outlier Extremes using IQR (Interquartile Range) Bounds
+for col in num_cols:
+    q25 = df[col].quantile(0.25)
+    q75 = df[col].quantile(0.75)
+    iqr = q75 - q25
+    lower_threshold = q25 - 1.5 * iqr
+    upper_threshold = q75 + 1.5 * iqr
+    # Clip values into valid non-anomalous distribution boundaries
+    df[col] = np.clip(df[col], lower_threshold, upper_threshold)
+
+print(f"Data Cleaning Completed. Remaining Null Values: {df.isnull().sum().sum()}")</code></pre>
+</div>
+              
+
+              <!-- Key Takeaways -->
+              
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>Conduct a thorough EDA first: check for missing values, duplicate rows/columns, and compute basic statistics (mean, median, mode) to understand data quality.</li>
+                  
+                  <li>Use value‑count summaries to spot repeated or rare categories, which helps decide whether to drop or merge columns/rows.</li>
+                  
+                  <li>Visualize distributions and relationships with histograms, box plots, bar charts, scatter plots, and correlation heat‑maps to uncover patterns, outliers, and multicollinearity.</li>
+                  
+                  <li>Explore the target variable’s relationship with each feature (e.g., group‑by plots, box plots) to guide feature selection and engineering.</li>
+                  
+                  <li>After EDA, encode categorical variables (one‑hot, ordinal, target‑encoding) and scale numeric features (StandardScaler, MinMaxScaler) before feeding data into machine‑learning models.</li>
+                  
+                </ul>
+</div>
+              
+
+              <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">Production Pattern: In Data Preprocessing: Categorical Feature Encoding & Feature Scaling, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference.</span>
+</div>
+              
+
+              <!-- Supplement Block -->
+              
+
+            </section>
+            
+          </div>
+<div class="chapter-summary-footer">
+<strong>Summary:</strong> In Data Preprocessing, Missing Imputation & Encoding, key concepts and implementation techniques are systematically explained and demonstrated.
+          </div>
+</article>
+        
+        <article class="chapter-card" data-chapter-title="Feature Engineering & Mathematical Scaling" data-timestamp-seconds="3000" id="ch_04">
+<div class="chapter-header">
+<div class="chapter-title-group">
+<span class="chapter-num">Chapter 4</span>
+<h2 class="chapter-heading">Feature Engineering & Mathematical Scaling</h2>
+</div>
+<button class="ts-pill" data-seconds="3000" onclick="seekVideo(3000)">
+              ▶ 50:00
+            </button>
+</div>
+<p class="chapter-overview">Comprehensive architectural breakdown of Feature Engineering & Mathematical Scaling.</p>
+<!-- Chapter Sections -->
+<div class="sections-list">
+            
+            <section class="section-block" data-chapter-title="Feature Engineering: Interaction Features & Domain Transformations" data-timestamp-seconds="3000" id="ch_04_s01">
+<div class="section-header">
+<h3 class="section-heading">Feature Engineering: Interaction Features & Domain Transformations</h3>
+<div class="section-tools">
+<button class="ts-pill-sm" data-seconds="3000" onclick="seekVideo(3000)">
+                    ▶ 50:00
+                  </button>
+<button class="btn-ask-ai" onclick="askAboutSection('Feature Engineering: Interaction Features & Domain Transformations', '50:00')">
+                    Ask AI
+                  </button>
+</div>
+</div>
+<!-- Theory Block -->
+              
+              <div class="theory-block">
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Feature Engineering: Interaction Features & Domain Transformations**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
+
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
+
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
+                
+                <div class="analogy-card">
+
+<span>Think of Feature Engineering: Interaction Features & Domain Transformations like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
+</div>
+                
+              </div>
+              
+
+                            <!-- Visual Diagram Blocks (Eraser.io / Vector SVG / Mermaid / Lecture Keyframe) -->
+              
+              <!-- Code Blocks -->
+              
+              <div class="code-card">
+<div class="code-header">
+  <span class="code-caption">Feature Engineering: Interaction Features & Domain Transformations — Production Implementation & Code Walkthrough</span>
+  <div class="code-header-actions">
+    <span class="code-lang-badge">PYTHON</span>
+    <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
+      <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+</div>
+<pre><code class="language-python"># ==============================================================================
+# Chapter 11: Data Preprocessing: Categorical Feature Encoding & Feature Scaling
+# ==============================================================================
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+
+df = pd.read_csv("cleaned_data.csv")
+X = df.drop(columns=["target"])
+y = df["target"]
+
+num_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+cat_cols = X.select_dtypes(include=["object", "category"]).columns.tolist()
+
+# Step 1: Construct Leakage-Proof ColumnTransformer
+# Numerical features are standardized (zero mean, unit variance)
+# Categorical features are one-hot encoded (handle_unknown='ignore' prevents test crash)
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", StandardScaler(), num_cols),
+        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols)
+    ]
+)
+
+# Step 2: Stratified Train-Test Split Before Fitting Preprocessor
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y if y.nunique() <= 10 else None
+)
+
+# Step 3: Fit Exclusively on Train Split, Transform Validation/Test
+X_train_proc = preprocessor.fit_transform(X_train)
+X_test_proc = preprocessor.transform(X_test)
+print(f"Transformed Training Feature Matrix Shape: {X_train_proc.shape}")
+print(f"Transformed Held-Out Test Matrix Shape: {X_test_proc.shape}")</code></pre>
+</div>
+              
+
+              <!-- Key Takeaways -->
+              
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>Verify feature distributions, null ratios, and skewness prior to selecting algorithmic model families.</li>
+                  
+                  <li>All transformation steps (imputation, scaling, encoding) must fit strictly on training splits to prevent data leakage.</li>
+                  
+                  <li>Select task-appropriate evaluation metrics (Precision-Recall AUC, F1-Score, RMSE) rather than relying solely on raw accuracy.</li>
+                  
+                  <li>Leverage Scikit-Learn Pipelines and ColumnTransformers to encapsulate preprocessing with estimators for production reproducibility.</li>
+                  
+                </ul>
+</div>
+              
+
+              <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">Production Pattern: In Feature Engineering: Interaction Features & Domain Transformations, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference.</span>
+</div>
+              
+
+              <!-- Supplement Block -->
+              
+
+            </section>
+            
+          </div>
+<div class="chapter-summary-footer">
+<strong>Summary:</strong> In Feature Engineering & Mathematical Scaling, key concepts and implementation techniques are systematically explained and demonstrated.
+          </div>
+</article>
+        
+        <article class="chapter-card" data-chapter-title="Supervised Learning: Linear Regression & Gradient Descent" data-timestamp-seconds="4200" id="ch_05">
+<div class="chapter-header">
+<div class="chapter-title-group">
+<span class="chapter-num">Chapter 5</span>
+<h2 class="chapter-heading">Supervised Learning: Linear Regression & Gradient Descent</h2>
+</div>
+<button class="ts-pill" data-seconds="4200" onclick="seekVideo(4200)">
+              ▶ 01:10:00
+            </button>
+</div>
+<p class="chapter-overview">Comprehensive architectural breakdown of Supervised Learning: Linear Regression & Gradient Descent.</p>
+<!-- Chapter Sections -->
+<div class="sections-list">
+            
+            <section class="section-block" data-chapter-title="Supervised Learning: Linear Regression & Gradient Descent: Core Foundations & Practical Implementation" data-timestamp-seconds="4200" id="ch_05_s01">
+<div class="section-header">
+<h3 class="section-heading">Supervised Learning: Linear Regression & Gradient Descent: Core Foundations & Practical Implementation</h3>
+<div class="section-tools">
+<button class="ts-pill-sm" data-seconds="4200" onclick="seekVideo(4200)">
+                    ▶ 01:10:00
+                  </button>
+<button class="btn-ask-ai" onclick="askAboutSection('Supervised Learning: Linear Regression & Gradient Descent: Core Foundations & Practical Implementation', '01:10:00')">
+                    Ask AI
+                  </button>
+</div>
+</div>
+<!-- Theory Block -->
+              
+              <div class="theory-block">
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Supervised Learning: Linear Regression & Gradient Descent: Core Foundations & Practical Implementation**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
+
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
+
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
+                
+                <div class="analogy-card">
+
+<span>Think of Supervised Learning: Linear Regression & Gradient Descent: Core Foundations & Practical Implementation like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
+</div>
+                
+              </div>
+              
+
+                            <!-- Visual Diagram Blocks (Eraser.io / Vector SVG / Mermaid / Lecture Keyframe) -->
+              
+              <!-- Code Blocks -->
+              
+              <div class="code-card">
+<div class="code-header">
+  <span class="code-caption">Supervised Learning: Linear Regression & Gradient Descent: Core Foundations & Practical Implementation — Production Implementation & Code Walkthrough</span>
+  <div class="code-header-actions">
+    <span class="code-lang-badge">PYTHON</span>
+    <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
+      <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+</div>
+<pre><code class="language-python"># ==============================================================================
+# Chapter 01 & 02: Machine Learning Runtime Environment & Prerequisite Verification
+# ==============================================================================
+import sys
+import sklearn
+import pandas as pd
+import numpy as np
+
+# Step 1: Verify core scientific computing & machine learning libraries
+print("--- Runtime Environment Diagnostic ---")
+print(f"Python Binary: {sys.executable}")
+print(f"Python Version: {sys.version.split()[0]}")
+print(f"Scikit-Learn Version: {sklearn.__version__} (Core modeling and pipelines)")
+print(f"Pandas Version: {pd.__version__} (DataFrame structures and tabular manipulation)")
+print(f"NumPy Version: {np.__version__} (N-dimensional vector and matrix operations)")
+
+# Step 2: Establish deterministic pseudo-random seeds for reproducible experiments
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
+
+print("
+[Environment Status] Machine Learning engineering runtime is verified and operational.")</code></pre>
+</div>
+              
+
+              <!-- Key Takeaways -->
+              
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>Verify missing values early in EDA with `df.isnull().sum()` to confirm data is pre‑cleaned before modeling.</li>
+                  
+                  <li>Use `df.select_dtypes(include='number')` (or a manual list of numeric columns) to isolate continuous features for distribution checks and visualizations.</li>
+                  
+                  <li>Keep a clear workflow: inspect shape, head, `df.info()`, then handle nulls, and finally extract numeric columns for exploratory plots.</li>
+                  
+                  <li>Remove non‑numeric columns from the numeric subset to avoid errors in downstream statistical or machine‑learning steps.</li>
+                  
+                  <li>Document each EDA step (e.g., null‑value check, numeric extraction) so the process is reproducible and transparent for future model iterations.</li>
+                  
+                </ul>
+</div>
+              
+
+              <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">Production Pattern: In Supervised Learning: Linear Regression & Gradient Descent: Core Foundations & Practical Implementation, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference.</span>
+</div>
+              
+
+              <!-- Supplement Block -->
+              
+
+            </section>
+            
+          </div>
+<div class="chapter-summary-footer">
+<strong>Summary:</strong> In Supervised Learning: Linear Regression & Gradient Descent, key concepts and implementation techniques are systematically explained and demonstrated.
+          </div>
+</article>
+        
+        <article class="chapter-card" data-chapter-title="Classification: Logistic Regression & Decision Boundaries" data-timestamp-seconds="5400" id="ch_06">
+<div class="chapter-header">
+<div class="chapter-title-group">
+<span class="chapter-num">Chapter 6</span>
+<h2 class="chapter-heading">Classification: Logistic Regression & Decision Boundaries</h2>
+</div>
+<button class="ts-pill" data-seconds="5400" onclick="seekVideo(5400)">
+              ▶ 01:30:00
+            </button>
+</div>
+<p class="chapter-overview">Comprehensive architectural breakdown of Classification: Logistic Regression & Decision Boundaries.</p>
+<!-- Chapter Sections -->
+<div class="sections-list">
+            
+            <section class="section-block" data-chapter-title="Classification: Logistic Regression & Decision Boundaries: Core Foundations & Practical Implementation" data-timestamp-seconds="5400" id="ch_06_s01">
+<div class="section-header">
+<h3 class="section-heading">Classification: Logistic Regression & Decision Boundaries: Core Foundations & Practical Implementation</h3>
+<div class="section-tools">
+<button class="ts-pill-sm" data-seconds="5400" onclick="seekVideo(5400)">
+                    ▶ 01:30:00
+                  </button>
+<button class="btn-ask-ai" onclick="askAboutSection('Classification: Logistic Regression & Decision Boundaries: Core Foundations & Practical Implementation', '01:30:00')">
+                    Ask AI
+                  </button>
+</div>
+</div>
+<!-- Theory Block -->
+              
+              <div class="theory-block">
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Classification: Logistic Regression & Decision Boundaries: Core Foundations & Practical Implementation**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
+
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
+
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
+                
+                <div class="analogy-card">
+
+<span>Think of Classification: Logistic Regression & Decision Boundaries: Core Foundations & Practical Implementation like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
+</div>
+                
+              </div>
+              
+
+                            <!-- Visual Diagram Blocks (Eraser.io / Vector SVG / Mermaid / Lecture Keyframe) -->
+              
+              <!-- Code Blocks -->
+              
+              <div class="code-card">
+<div class="code-header">
+  <span class="code-caption">Classification: Logistic Regression & Decision Boundaries: Core Foundations & Practical Implementation — Production Implementation & Code Walkthrough</span>
+  <div class="code-header-actions">
+    <span class="code-lang-badge">PYTHON</span>
+    <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
+      <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+</div>
+<pre><code class="language-python"># ==============================================================================
+# Chapter 01 & 02: Machine Learning Runtime Environment & Prerequisite Verification
+# ==============================================================================
+import sys
+import sklearn
+import pandas as pd
+import numpy as np
+
+# Step 1: Verify core scientific computing & machine learning libraries
+print("--- Runtime Environment Diagnostic ---")
+print(f"Python Binary: {sys.executable}")
+print(f"Python Version: {sys.version.split()[0]}")
+print(f"Scikit-Learn Version: {sklearn.__version__} (Core modeling and pipelines)")
+print(f"Pandas Version: {pd.__version__} (DataFrame structures and tabular manipulation)")
+print(f"NumPy Version: {np.__version__} (N-dimensional vector and matrix operations)")
+
+# Step 2: Establish deterministic pseudo-random seeds for reproducible experiments
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
+
+print("
+[Environment Status] Machine Learning engineering runtime is verified and operational.")</code></pre>
+</div>
+              
+
+              <!-- Key Takeaways -->
+              
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>Verify feature distributions, null ratios, and skewness prior to selecting algorithmic model families.</li>
+                  
+                  <li>All transformation steps (imputation, scaling, encoding) must fit strictly on training splits to prevent data leakage.</li>
+                  
+                  <li>Select task-appropriate evaluation metrics (Precision-Recall AUC, F1-Score, RMSE) rather than relying solely on raw accuracy.</li>
+                  
+                  <li>Leverage Scikit-Learn Pipelines and ColumnTransformers to encapsulate preprocessing with estimators for production reproducibility.</li>
+                  
+                </ul>
+</div>
+              
+
+              <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">Production Pattern: In Classification: Logistic Regression & Decision Boundaries: Core Foundations & Practical Implementation, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference.</span>
+</div>
+              
+
+              <!-- Supplement Block -->
+              
+
+            </section>
+            
+          </div>
+<div class="chapter-summary-footer">
+<strong>Summary:</strong> In Classification: Logistic Regression & Decision Boundaries, key concepts and implementation techniques are systematically explained and demonstrated.
+          </div>
+</article>
+        
+        <article class="chapter-card" data-chapter-title="Model Evaluation, Bias-Variance Tradeoff & Cross Validation" data-timestamp-seconds="6600" id="ch_07">
+<div class="chapter-header">
+<div class="chapter-title-group">
+<span class="chapter-num">Chapter 7</span>
+<h2 class="chapter-heading">Model Evaluation, Bias-Variance Tradeoff & Cross Validation</h2>
+</div>
+<button class="ts-pill" data-seconds="6600" onclick="seekVideo(6600)">
+              ▶ 01:50:00
+            </button>
+</div>
+<p class="chapter-overview">Comprehensive architectural breakdown of Model Evaluation, Bias-Variance Tradeoff & Cross Validation.</p>
+<!-- Chapter Sections -->
+<div class="sections-list">
+            
+            <section class="section-block" data-chapter-title="Model Evaluation, Bias-Variance Tradeoff & Cross Validation: Core Foundations & Practical Implementation" data-timestamp-seconds="6600" id="ch_07_s01">
+<div class="section-header">
+<h3 class="section-heading">Model Evaluation, Bias-Variance Tradeoff & Cross Validation: Core Foundations & Practical Implementation</h3>
+<div class="section-tools">
+<button class="ts-pill-sm" data-seconds="6600" onclick="seekVideo(6600)">
+                    ▶ 01:50:00
+                  </button>
+<button class="btn-ask-ai" onclick="askAboutSection('Model Evaluation, Bias-Variance Tradeoff & Cross Validation: Core Foundations & Practical Implementation', '01:50:00')">
+                    Ask AI
+                  </button>
+</div>
+</div>
+<!-- Theory Block -->
+              
+              <div class="theory-block">
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **Model Evaluation, Bias-Variance Tradeoff & Cross Validation: Core Foundations & Practical Implementation**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
+
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
+
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
+                
+                <div class="analogy-card">
+
+<span>Think of Model Evaluation, Bias-Variance Tradeoff & Cross Validation: Core Foundations & Practical Implementation like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
+</div>
+                
+              </div>
+              
+
+                            <!-- Visual Diagram Blocks (Eraser.io / Vector SVG / Mermaid / Lecture Keyframe) -->
+              
+              <!-- Code Blocks -->
+              
+              <div class="code-card">
+<div class="code-header">
+  <span class="code-caption">Model Evaluation, Bias-Variance Tradeoff & Cross Validation: Core Foundations & Practical Implementation — Production Implementation & Code Walkthrough</span>
+  <div class="code-header-actions">
+    <span class="code-lang-badge">PYTHON</span>
+    <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
+      <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+</div>
+<pre><code class="language-python"># ==============================================================================
+# Chapter 01 & 02: Machine Learning Runtime Environment & Prerequisite Verification
+# ==============================================================================
+import sys
+import sklearn
+import pandas as pd
+import numpy as np
+
+# Step 1: Verify core scientific computing & machine learning libraries
+print("--- Runtime Environment Diagnostic ---")
+print(f"Python Binary: {sys.executable}")
+print(f"Python Version: {sys.version.split()[0]}")
+print(f"Scikit-Learn Version: {sklearn.__version__} (Core modeling and pipelines)")
+print(f"Pandas Version: {pd.__version__} (DataFrame structures and tabular manipulation)")
+print(f"NumPy Version: {np.__version__} (N-dimensional vector and matrix operations)")
+
+# Step 2: Establish deterministic pseudo-random seeds for reproducible experiments
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
+
+print("
+[Environment Status] Machine Learning engineering runtime is verified and operational.")</code></pre>
+</div>
+              
+
+              <!-- Key Takeaways -->
+              
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>**Leverage domain knowledge first** – Knowing the problem context (e.g., which variables are categorical or continuous) guides the choice of evaluation metrics and statistical tests such as chi‑square or correlation.</li>
+                  
+                  <li>**Use authoritative documentation as a quick reference** – Official libraries, Wikipedia, and academic papers are reliable sources for formulas, assumptions, and implementation details of tests and validation techniques.</li>
+                  
+                  <li>**Follow a systematic evaluation pipeline** – Collect data → split into train/validation/test → train model → compute bias‑variance diagnostics → apply cross‑validation → report metrics.</li>
+                  
+                  <li>**Apply cross‑validation to estimate true performance** – K‑fold or stratified CV reduces variance in performance estimates and helps detect over‑fitting early.</li>
+                  
+                  <li>**Balance bias and variance through model complexity** – Simpler models lower bias but may increase variance; more complex models reduce bias but risk over‑fitting; use CV results to pick the sweet spot.</li>
+                  
+                </ul>
+</div>
+              
+
+              <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">Production Pattern: In Model Evaluation, Bias-Variance Tradeoff & Cross Validation: Core Foundations & Practical Implementation, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference.</span>
+</div>
+              
+
+              <!-- Supplement Block -->
+              
+
+            </section>
+            
+          </div>
+<div class="chapter-summary-footer">
+<strong>Summary:</strong> In Model Evaluation, Bias-Variance Tradeoff & Cross Validation, key concepts and implementation techniques are systematically explained and demonstrated.
+          </div>
+</article>
+        
+        <article class="chapter-card" data-chapter-title="End-to-End Production ML Pipeline Project" data-timestamp-seconds="7800" id="ch_08">
+<div class="chapter-header">
+<div class="chapter-title-group">
+<span class="chapter-num">Chapter 8</span>
+<h2 class="chapter-heading">End-to-End Production ML Pipeline Project</h2>
+</div>
+<button class="ts-pill" data-seconds="7800" onclick="seekVideo(7800)">
+              ▶ 02:10:00
+            </button>
+</div>
+<p class="chapter-overview">Comprehensive architectural breakdown of End-to-End Production ML Pipeline Project.</p>
+<!-- Chapter Sections -->
+<div class="sections-list">
+            
+            <section class="section-block" data-chapter-title="End-to-End Production ML Pipeline Project: Core Foundations & Practical Implementation" data-timestamp-seconds="7800" id="ch_08_s01">
+<div class="section-header">
+<h3 class="section-heading">End-to-End Production ML Pipeline Project: Core Foundations & Practical Implementation</h3>
+<div class="section-tools">
+<button class="ts-pill-sm" data-seconds="7800" onclick="seekVideo(7800)">
+                    ▶ 02:10:00
+                  </button>
+<button class="btn-ask-ai" onclick="askAboutSection('End-to-End Production ML Pipeline Project: Core Foundations & Practical Implementation', '02:10:00')">
+                    Ask AI
+                  </button>
+</div>
+</div>
+<!-- Theory Block -->
+              
+              <div class="theory-block">
+<p class="theory-text">### I. Foundational Theory & Mathematical Principles
+In this lecture on **End-to-End Production ML Pipeline Project: Core Foundations & Practical Implementation**, the instructor systematically examines the foundational mathematics, statistical properties, and computational mechanics required for scalable machine learning pipelines. Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, and the objective functions that govern parameter convergence.
+
+### II. Architectural Walkthrough & Dataflow Mechanics
+The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. Every operation—from exploratory distribution checks and missing value imputation to categorical encoding and feature scaling—is contextualized within production engineering standards. Crucially, the workflow strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating catastrophic data leakage that invalidates out-of-sample generalization.
+
+### III. Production Considerations & Validation Strategies
+Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy (such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter optimization via cross-validation. Developers are taught how to validate model stability and export fully reproducible pipeline artifacts ready for deployment.</p>
+                
+                <div class="analogy-card">
+
+<span>Think of End-to-End Production ML Pipeline Project: Core Foundations & Practical Implementation like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before powering the final spacecraft (The Machine Learning Model).</span>
+</div>
+                
+              </div>
+              
+
+                            <!-- Visual Diagram Blocks (Eraser.io / Vector SVG / Mermaid / Lecture Keyframe) -->
+              
+              
+              <div class="visual-diagram-card" data-seconds="7800">
+<div class="visual-card-topbar">
+<div class="diagram-type-badges">
+                    
+                      <span class="diagram-tag tag-flow">REACTIVE FLOWCHART</span>
+                    
+                    <span class="diagram-time-pill" onclick="seekVideo(7800)">▶ 02:10:00</span>
+</div>
+<div class="visual-card-actions">
+  <button class="visual-btn-seek" onclick="seekVideo(7800)" title="Jump video to this lecture moment">
+    ▶ Play at 02:10:00
+  </button>
+  <button class="visual-btn-popout" onclick="openVisualLightbox(this)" title="Pop Out Big (Pan & Zoom)">
+    Pop Out ⤢
+  </button>
+</div>
+</div>
+                  <div class="visual-media-wrapper" onclick="openVisualLightbox(this)" title="Click to pop out big (Pan & Zoom)">
+                    
+                      <div class="mermaid-box">
+                        <pre class="mermaid">graph TD
+    classDef start fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef proc fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+    classDef eval fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef finish fill:#ecfdf5,stroke:#059669,stroke-width:2px,color:#065f46;
+    ProblemDef(["Problem Definition & Business Objective"]):::start --> DataIngest["Data Load & Stratified Train-Test Split"]:::proc
+    DataIngest --> FeaturePipe["Preprocessing & Transformation Pipeline"]:::proc
+    FeaturePipe --> ModelFit["Estimator Training & Baseline Validation"]:::proc
+    ModelFit --> Tuning["Hyperparameter Optimization (GridSearchCV)"]:::proc
+    Tuning --> Diagnostics{"Validation & Confusion Matrix Diagnostics"}:::eval
+    Diagnostics -->|"Target Performance Verified"| FinalArtifact(["Export Model Pipeline Artifact (.joblib)"]):::finish</pre>
+                      </div>
+                    
+                    <div class="visual-hover-hint">🔍 Click to Pop Out Big</div>
+                  </div>
+                  <div class="diagram-caption">
+
+<span class="caption-text">Architecture Flowchart: End-to-End Production ML Pipeline Project (02:10:00)</span>
+</div>
+</div>
+              <!-- Code Blocks -->
+              
+              <div class="code-card">
+<div class="code-header">
+  <span class="code-caption">End-to-End Production ML Pipeline Project: Core Foundations & Practical Implementation — Production Implementation & Code Walkthrough</span>
+  <div class="code-header-actions">
+    <span class="code-lang-badge">PYTHON</span>
+    <button type="button" class="btn-copy-code" onclick="copyCodeBlock(this)" title="Copy Code to Clipboard">
+      <svg class="copy-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+</div>
+<pre><code class="language-python"># ==============================================================================
+# Chapter 01 & 02: Machine Learning Runtime Environment & Prerequisite Verification
+# ==============================================================================
+import sys
+import sklearn
+import pandas as pd
+import numpy as np
+
+# Step 1: Verify core scientific computing & machine learning libraries
+print("--- Runtime Environment Diagnostic ---")
+print(f"Python Binary: {sys.executable}")
+print(f"Python Version: {sys.version.split()[0]}")
+print(f"Scikit-Learn Version: {sklearn.__version__} (Core modeling and pipelines)")
+print(f"Pandas Version: {pd.__version__} (DataFrame structures and tabular manipulation)")
+print(f"NumPy Version: {np.__version__} (N-dimensional vector and matrix operations)")
+
+# Step 2: Establish deterministic pseudo-random seeds for reproducible experiments
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
+
+print("
+[Environment Status] Machine Learning engineering runtime is verified and operational.")</code></pre>
+</div>
+              
+
+              <!-- Key Takeaways -->
+              
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>Verify feature distributions, null ratios, and skewness prior to selecting algorithmic model families.</li>
+                  
+                  <li>All transformation steps (imputation, scaling, encoding) must fit strictly on training splits to prevent data leakage.</li>
+                  
+                  <li>Select task-appropriate evaluation metrics (Precision-Recall AUC, F1-Score, RMSE) rather than relying solely on raw accuracy.</li>
+                  
+                  <li>Leverage Scikit-Learn Pipelines and ColumnTransformers to encapsulate preprocessing with estimators for production reproducibility.</li>
+                  
+                </ul>
+</div>
+              
+
+              <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">Production Pattern: In End-to-End Production ML Pipeline Project: Core Foundations & Practical Implementation, data transformations and models adhere to standard Scikit-Learn fit-transform interfaces for zero-downtime inference.</span>
+</div>
+              
+
+              <!-- Supplement Block -->
+              
+
+            </section>
+            
+          </div>
+<div class="chapter-summary-footer">
+<strong>Summary:</strong> In End-to-End Production ML Pipeline Project, key concepts and implementation techniques are systematically explained and demonstrated.
+          </div>
+</article>
+        
+      </div>
+</main>
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- VERTICAL RESIZER (DRAGGABLE LEFT / RIGHT)                           -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="resizer v-resizer" id="v-resizer" title="Drag to resize Notes vs. Side Companion">
+<div class="resizer-handle"></div>
+</div>
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- RIGHT COLUMN (STACKED: VIDEO TOP + CHAT BOTTOM)                      -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<aside class="right-column" id="right-column">
+<!-- PANE 2: TOP-RIGHT YOUTUBE PLAYER -->
+<section class="video-pane" id="video-pane">
+<div class="video-wrapper">
+<div data-video-id="1L420xXpDTg" id="yt-player-frame"></div>
+</div>
+</section>
+<!-- HORIZONTAL RESIZER (DRAGGABLE UP / DOWN) -->
+<div class="resizer h-resizer" id="h-resizer" title="Drag to resize Video vs. Chat Assistant">
+<div class="resizer-handle"></div>
+</div>
+<!-- PANE 3: BOTTOM-RIGHT DOCKED RAG CHATBOT -->
+<section class="chat-pane" id="chat-pane">
+<div class="chat-minimal-navbar" id="chat-minimal-navbar">
+  <div class="chat-nav-brand" onclick="toggleChatMinimize(true)">
+    <span class="chat-status-dot"></span>
+    <span class="chat-nav-title">Study Assistant</span>
+    <!-- DUAL-MODE INTERACTIVE TOGGLE: GROUNDED VS OPEN -->
+    <div class="chat-mode-toggle" id="chat-mode-toggle" role="group" aria-label="Study Assistant Mode">
+      <button type="button" class="mode-toggle-btn active" id="mode-grounded-btn" onclick="setChatMode('grounded')" title="Strictly ground answers in current video notes & timestamps">
+        <span class="mode-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:3px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span> Grounded
+      </button>
+      <button type="button" class="mode-toggle-btn" id="mode-open-btn" onclick="setChatMode('open')" title="Switch to open AI mode for broader CS concepts, frameworks, and coding">
+        <span class="mode-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span> Open
+      </button>
+    </div>
+  </div>
+  <div class="chat-nav-actions">
+    <button type="button" class="chat-nav-btn chat-nav-clear" onclick="clearChatMessages(); event.stopPropagation();" title="Clear chat messages">Clear</button>
+    <button type="button" class="chat-nav-btn chat-nav-minimize" id="btn-minimize-chat" onclick="toggleChatMinimize(); event.stopPropagation();" title="Minimize / Expand Chat Assistant">
+      <svg class="minimize-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+  </div>
+</div>
+<div class="chat-message-list" id="chat-messages">
+<div class="chat-msg ai-msg">
+            Hello! I am your study assistant for <strong>Complete Machine Learning Course for Beginners | Part 1- Foundation | Sheryians AI School</strong>. Ask me to explain concepts, clarify code, or quiz your understanding.
+          </div>
+</div>
+<div class="chat-quick-chips">
+<button class="chip-btn" onclick="sendPrompt('Summarize the currently active chapter in 3 points')">Summarize</button>
+<button class="chip-btn" onclick="sendPrompt('Explain the last code snippet step-by-step')">Code Explain</button>
+<button class="chip-btn" onclick="sendPrompt('Quiz me on the core topics covered in this lecture')">Quiz Me</button>
+</div>
+
+<form class="chat-input-bar minimal-chat-bar" id="chat-form">
+  <input autocomplete="off" id="chat-query" placeholder="Ask about lecture notes or code..." type="text"/>
+  <button id="chat-submit-btn" class="btn-send-sym" type="submit" title="Send query">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#ffffff" stroke="none">
+      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="#ffffff"/>
+    </svg>
+  </button>
+</form>
+</section>
+</aside>
+
+<!-- FLOATING RESTORE COMPANION FAB (WHEN SIDEBAR IS COLLAPSED ON DESKTOP) -->
+<button type="button" class="floating-companion-fab" id="floating-companion-fab" onclick="toggleSidebar()" title="Show Video & Chat Assistant">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+  <span>Show Companion</span>
+</button>
+
+<!-- MOBILE DOCKED VIEW SWITCHER (VISIBLE ONLY ON MOBILE <= 960px) -->
+<nav class="mobile-nav-bar" id="mobile-nav-bar" aria-label="Mobile Navigation">
+  <button type="button" class="mobile-tab-btn active" id="tab-btn-notes" onclick="setMobileView('notes')" aria-label="Study Notes">
+    <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span>
+    <span class="tab-label">Notes</span>
+  </button>
+  <button type="button" class="mobile-tab-btn" id="tab-btn-video" onclick="setMobileView('video')" aria-label="Video Player">
+    <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2.5"></rect><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon></svg></span>
+    <span class="tab-label">Video</span>
+    <span class="tab-badge" id="mobile-time-badge">00:00</span>
+  </button>
+  <button type="button" class="mobile-tab-btn" id="tab-btn-chat" onclick="setMobileView('chat')" aria-label="AI Study Assistant">
+    <span class="tab-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg></span>
+    <span class="tab-label">Assistant</span>
+    <span class="tab-badge-ai">AI</span>
+  </button>
+</nav>
+
+</div>
+
+<!-- Notification Toast for Synchronized Seeking -->
+<div class="sync-toast hidden" id="sync-toast"></div>
+<!-- Lightbox Modal for Fullscreen Visual Diagram Inspection -->
+<!-- Interactive Pop-Out Modal with Pan & Zoom -->
+  <div class="lightbox-modal hidden" id="visual-lightbox" onclick="closeVisualLightbox(event)">
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+      <div class="lightbox-header">
+        <div class="lightbox-title-wrap">
+          <span class="lightbox-badge">DIAGRAM INSPECTOR</span>
+          <span class="lightbox-caption" id="lightbox-caption"></span>
+        </div>
+        <div class="lightbox-controls">
+          <button type="button" class="pz-btn" onclick="lightboxZoom(-0.2)" title="Zoom Out (or mouse wheel)">−</button>
+          <span class="pz-scale-label" id="pz-scale-label">100%</span>
+          <button type="button" class="pz-btn" onclick="lightboxZoom(0.2)" title="Zoom In (or mouse wheel)">+</button>
+          <button type="button" class="pz-btn" onclick="lightboxReset()" title="Reset Pan & Zoom">↺</button>
+          <button type="button" class="lightbox-close" onclick="closeVisualLightbox()" title="Close (or click outside / Esc)">✕</button>
+        </div>
+      </div>
+      <div class="lightbox-viewport" id="lightbox-viewport">
+        <div class="lightbox-stage" id="lightbox-stage">
+          <div id="lightbox-body"></div>
+        </div>
+        <div class="lightbox-hint">Drag to Pan • Scroll Wheel to Zoom • Click outside to exit</div>
+      </div>
+    </div>
+  </div>
+  <!-- Scripts -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      try {
+        if (window.mermaid) {
+          mermaid.initialize({
+            startOnLoad: true,
+            theme: 'neutral',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+            themeVariables: {
+              darkMode: false,
+              background: '#ffffff',
+              mainBkg: '#ffffff',
+              primaryColor: '#f8fafc',
+              primaryTextColor: '#0f172a',
+              primaryBorderColor: '#cbd5e1',
+              lineColor: '#0f766e',
+              secondaryColor: '#f1f5f9',
+              tertiaryColor: '#ffffff',
+              fontSize: '14px',
+              fontFamily: "'Roboto', sans-serif",
+              nodeBorder: '#64748b',
+              clusterBkg: '#f8fafc',
+              clusterBorder: '#cbd5e1',
+              edgeLabelBackground: '#ffffff'
+            }
+          });
+        }
+      } catch(e) {
+        console.warn("Mermaid init notice:", e);
+      }
+    });
+  </script>
+  <script>
+    let pzState = {
+      scale: 1.0,
+      panning: false,
+      startX: 0,
+      startY: 0,
+      translateX: 0,
+      translateY: 0
+    };
+
+    function clampPan() {
+      const vp = document.getElementById('lightbox-viewport');
+      const vpW = vp ? vp.clientWidth : 800;
+      const vpH = vp ? vp.clientHeight : 600;
+      // Bounded panning: strictly prevent the image from flying off screen
+      // Allows proportional exploration of edges when zoomed in, but keeps image firmly anchored
+      const maxPanX = Math.max(50, Math.round((vpW * 0.35) * pzState.scale));
+      const maxPanY = Math.max(40, Math.round((vpH * 0.35) * pzState.scale));
+      pzState.translateX = Math.max(-maxPanX, Math.min(maxPanX, pzState.translateX));
+      pzState.translateY = Math.max(-maxPanY, Math.min(maxPanY, pzState.translateY));
+    }
+
+    function updateStageTransform() {
+      const stage = document.getElementById('lightbox-stage');
+      const label = document.getElementById('pz-scale-label');
+      if (stage) {
+        stage.style.transform = `translate(${pzState.translateX}px, ${pzState.translateY}px) scale(${pzState.scale})`;
+      }
+      if (label) {
+        label.textContent = Math.round(pzState.scale * 100) + '%';
+      }
+    }
+
+    function lightboxZoom(delta) {
+      // Strictly bounded zoom: between 0.8x (80%) and 2.5x (250%)
+      const newScale = Math.max(0.8, Math.min(2.5, pzState.scale + delta));
+      pzState.scale = Math.round(newScale * 100) / 100;
+      clampPan();
+      updateStageTransform();
+    }
+
+    function lightboxReset() {
+      pzState.scale = 1.0;
+      pzState.translateX = 0;
+      pzState.translateY = 0;
+      updateStageTransform();
+    }
+
+    function openVisualLightbox(btnOrWrapper) {
+      const card = btnOrWrapper.closest('.visual-diagram-card');
+      if (!card) return;
+      const modal = document.getElementById('visual-lightbox');
+      const body = document.getElementById('lightbox-body');
+      const caption = document.getElementById('lightbox-caption');
+      
+      const img = card.querySelector('.diagram-img');
+      const mermaidBox = card.querySelector('.mermaid-box');
+      const capText = card.querySelector('.caption-text') ? card.querySelector('.caption-text').innerText : (card.querySelector('.diagram-caption') ? card.querySelector('.diagram-caption').innerText : '');
+
+      if (mermaidBox && mermaidBox.querySelector('svg')) {
+        const clone = mermaidBox.cloneNode(true);
+        const svg = clone.querySelector('svg');
+        if (svg) {
+          svg.removeAttribute('style');
+          svg.style.maxWidth = '100%';
+          svg.style.maxHeight = '74vh';
+          svg.style.height = 'auto';
+          svg.style.width = '100%';
+          svg.style.background = '#ffffff';
+        }
+        body.innerHTML = `<div class="lightbox-svg-wrap">${clone.innerHTML}</div>`;
+      } else if (img) {
+        body.innerHTML = `<img src="${img.src}" class="lightbox-full-img" alt="Diagram" width="920">`;
+      } else if (mermaidBox) {
+        const clone = mermaidBox.cloneNode(true);
+        const svg = clone.querySelector('svg');
+        if (svg) {
+          svg.removeAttribute('style');
+          svg.style.maxWidth = '100%';
+          svg.style.maxHeight = '74vh';
+          svg.style.height = 'auto';
+          svg.style.width = '100%';
+          svg.style.background = '#ffffff';
+        }
+        body.innerHTML = `<div class="lightbox-svg-wrap">${clone.innerHTML}</div>`;
+      }
+      if (caption) caption.innerText = capText;
+
+      // Reset pan/zoom on open
+      pzState = { scale: 1.0, panning: false, startX: 0, startY: 0, translateX: 0, translateY: 0 };
+      updateStageTransform();
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeVisualLightbox(e) {
+      if (e && e.target && e.target.id !== 'visual-lightbox' && !e.target.closest('.lightbox-close')) {
+        return;
+      }
+      const modal = document.getElementById('visual-lightbox');
+      if (modal) modal.classList.add('hidden');
+      const body = document.getElementById('lightbox-body');
+      if (body) body.innerHTML = '';
+      pzState = { scale: 1.0, panning: false, startX: 0, startY: 0, translateX: 0, translateY: 0 };
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const viewport = document.getElementById('lightbox-viewport');
+      if (!viewport) return;
+
+      viewport.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.lightbox-close') || e.target.closest('.lightbox-controls')) return;
+        pzState.panning = true;
+        pzState.startX = e.clientX - pzState.translateX;
+        pzState.startY = e.clientY - pzState.translateY;
+        viewport.style.cursor = 'grabbing';
+      });
+
+      window.addEventListener('mousemove', function(e) {
+        if (!pzState.panning) return;
+        pzState.translateX = e.clientX - pzState.startX;
+        pzState.translateY = e.clientY - pzState.startY;
+        clampPan();
+        updateStageTransform();
+      });
+
+      window.addEventListener('mouseup', function() {
+        if (pzState.panning) {
+          pzState.panning = false;
+          const vp = document.getElementById('lightbox-viewport');
+          if (vp) vp.style.cursor = 'grab';
+        }
+      });
+
+      viewport.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.15 : -0.15;
+        lightboxZoom(delta);
+      }, { passive: false });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeVisualLightbox();
+        }
+      });
+    });
+  </script>
+  <script src="/static/js/workspace_splitter.js"></script>
+<script src="/static/js/yt_sync_controller.js?v=202610101820"></script>
+<script src="/static/js/rag_chat_client.js?v=202610101820"></script>
+<script id="header-burger-inline-script">
+  // Smooth 60fps scrolling enabled
+</script>
+
+
+
+<script>
+// High-performance scroll listener to minimize workspace navbar
+(function initNavbarMinimizeOnScroll() {
+  function setupListener() {
+    const pane = document.getElementById("handbook-pane");
+    const header = document.querySelector(".handbook-header");
+    if (!pane || !header) return;
+
+    let ticking = false;
+    function updateNavbar() {
+      const st = pane.scrollTop;
+      if (st > 40) {
+        if (!header.classList.contains("minimized")) {
+          header.classList.add("minimized");
+        }
+      } else {
+        if (header.classList.contains("minimized")) {
+          header.classList.remove("minimized");
+        }
+      }
+      ticking = false;
+    }
+
+    pane.addEventListener("scroll", function() {
+      if (!ticking) {
+        window.requestAnimationFrame(updateNavbar);
+        ticking = true;
+      }
+    }, { passive: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupListener);
+  } else {
+    setupListener();
+  }
+})();
+</script>
+
+
+</body>
+</html>

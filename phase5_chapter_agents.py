@@ -7,8 +7,9 @@ and produces concrete mental models with zero foreign cross-talk.
 """
 
 import asyncio
+import os
 import re
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -17,6 +18,9 @@ from states import SectionState, SectionContent, ChapterContent, MasterNotesStat
 from core.model_router import get_chat_model
 from core.visual_architect import visual_architect_agent_node, reset_diagram_cache
 from core.code_cleaning_agent import run_code_cleaning_agent
+from core.transcript_coverage import balanced_transcript_excerpt
+
+PHASE5_PARALLEL = max(1, int(os.environ.get("PHASE5_PARALLEL", "6")))
 
 # ── Domain-Specific Fallback Code Snippets ─────────────────────────────
 FALLBACK_ML_CODE = {
@@ -552,32 +556,40 @@ def theory_agent_node(state: SectionState) -> Dict[str, Any]:
     if llm:
         try:
             prompt_str = (
-                "You are a Senior Principal AI Curriculum Architect and Lead Educator.\n"
-                "Task: Synthesize exhaustive, professional, in-depth technical documentation for a handbook based on this lecture chapter.\n\n"
-                "Topic: \"" + title + "\"\n"
-                "Chapter: \"" + chapter_title + "\"\n"
-                "Subject Domain: " + domain + "\n\n"
-                "Spoken Lecture Context (Hindi/Hinglish transcription excerpt):\n"
+                "You are a Senior Principal Technical Curriculum Architect.\n"
+                "Task: Document ONLY what the instructor teaches in this segment — no generic filler.\n\n"
+                'Topic: "{title}"\n'
+                'Chapter: "{chapter_title}"\n'
+                "Subject Domain: {domain}\n\n"
+                "Spoken Lecture Context (English transcript excerpts):\n"
                 "---\n{transcript}\n---\n\n"
                 "REQUIREMENTS:\n"
-                "Provide an authoritative, detailed technical breakdown in high-grade English covering:\n"
-                "1. EXPLANATION: Write at least 3-4 comprehensive, rigorous paragraphs explaining:\n"
-                "   - Theoretical & mathematical foundations (underlying hypotheses, objective functions, assumptions).\n"
-                "   - Step-by-step practical mechanics (how data transforms through this phase in Python).\n"
-                "   - Real-world production engineering implications (data leakage prevention, edge cases, scalability).\n"
-                "2. ANALOGY: A vivid, memorable physical engineering or industrial mental model explaining this concept.\n\n"
+                "1. EXPLANATION: 3-4 paragraphs with markdown headings grounded in the transcript above.\n"
+                "   - Core concepts, mechanics, and any formulas (LaTeX \\[ ... \\] or \\( ... \\)).\n"
+                "   - Do NOT invent topics not present in the transcript.\n"
+                "   - Do NOT output code snippets in EXPLANATION.\n"
+                "2. ANALOGY: One vivid mental model for this specific topic.\n\n"
                 "Format strictly as:\n"
                 "EXPLANATION:\n<detailed paragraphs>\n\nANALOGY:\n<mental model>"
             )
             prompt = PromptTemplate.from_template(prompt_str)
             chain = prompt | llm | StrOutputParser()
-            result = chain.invoke({"transcript": transcript[:3500] if transcript else ""})
+            excerpt = balanced_transcript_excerpt(transcript, max_chars=14000)
+            result = chain.invoke(
+                {
+                    "title": title,
+                    "chapter_title": chapter_title,
+                    "domain": domain,
+                    "transcript": excerpt,
+                }
+            )
             
             if result and "EXPLANATION:" in result:
                 exp_m = re.search(r"EXPLANATION:\s*(.*?)(?=ANALOGY:|$)", result, re.DOTALL | re.IGNORECASE)
                 ana_m = re.search(r"ANALOGY:\s*(.*)", result, re.DOTALL | re.IGNORECASE)
                 if exp_m:
-                    explanation = exp_m.group(1).strip()
+                    from core.theory_formatter import clean_theory_markdown
+                    explanation = clean_theory_markdown(exp_m.group(1))
                 if ana_m:
                     analogy = ana_m.group(1).strip()
         except Exception as e:
@@ -614,10 +626,8 @@ def theory_agent_node(state: SectionState) -> Dict[str, Any]:
 
     if not analogy:
         analogy = (
-            f"Think of {title} like refining raw geological minerals into aerospace-grade titanium: raw dataset inputs "
-            f"must first be thoroughly surveyed for structural flaws (EDA), purified of contaminants and nulls (Data Cleaning), "
-            f"calibrated to uniform metric standards (Preprocessing), and engineered into high-performance components before "
-            f"powering the final spacecraft (The Machine Learning Model)."
+            f"Think of {title} as establishing the core blueprint: the principles and patterns introduced here "
+            f"directly determine the reliability, performance, and scalability of subsequent stages."
         )
 
     return {
@@ -629,6 +639,60 @@ def theory_agent_node(state: SectionState) -> Dict[str, Any]:
         }
     }
 
+
+def should_section_include_code(
+    title: str,
+    chapter_title: str,
+    transcript: str,
+    procured_code: str,
+    is_grounded_repo_code: bool = False,
+) -> bool:
+    """
+    Strict code gating:
+    - Never attaches code purely because global repo files exist.
+    - Intro, conceptual, philosophy, and overview topics NEVER receive code unless instructor explicitly writes code.
+    - Requires genuine grounded repo slice OR explicit in-lecture coding keywords + tokens.
+    """
+    combined = f"{chapter_title} {title}".lower()
+
+    # Disallow coding on pure introductory, conceptual, or overview topics
+    strictly_conceptual = [
+        "welcome", "prerequisites", "course overview", "curriculum roadmap",
+        "what is machine learning", "philosophy of", "traditional programming",
+        "difference between", "difference b/w", "taxonomic hierarchy",
+        "taxonomy of ml", "steps for making", "lifecycle", "career", "salary",
+        "interview tips", "outro", "summary", "key takeaways", "conclusion",
+        "pros and cons", "applications of", "generative ai vs agentic", "why langgraph"
+    ]
+    if any(k in combined for k in strictly_conceptual):
+        # Only override if the transcript contains active code execution statements
+        excerpt_check = (transcript or "")[:4000].lower()
+        if not any(token in excerpt_check for token in ["def ", "class ", "import ", "plt.", "pd.read_csv", "np.array"]):
+            return False
+
+    coding_keywords = [
+        "implementation", "implement", "programming", "project", "hands-on",
+        "build", "script", "function", "training loop", "notebook", "scikit-learn",
+        "pytorch", "tensorflow", "pandas", "numpy", "eda", "data cleaning",
+        "preprocessing", "feature engineering", "feature selection", "model training",
+        "stategraph", "memorysaver", "workflow"
+    ]
+    is_explicitly_coding = any(w in combined for w in coding_keywords)
+
+    excerpt = (transcript or "")[:6000]
+    has_code_tokens = bool(
+        re.search(
+            r"(def |import |class |return |pd\.|np\.|\.fit\(|\.predict\(|\.transform\(|```)",
+            excerpt,
+        )
+    )
+
+    # If grounded repo code was specifically settled with high affinity AND tokens match
+    if procured_code and is_grounded_repo_code and (has_code_tokens or is_explicitly_coding):
+        return True
+
+    return is_explicitly_coding and has_code_tokens
+
 # AGENT 2: Code Agent (Powered by the Code Cleaning Agent)
 def code_agent_node(state: SectionState) -> Dict[str, Any]:
     title = state["section_title"]
@@ -639,27 +703,37 @@ def code_agent_node(state: SectionState) -> Dict[str, Any]:
     selected_model = state.get("selected_model")
     github_files = state.get("github_files") or {}
     procured_code = state.get("procured_code")
+    is_grounded_repo_code = bool(state.get("is_grounded_repo_code"))
+
+    if not should_section_include_code(
+        title,
+        chapter_title,
+        transcript,
+        procured_code or "",
+        is_grounded_repo_code=is_grounded_repo_code,
+    ):
+        return {"code_blocks": []}
 
     llm = get_chat_model(api_key=api_key, model_name=selected_model)
+    excerpt = balanced_transcript_excerpt(transcript, max_chars=10000)
+    repo_for_agent = github_files if is_grounded_repo_code else {}
 
-    # Invoke the dedicated Code Cleaning Agent
     cleaning_res = run_code_cleaning_agent(
         chapter_title=f"{chapter_title} - {title}",
-        transcript=transcript,
+        transcript=excerpt,
         domain=domain,
-        github_files=github_files,
+        github_files=repo_for_agent,
         llm=llm,
-        procured_code=procured_code
+        procured_code=procured_code if is_grounded_repo_code else None,
     )
 
     code = cleaning_res.get("code")
     filename = cleaning_res.get("filename", f"{re.sub(r'[^a-zA-Z0-9_]+', '_', title.lower())}.py")
-    source_label = cleaning_res.get("source", "Synthesized Code Implementation")
+    source_label = cleaning_res.get("source", "Lecture-Grounded Code")
 
-    # If Code Cleaning Agent returned empty or was offline, fallback to our rich domain code
-    if not code or len(code.strip()) < 100:
-        code = get_code_for_topic(title, chapter_title, domain)
-        source_label = "Production Implementation & Code Walkthrough"
+    # Only provide code if genuine code was extracted or relevant
+    if not code or len(code.strip()) < 50:
+        return {"code_blocks": []}
 
     cb = {
         "language": "python",
@@ -692,7 +766,9 @@ def keypoints_agent_node(state: SectionState) -> Dict[str, Any]:
             )
             prompt = PromptTemplate.from_template(prompt_str)
             chain = prompt | llm | StrOutputParser()
-            result = chain.invoke({"transcript": transcript[:2000] if transcript else ""})
+            result = chain.invoke(
+                {"transcript": balanced_transcript_excerpt(transcript, max_chars=8000)}
+            )
             if result:
                 for line in result.splitlines():
                     line = line.strip()
@@ -798,25 +874,27 @@ def generate_section_sync(
         "is_grounded_repo_code": section_def.get("is_grounded_repo_code", False)
     }
 
-    # Step 1: In-depth Theory Agent
-    theory_out = theory_agent_node(initial_state)
-    initial_state.update(theory_out)
+    # Concurrent Section Fan-Out: Execute specialist agents in parallel
+    from concurrent.futures import ThreadPoolExecutor
 
-    # Step 2: Code Cleaning Agent
-    code_out = code_agent_node(initial_state)
-    initial_state.update(code_out)
+    theory_out = {}
+    code_out = {}
+    key_out = {}
+    pit_out = {}
+    vis_out = {}
 
-    # Step 3: Key Points Agent
-    key_out = keypoints_agent_node(initial_state)
-    initial_state.update(key_out)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        f_theory = executor.submit(theory_agent_node, initial_state)
+        f_code = executor.submit(code_agent_node, initial_state)
+        f_key = executor.submit(keypoints_agent_node, initial_state)
+        f_pit = executor.submit(pitfalls_agent_node, initial_state)
+        f_vis = executor.submit(visual_architect_agent_node, initial_state)
 
-    # Step 4: Pitfalls Agent
-    pit_out = pitfalls_agent_node(initial_state)
-    initial_state.update(pit_out)
-
-    # Step 5: Curated Visual Architect
-    vis_out = visual_architect_agent_node(initial_state)
-    initial_state.update(vis_out)
+        theory_out = f_theory.result()
+        code_out = f_code.result()
+        key_out = f_key.result()
+        pit_out = f_pit.result()
+        vis_out = f_vis.result()
 
     diag = vis_out.get("visual_diagram") or (vis_out.get("diagrams", [None])[0] if vis_out.get("diagrams") else None)
     diags = vis_out.get("visual_diagrams") or ([diag] if diag else [])
@@ -844,42 +922,75 @@ def generate_section_sync(
     }
 
 async def run_all_chapters_batched(notes_structure: Dict[str, Any], state: MasterNotesState) -> List[ChapterContent]:
-    print("[Phase 5] Parallel Chapter Agent Swarm started across all sections with real lecture audio...")
+    print(
+        f"[Phase 5] Fan-out: up to {PHASE5_PARALLEL} sections in parallel "
+        "(theory → code → keypoints → pitfalls → visual per section)..."
+    )
     reset_diagram_cache()
-    
+
     chapters_def = notes_structure.get("chapters", [])
     domain = notes_structure.get("domain") or state.get("domain") or "machine_learning"
     api_key = state.get("api_key", "")
     selected_model = state.get("model_name", "")
     github_files = state.get("github_files") or {}
 
-    generated_chapters: List[ChapterContent] = []
+    sem = asyncio.Semaphore(PHASE5_PARALLEL)
+    work: List[Tuple[int, Dict[str, Any], Dict[str, Any]]] = []
 
     for idx, ch in enumerate(chapters_def, 1):
-        ch_title = ch.get("chapter_title") or ch.get("title", f"Chapter {idx}")
-        ch_id = ch.get("chapter_id", f"ch_{idx:02d}")
         ch["domain"] = domain
-        print(f"[Phase 5] Processing Chapter {idx}/{len(chapters_def)}: {ch_title} (Domain: {domain})...")
-        
-        secs = ch.get("sections", [])
-        rendered_sections: List[SectionContent] = []
-
-        for s in secs:
+        for s in ch.get("sections", []):
             s["domain"] = domain
-            s_content = generate_section_sync(s, ch, api_key, selected_model, github_files=github_files)
-            rendered_sections.append(s_content)
+            work.append((idx, ch, s))
 
-        generated_chapters.append({
-            "chapter_id": ch_id,
-            "chapter_order": ch.get("chapter_order", idx),
-            "chapter_title": ch_title,
-            "title": ch_title,
-            "timestamp_str": ch.get("timestamp_str", "00:00"),
-            "timestamp_seconds": ch.get("timestamp_seconds", 0),
-            "overview": ch.get("overview", f"Comprehensive breakdown of {ch_title}."),
-            "chapter_summary": ch.get("chapter_summary", f"Core concepts and implementation techniques in {ch_title}."),
-            "sections": rendered_sections
-        })
+    async def _run_section(ch_idx: int, ch: Dict[str, Any], s: Dict[str, Any]) -> Tuple[int, str, SectionContent]:
+        ch_title = ch.get("chapter_title") or ch.get("title", f"Chapter {ch_idx}")
+        async with sem:
+            content = await asyncio.to_thread(
+                generate_section_sync,
+                s,
+                ch,
+                api_key,
+                selected_model,
+                github_files,
+            )
+        return ch_idx, ch.get("chapter_id", f"ch_{ch_idx:02d}"), content
+
+    results = await asyncio.gather(*[_run_section(i, ch, s) for i, ch, s in work])
+
+    by_chapter: Dict[str, List[SectionContent]] = {}
+    chapter_meta: Dict[str, Dict[str, Any]] = {}
+    for ch_idx, ch in enumerate(chapters_def, 1):
+        cid = ch.get("chapter_id", f"ch_{ch_idx:02d}")
+        chapter_meta[cid] = ch
+        by_chapter[cid] = []
+
+    for ch_idx, cid, sec_content in results:
+        by_chapter.setdefault(cid, []).append(sec_content)
+
+    generated_chapters: List[ChapterContent] = []
+    for ch_idx, ch in enumerate(chapters_def, 1):
+        ch_title = ch.get("chapter_title") or ch.get("title", f"Chapter {ch_idx}")
+        ch_id = ch.get("chapter_id", f"ch_{ch_idx:02d}")
+        secs = by_chapter.get(ch_id, [])
+        secs.sort(key=lambda x: x.get("section_order", 0))
+        print(f"[Phase 5] Chapter {ch_idx}/{len(chapters_def)} done: {ch_title} ({len(secs)} sections)")
+        generated_chapters.append(
+            {
+                "chapter_id": ch_id,
+                "chapter_order": ch.get("chapter_order", ch_idx),
+                "chapter_title": ch_title,
+                "title": ch_title,
+                "timestamp_str": ch.get("timestamp_str", "00:00"),
+                "timestamp_seconds": ch.get("timestamp_seconds", 0),
+                "overview": ch.get("overview", f"Comprehensive breakdown of {ch_title}."),
+                "chapter_summary": ch.get(
+                    "chapter_summary",
+                    f"Core concepts and implementation techniques in {ch_title}.",
+                ),
+                "sections": secs,
+            }
+        )
 
     return generated_chapters
 

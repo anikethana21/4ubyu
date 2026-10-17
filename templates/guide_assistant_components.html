@@ -1,0 +1,91 @@
+﻿<!-- ========================================================================= -->
+<!-- 4 U BY U - MODULAR GUIDE ASSISTANT COMPONENT REPOSITORY                  -->
+<!-- Preserved components for the Generated Guide Assistant & Workspace        -->
+<!-- Use these modular components in base_workspace.html or output notes        -->
+<!-- only when necessary.                                                      -->
+<!-- ========================================================================= -->
+
+<!-- COMPONENT 1: Floating Island Glass Navigation Capsule (Image 1) -->
+<!-- Usage: Dock at top of workspace or full-width handbook view -->
+<nav class=floating-glass-nav workspace-guide-nav id=guide-floating-nav style=display: none;>
+  <a href=#handbook-pane class=nav-pill-item active title=Educational Handbook Notes>
+    <span>Handbook</span>
+  </a>
+  <a href=#video-pane class=nav-pill-item title=Synchronized Video Player>
+    <span>Video Player</span>
+  </a>
+  <a href=https://rprep-ai.vercel.app/ target=_blank rel=noopener noreferrer class=nav-pill-item title=Resume & Career Prep>
+    <span>R-Prep &#8599;</span>
+  </a>
+</nav>
+
+<!-- COMPONENT 2: Multi-Agent Swarm Badge Pill (Image 2) -->
+<!-- Usage: Embedded in AI Chat Assistant header or handbook preface -->
+<div class=floating-glass-pill guide-swarm-pill id=guide-swarm-badge>
+  <span style=color: #fbbf24; font-size: 0.95rem;>&#10022;</span>
+  <span>Multi-Agent Swarm</span>
+  <span class=pill-sep>&rsaquo;</span>
+  <span class=pill-bright>Interactive Synthesis</span>
+</div>
+
+<!-- COMPONENT 3: Segmented Switcher Tab Row (Image 3) -->
+<!-- Usage: Placed in Assistant Chat Toolbar or Handbook View Mode Selector -->
+<div class=segmented-tab-row guide-mode-switcher id=guide-mode-switcher>
+  <button type=button class=segmented-tab-btn active id=guide-tab-notes onclick=filterGuideView('notes')>
+    <svg width=14 height=14 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2><polygon points=5 3 19 12 5 21 5 3></polygon></svg>
+    <span>Video Lecture</span>
+  </button>
+  <button type=button class=segmented-tab-btn id=guide-tab-deep onclick=filterGuideView('handbook')>
+    <svg width=14 height=14 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2><polygon points=12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2></polygon></svg>
+    <span>Deep Handbooks</span>
+  </button>
+  <button type=button class=segmented-tab-btn id=guide-tab-sync onclick=filterGuideView('sync')>
+    <svg width=14 height=14 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2><polygon points=13 2 3 14 12 14 11 22 21 10 12 10 13 2></polygon></svg>
+    <span>Sub-Second Sync</span>
+  </button>
+</div>
+
+<!-- COMPONENT 4: 4 Glassmorphic Feature / Capability Cards (Image 4) -->
+<!-- Usage: Expandable Assistant Insights Drawer or About This Generated Guide -->
+<div class=feature-glass-grid guide-capabilities-grid id=guide-capabilities-grid>
+  <div class=feature-glass-card>
+    <div class=feature-card-title>
+      <svg width=16 height=16 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2><rect x=3 y=3 width=18 height=18 rx=2 ry=2></rect><line x1=3 y1=9 x2=21 y2=9></line><line x1=9 y1=21 x2=9 y2=9></line></svg>
+      <span>Glassmorphism</span>
+    </div>
+    <p class=feature-card-desc>Translucent obsidian glass depth with dynamic constellation particle mesh.</p>
+  </div>
+
+  <div class=feature-glass-card>
+    <div class=feature-card-title>
+      <svg width=16 height=16 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2><path d=M12 2a10 10 0 1 0 10 10H12V2z></path></svg>
+      <span>Grounded AI</span>
+    </div>
+    <p class=feature-card-desc>Dual Open &amp; Grounded RAG assistant anchored to exact frame timestamps.</p>
+  </div>
+
+  <div class=feature-glass-card>
+    <div class=feature-card-title>
+      <svg width=16 height=16 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2><path d=M4 19.5A2.5 2.5 0 0 1 6.5 17H20></path><path d=M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z></path></svg>
+      <span>Deep Handbooks</span>
+    </div>
+    <p class=feature-card-desc>Mathematical formulas, formatted LaTeX, code blocks, and mental models.</p>
+  </div>
+
+  <div class=feature-glass-card>
+    <div class=feature-card-title>
+      <svg width=16 height=16 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2><polyline points=16 18 22 12 16 6></polyline><polyline points=8 6 2 12 8 18></polyline></svg>
+      <span>Animated Swarm</span>
+    </div>
+    <p class=feature-card-desc>Autonomous multi-agent synthesis pipeline running parallel reasoning agents.</p>
+  </div>
+</div>
+
+<!-- COMPONENT 5: Floating Breadcrumb Glass Pill (Image 5) -->
+<!-- Usage: Placed in Handbook Topbar or Assistant Drawer Breadcrumb -->
+<div class=floating-glass-pill guide-breadcrumb-pill id=guide-breadcrumb>
+  <svg width=13 height=13 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2><path d=M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z></path><polyline points=9 22 9 12 15 12 15 22></polyline></svg>
+  <span>Study</span>
+  <span class=pill-sep>&rsaquo;</span>
+  <span class=pill-bright>Notes</span>
+</div>

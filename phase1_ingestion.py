@@ -10,6 +10,7 @@ from langgraph.graph import StateGraph, START, END
 from states import MasterNotesState
 from core.transcriber import extract_video_id, fetch_youtube_transcript, format_seconds
 from core.robust_ingestion import extract_robust_metadata
+from core.chapter_detector import choose_syllabus_chapters
 
 def yt_fetch_node(state: MasterNotesState) -> Dict[str, Any]:
     """Fetches high-level metadata and chapters with 100% cloud reliability."""
@@ -89,22 +90,46 @@ def transcribe_node(state: MasterNotesState) -> Dict[str, Any]:
     full_text, timed_segments = fetch_youtube_transcript(video_id)
     
     yt_chapters = state.get("yt_chapters", [])
-    
-    # Attach actual transcript slices to each chapter
-    if timed_segments and yt_chapters:
-        for idx, ch in enumerate(yt_chapters):
-            s = ch.get("start_time", 0.0)
-            e = ch.get("end_time", 999999.0)
-            ch_text = " ".join([seg["text"] for seg in timed_segments if s <= seg["start"] < e])
+    video_duration = float(state.get("video_metadata", {}).get("duration", 0) or 0)
+    api_key = state.get("api_key")
+    model_name = state.get("model_name")
+
+    if state.get("hitl_approved") and yt_chapters:
+        syllabus = yt_chapters
+        syllabus_source = "hitl_approved"
+        print(f"[Phase 1] Using {len(syllabus)} human-approved chapters (skipping auto-detection).")
+    else:
+        # Transcript-first syllabus (primary); YouTube markers are hints only
+        syllabus, syllabus_source = choose_syllabus_chapters(
+            timed_transcript=timed_segments,
+            full_transcript=full_text,
+            video_duration=video_duration,
+            yt_chapters=yt_chapters,
+            api_key=api_key,
+            model_name=model_name,
+            prefer_transcript=True,
+        )
+
+    for ch in syllabus:
+        s = float(ch.get("start_time", 0))
+        e = float(ch.get("end_time", s + 300))
+        if not ch.get("transcript") and timed_segments:
+            ch_text = " ".join(
+                seg["text"] for seg in timed_segments if s <= seg["start"] < e
+            )
             ch["transcript"] = ch_text
-            ch["start_seconds"] = int(s)
-            print(f"[Phase 1] Chapter '{ch.get('title')}' mapped to {len(ch_text)} transcript chars.")
-            
+        ch["start_seconds"] = int(s)
+        print(
+            f"[Phase 1] Chapter '{ch.get('title')}' ({syllabus_source}) "
+            f"→ {len(ch.get('transcript', ''))} transcript chars."
+        )
+
     return {
         "full_transcript": full_text,
         "timed_transcript": timed_segments,
-        "yt_chapters": yt_chapters,
-        "raw_chapters": yt_chapters
+        "yt_chapters": syllabus,
+        "raw_chapters": syllabus,
+        "syllabus_source": syllabus_source,
     }
 
 def build_phase1_graph():

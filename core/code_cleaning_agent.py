@@ -108,13 +108,13 @@ def run_code_cleaning_agent(
                 "Spoken Lecture Context:\n"
                 "---\n{transcript}\n---\n\n"
                 "INSTRUCTIONS:\n"
-                "1. Reconstruct, clean, and sequentially arrange all code demonstrated or discussed by the instructor.\n"
-                "2. Even if code in the video/transcript was fragmented, partial, or out of order, produce ONE complete, self-contained, fully runnable Python script.\n"
-                "3. If repository code is available, merge it intelligently with what the instructor taught.\n"
-                "4. Add clear step-by-step section headers (e.g. # Step 1: ..., # Step 2: ...).\n"
-                "5. Add concise inline annotations explaining critical parameters (e.g. why median was chosen, random_state=42, handle_unknown='ignore').\n"
-                "6. Include all necessary imports at the top.\n"
-                "7. Output strictly Python code inside a ```python ``` block."
+                "1. ONLY output code if the instructor actually demonstrates or discusses implementation in the transcript.\n"
+                "2. If the segment is conceptual (definitions, comparisons, roadmap) with no coding, output an empty ```python ``` block.\n"
+                "3. Use repository reference ONLY for lines/symbols explicitly aligned with this chapter — do NOT paste unrelated modules.\n"
+                "4. Prefer faithful reconstruction from the lecture over inventing a full project script.\n"
+                "5. Add step headers (# Step 1: ...) and concise inline annotations for non-obvious parameters.\n"
+                "6. Include necessary imports at the top.\n"
+                "7. Output strictly Python inside a ```python ``` block (empty block if no code belongs here)."
             )
             prompt = PromptTemplate.from_template(prompt_str)
             chain = prompt | llm | StrOutputParser()
@@ -133,18 +133,17 @@ def run_code_cleaning_agent(
         except Exception as e:
             print(f"[CodeCleaningAgent] LLM cleaning notice for {chapter_title}: {e}")
 
-    # Fallback to repo code if high-quality
-    if repo_code and len(repo_code.strip()) > 100:
+    if procured_code and repo_code and len(repo_code.strip()) > 100 and tokens:
         return {
             "code": clean_and_annotate_code(repo_code, chapter_title, domain),
             "filename": repo_filename,
-            "source": f"Grounded GitHub Repository Asset ({repo_filename})",
-            "tokens_used": tokens
+            "source": f"Grounded Repository Excerpt ({repo_filename})",
+            "tokens_used": tokens,
         }
 
     return {
         "code": "",
         "filename": repo_filename,
-        "source": "Standard Fallback",
-        "tokens_used": tokens
+        "source": "No lecture-grounded code",
+        "tokens_used": tokens,
     }
