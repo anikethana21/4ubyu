@@ -1,12 +1,14 @@
-﻿"""
+"""
 4 U By U - FastAPI Authentication Dependencies
 Extracts and validates persistent user sessions from Authorization headers or cookies.
+Defensively handles unconfigured or offline database instances with clear 503 notices.
 """
 
 from typing import Optional, Dict, Any
 from fastapi import Request, HTTPException, status
 from core.security import decode_access_token, is_token_blacklisted
 from core.db import get_supabase_client
+
 
 async def extract_token_from_request(request: Request) -> Optional[str]:
     """Extracts bearer token from Authorization header or auth_token cookie."""
@@ -17,6 +19,7 @@ async def extract_token_from_request(request: Request) -> Optional[str]:
     if cookie_token:
         return cookie_token.strip()
     return None
+
 
 async def get_current_user(request: Request) -> Dict[str, Any]:
     """Strict dependency: requires a valid, non-blacklisted authenticated user session."""
@@ -46,6 +49,12 @@ async def get_current_user(request: Request) -> Dict[str, Any]:
 
     user_id = payload.get("sub")
     client = get_supabase_client()
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database service is unavailable. Please verify SUPABASE_URL and SUPABASE_KEY."
+        )
+
     try:
         res = client.table("users").select("id, email, token_version, created_at").eq("id", user_id).execute()
         if not res.data or len(res.data) == 0:
@@ -73,9 +82,10 @@ async def get_current_user(request: Request) -> Dict[str, Any]:
             detail=f"Database authentication error: {str(e)}"
         )
 
+
 async def get_optional_current_user(request: Request) -> Optional[Dict[str, Any]]:
     """Lenient dependency: returns current user if authenticated, or None if guest."""
     try:
         return await get_current_user(request)
-    except HTTPException:
+    except (HTTPException, Exception):
         return None

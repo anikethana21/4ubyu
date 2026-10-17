@@ -8,7 +8,8 @@ import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, HTTPException, Request, Response, Depends, status
-from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, EmailStr
@@ -47,6 +48,15 @@ from core.workspace_manager import (
 
 app = FastAPI(title="4 U By U - Educational Workspace Generator")
 
+# Baseline Middleware: CORS Cross-Origin Support
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Mount Static & Output Directories
 static_dir = BASE_DIR / "static"
 templates_dir = BASE_DIR / "templates"
@@ -55,6 +65,16 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 
 templates = Jinja2Templates(directory=str(templates_dir))
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Serves brand logo icon for browser tab."""
+    favicon_path = static_dir / "images" / "logo.png"
+    if not favicon_path.exists():
+        favicon_path = static_dir / "logo.png"
+    if favicon_path.exists():
+        return FileResponse(str(favicon_path))
+    return Response(status_code=204)
 
 # ---------------------------------------------------------------------------
 # PYDANTIC SCHEMAS
@@ -613,19 +633,28 @@ async def delete_handbook(video_id: str):
 
 @app.get("/health")
 async def health_check():
-    """Health endpoint for monitoring."""
+    """Health endpoint for monitoring and uptime probes."""
     allowed, status_msg = check_capacity_limits()
+    client = get_supabase_client()
+    db_connected = False
+    if client:
+        try:
+            client.table("users").select("count", count="exact").limit(1).execute()
+            db_connected = True
+        except Exception:
+            db_connected = False
+
     key_env = os.getenv("GROQ_API_KEY", "")
     from config import DEFAULT_GROQ_KEY
     return {
+        "status": "healthy",
         "app": "4 U By U",
         "mode": APP_MODE,
+        "database_connected": db_connected,
         "capacity_status": status_msg,
         "has_env_key": bool(key_env),
         "env_key_prefix": key_env[:10] if key_env else "",
-        "env_key_len": len(key_env),
-        "default_key_prefix": DEFAULT_GROQ_KEY[:10] if DEFAULT_GROQ_KEY else "",
-        "default_key_len": len(DEFAULT_GROQ_KEY)
+        "default_key_prefix": DEFAULT_GROQ_KEY[:10] if DEFAULT_GROQ_KEY else ""
     }
 
 if __name__ == "__main__":

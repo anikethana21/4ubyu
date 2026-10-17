@@ -1,4 +1,4 @@
-"""
+r"""
 4 U By U - Theoretical Content & LaTeX Equations Formatter
 Translates raw theory blocks into beautiful publication-grade HTML
 while shielding MathJax delimiters \(...\) and \[...\] from markdown corruption.

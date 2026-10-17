@@ -16,7 +16,7 @@ from langchain_core.documents import Document
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from config import VECTOR_DB_DIR
+from config import BASE_DIR, VECTOR_DB_DIR
 from core.html_chunker import chunk_workspace_html, CURATED_SUGGESTIVE_QUESTIONS
 from core.web_search import search_web_duckduckgo, format_web_context
 from core.model_router import get_chat_model

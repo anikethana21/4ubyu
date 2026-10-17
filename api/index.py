@@ -1,5 +1,5 @@
 """
-4 U By U — Vercel Serverless Function Entrypoint
+4 U By U - Vercel Serverless Function Entrypoint
 Binds the FastAPI application to Vercel's serverless Python runtime.
 """
 

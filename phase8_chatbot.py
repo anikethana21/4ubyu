@@ -373,7 +373,7 @@ Suggested Follow-ups:
             "Production Implementation & Best Practices"
         ]
         out_msg = (
-            f"> **[Grounded Mode 🔒 • Topic Outside Current Lecture]**\n\n"
+            f"> **[Grounded Mode • Topic Outside Current Lecture]**\n\n"
             f"The concept **\"{q_clean}\"** is not covered in the local notes for **{video_title}**.\n\n"
             f"💡 **Switch to Open Mode (⚡)** using the toggle at the top of this chat panel to get a full production-grade explanation and code walkthrough.\n\n"
             f"Or explore one of the verified topics from this course:\n"
@@ -400,7 +400,7 @@ Suggested Follow-ups:
         ts_display = f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
         source_badge = f"[Video Timestamp Grounding • Aligned to [TS {ts_display}]]"
 
-    grounded_prompt = f"""You are the Master Educational AI Assistant for "4 U By U" ? tutoring a student on the course: "{video_title}".
+    grounded_prompt = f"""You are the Master Educational AI Assistant for "4 U By U" — tutoring a student on the course: "{video_title}".
 
 STRICT GROUNDING & TEACHING RULES:
 1. AUTHORITY & GROUNDING: Ground your answer directly in the lecture notes, transcription, and course code provided below.
