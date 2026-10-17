@@ -12,8 +12,14 @@ from config import BASE_DIR, OUTPUT_DIR
 from core.db import get_supabase_client
 from core.cipher import encrypt_secret, decrypt_secret, mask_secret
 
-STORAGE_USERS_DIR = BASE_DIR / "storage" / "users"
-STORAGE_USERS_DIR.mkdir(parents=True, exist_ok=True)
+import tempfile
+
+try:
+    STORAGE_USERS_DIR = BASE_DIR / "storage" / "users"
+    STORAGE_USERS_DIR.mkdir(parents=True, exist_ok=True)
+except (OSError, PermissionError):
+    STORAGE_USERS_DIR = Path(tempfile.gettempdir()) / "4ubyu" / "storage" / "users"
+    STORAGE_USERS_DIR.mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------------
 # WORKSPACE CRUD & ISOLATED STORAGE
@@ -35,8 +41,12 @@ def save_user_workspace(
     storage_path = f"{user_id}/{workspace_id}.html"
 
     # 1. Local user-partitioned file
-    user_ws_dir = STORAGE_USERS_DIR / user_id / "workspaces"
-    user_ws_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        user_ws_dir = STORAGE_USERS_DIR / user_id / "workspaces"
+        user_ws_dir.mkdir(parents=True, exist_ok=True)
+    except (OSError, PermissionError):
+        user_ws_dir = Path(tempfile.gettempdir()) / "4ubyu" / "storage" / "users" / user_id / "workspaces"
+        user_ws_dir.mkdir(parents=True, exist_ok=True)
     local_file_path = user_ws_dir / f"{workspace_id}.html"
     with open(local_file_path, "w", encoding="utf-8") as f:
         f.write(html_content)

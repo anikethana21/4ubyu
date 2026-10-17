@@ -29,3 +29,11 @@ youtube-transcript-api>=0.6.2
 yt-dlp>=2024.10.07
 pillow>=10.0.0
 tavily-python>=0.5.0
+
+# Authentication, Security & Database Vault
+supabase>=2.0.0
+bcrypt>=4.0.0
+pyjwt>=2.8.0
+cryptography>=42.0.0
+numpy>=1.24.0
+markdown>=3.6.0

@@ -20,7 +20,18 @@ from main import run_master_notes_pipeline, inspect_video_for_hitl
 from core.handbook_rag import stream_handbook_chat_response, get_suggestive_questions
 
 # Auth, DB, Security & Workspace Isolation
+# Auth, DB, Security & Workspace Isolation
 from core.db import get_supabase_client
+
+def require_supabase_client():
+    client = get_supabase_client()
+    if not client:
+        raise HTTPException(
+            status_code=503,
+            detail="Cloud Database / Authentication service is not configured. Please set SUPABASE_URL and SUPABASE_KEY in Vercel environment variables."
+        )
+    return client
+
 from core.security import hash_password, verify_password, create_access_token, blacklist_token
 from core.auth_dependency import get_current_user, get_optional_current_user
 from core.workspace_manager import (
@@ -114,7 +125,7 @@ async def register_user(req: RegisterRequest, response: Response):
     if len(req.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
 
-    client = get_supabase_client()
+    client = require_supabase_client()
     # Check if email is already registered
     existing = client.table("users").select("id").eq("email", email).execute()
     if existing.data and len(existing.data) > 0:
@@ -160,7 +171,7 @@ async def register_user(req: RegisterRequest, response: Response):
 async def login_user(req: LoginRequest, response: Response):
     """Authenticates user with bcrypt, returns persistent JWT and sets session cookie."""
     email = req.email.strip().lower()
-    client = get_supabase_client()
+    client = require_supabase_client()
     res = client.table("users").select("*").eq("email", email).execute()
     if not res.data or len(res.data) == 0:
         raise HTTPException(status_code=401, detail="Invalid email or password.")
@@ -209,7 +220,7 @@ async def logout_user(response: Response, user: Dict[str, Any] = Depends(get_cur
         blacklist_token(jti, user_id, exp)
 
     # Invalidate other copies of token
-    client = get_supabase_client()
+    client = require_supabase_client()
     client.table("users").update({"token_version": user.get("token_version", 1) + 1}).eq("id", user_id).execute()
 
     response.delete_cookie("auth_token")
