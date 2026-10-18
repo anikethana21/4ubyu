@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://four-u-by-u-workspace.onrender.com
-// @version      1.0.0
+// @version      1.5.0
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the transcript in your own browser and hands it to your 4 U By U workspace.
 // @author       Anikethana
 // @match        https://www.youtube.com/*
@@ -11,6 +11,8 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
+// @grant        GM_openInTab
+// @grant        unsafeWindow
 // @connect      *
 // ==/UserScript==
 
@@ -26,64 +28,23 @@
   const state = {
     busy: false,
     root: null,
+    card: null,
     button: null,
     label: null,
     hint: null,
+    settings: null,
+    settingsOpen: false,
+    autoOpened: false,
   };
 
   // -------------------------------------------------------------------------
   // Settings (stored by the userscript manager, never sent anywhere else)
   // -------------------------------------------------------------------------
 
-  const getSetting = (key) => GM_getValue(key, DEFAULTS[key]);
-  const setSetting = (key, value) => GM_setValue(key, value);
+  const getSetting = (key) => (GM_getValue(key, DEFAULTS[key]) || "").trim();
+  const setSetting = (key, value) => GM_setValue(key, String(value || "").trim());
 
-  function registerMenu() {
-    GM_registerMenuCommand("⚙️ Set 4 U By U server URL", () => {
-      const current = getSetting("serverUrl");
-      const next = prompt(
-        "Where is your 4 U By U workspace running?\n\n" +
-          "Locally:  http://127.0.0.1:8000\n" +
-          "Deployed: https://four-u-by-u-workspace.onrender.com",
-        current
-      );
-      if (next && next.trim()) {
-        setSetting("serverUrl", next.trim().replace(/\/+$/, ""));
-        toast("Server URL saved.", "ok");
-      }
-    });
-
-    GM_registerMenuCommand("🔑 Set 4 U By U ingest token", () => {
-      const next = prompt(
-        "Paste your ingest token.\n\n" +
-          "On your server this is the EXTENSION_INGEST_TOKEN value.\n" +
-          "It is sent only to your own 4 U By U server.",
-        getSetting("ingestToken")
-      );
-      if (next !== null) {
-        setSetting("ingestToken", next.trim());
-        toast(next.trim() ? "Ingest token saved." : "Ingest token cleared.", "ok");
-      }
-    });
-
-    GM_registerMenuCommand("ℹ️ Show 4 U By U settings", () => {
-      alert(
-        "4 U By U settings\n\n" +
-          "Server: " + getSetting("serverUrl") + "\n" +
-          "Token : " + (getSetting("ingestToken") ? "set (" + getSetting("ingestToken").slice(0, 6) + "…)" : "NOT SET — required") +
-          "\n\nNothing is read from this page except the video's own caption\n" +
-          "track and public metadata. Cookies never leave your browser."
-      );
-    });
-
-    GM_registerMenuCommand("▶️ Grab this lecture's transcript", () => {
-      if (location.pathname !== "/watch") {
-        alert("Open a YouTube video first.");
-        return;
-      }
-      run();
-    });
-  }
+  const isConfigured = () => Boolean(getSetting("ingestToken"));
 
   // -------------------------------------------------------------------------
   // UI
@@ -97,26 +58,61 @@
     }
     #fubyu-root * { box-sizing: border-box; }
     #fubyu-card {
-      min-width: 268px; max-width: 340px;
+      min-width: 300px; max-width: 372px;
       padding: 14px 16px; border-radius: 16px;
-      background: rgba(20, 22, 34, 0.72);
+      background: rgba(20, 22, 34, 0.78);
       -webkit-backdrop-filter: blur(16px) saturate(140%);
       backdrop-filter: blur(16px) saturate(140%);
       border: 1px solid rgba(255, 255, 255, 0.14);
       box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
-      color: #eef1fb; opacity: 0; transform: translateY(8px) scale(0.98);
+      color: #eef1fb;
       transition: opacity .18s ease, transform .18s ease;
-      pointer-events: none;
     }
-    #fubyu-card.visible { opacity: 1; transform: none; pointer-events: auto; }
     #fubyu-title {
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
       font-size: 12px; font-weight: 700; letter-spacing: .09em;
       text-transform: uppercase; color: #9fb0d8; margin-bottom: 7px;
     }
+    #fubyu-gear {
+      appearance: none; background: rgba(255,255,255,.08); cursor: pointer;
+      border: 1px solid rgba(255,255,255,.16); border-radius: 8px;
+      color: #dfe6fb; font-size: 13px; line-height: 1;
+      padding: 4px 7px;
+    }
+    #fubyu-gear:hover { background: rgba(255,255,255,.16); }
     #fubyu-hint { font-size: 12.5px; line-height: 1.5; color: #cfd8ef; }
     #fubyu-hint.error { color: #ffb4b4; }
     #fubyu-hint.ok { color: #a7f3c4; }
+    #fubyu-hint.warn { color: #ffd79a; }
+
+    #fubyu-settings { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.12); }
+    #fubyu-settings[hidden] { display: none; }
+    #fubyu-settings label {
+      display: block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+      color: #93a2c7; margin: 9px 0 4px;
+    }
+    #fubyu-settings input {
+      width: 100%; padding: 8px 10px; border-radius: 9px; font-size: 12.5px;
+      background: rgba(10, 12, 20, 0.85); color: #eef1fb;
+      border: 1px solid rgba(255,255,255,.18); outline: none;
+      font-family: ui-monospace, Consolas, monospace;
+    }
+    #fubyu-settings input:focus { border-color: rgba(140,160,255,.85); }
+    #fubyu-row { display: flex; gap: 8px; margin-top: 12px; }
+    #fubyu-row button {
+      flex: 1; appearance: none; cursor: pointer; padding: 9px 10px;
+      border-radius: 9px; font-size: 12.5px; font-weight: 650; color: #fff;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(135deg, rgba(96,120,255,.95), rgba(158,86,255,.95));
+    }
+    #fubyu-row button.secondary {
+      background: rgba(255,255,255,.09); font-weight: 600;
+    }
+    #fubyu-row button:hover { filter: brightness(1.1); }
+    #fubyu-test-result { font-size: 12px; line-height: 1.5; margin-top: 9px; color: #cfd8ef; }
+    #fubyu-test-result.ok { color: #a7f3c4; }
+    #fubyu-test-result.error { color: #ffb4b4; }
+
     #fubyu-button {
       appearance: none; border: 1px solid rgba(255,255,255,0.18); cursor: pointer;
       padding: 12px 20px; border-radius: 999px; font-size: 13.5px; font-weight: 650;
@@ -153,8 +149,25 @@
     root.id = "fubyu-root";
     root.innerHTML = `
       <div id="fubyu-card">
-        <div id="fubyu-title"><span>4 U By U</span></div>
-        <div id="fubyu-hint">Reading this lecture's captions…</div>
+        <div id="fubyu-title">
+          <span>4 U By U</span>
+          <button id="fubyu-gear" type="button" title="Settings">⚙️ Setup</button>
+        </div>
+        <div id="fubyu-hint"></div>
+
+        <div id="fubyu-settings" hidden>
+          <label for="fubyu-server">Server URL</label>
+          <input id="fubyu-server" type="text" spellcheck="false"
+                 placeholder="http://127.0.0.1:8000">
+          <label for="fubyu-token">Ingest token</label>
+          <input id="fubyu-token" type="password" spellcheck="false"
+                 placeholder="paste your EXTENSION_INGEST_TOKEN">
+          <div id="fubyu-row">
+            <button id="fubyu-save" type="button">Save</button>
+            <button id="fubyu-test" class="secondary" type="button">Test</button>
+          </div>
+          <div id="fubyu-test-result"></div>
+        </div>
       </div>
       <button id="fubyu-button" type="button">
         <span id="fubyu-spinner"></span>
@@ -164,31 +177,159 @@
     document.body.appendChild(root);
 
     state.root = root;
+    state.card = root.querySelector("#fubyu-card");
     state.button = root.querySelector("#fubyu-button");
     state.label = root.querySelector("#fubyu-label");
     state.hint = root.querySelector("#fubyu-hint");
+    state.settings = root.querySelector("#fubyu-settings");
+
     state.button.addEventListener("click", run);
+    root.querySelector("#fubyu-gear").addEventListener("click", toggleSettings);
+    root.querySelector("#fubyu-save").addEventListener("click", saveSettings);
+    root.querySelector("#fubyu-test").addEventListener("click", testConnection);
+
+    // Stop YouTube's own handlers from swallowing clicks inside our UI.
+    root.addEventListener("click", (event) => event.stopPropagation());
+
+    loadSettingsIntoForm();
+    renderConfigState();
   }
 
   function unmount() {
     if (state.root && state.root.parentNode) state.root.parentNode.removeChild(state.root);
-    state.root = state.button = state.label = state.hint = null;
+    state.root = state.card = state.button = state.label = state.hint = null;
+    state.settings = null;
+    state.settingsOpen = false;
+    state.autoOpened = false;
+  }
+
+  function loadSettingsIntoForm() {
+    if (!state.root) return;
+    state.root.querySelector("#fubyu-server").value = getSetting("serverUrl");
+    state.root.querySelector("#fubyu-token").value = getSetting("ingestToken");
+  }
+
+  function toggleSettings(force) {
+    if (!state.settings) return;
+    state.settingsOpen = typeof force === "boolean" ? force : !state.settingsOpen;
+    state.settings.hidden = !state.settingsOpen;
+    if (state.settingsOpen) {
+      loadSettingsIntoForm();
+      const tokenInput = state.root.querySelector("#fubyu-token");
+      tokenInput.focus();
+      tokenInput.select();
+    }
+  }
+
+  function saveSettings() {
+    if (!state.root) return;
+    const server = state.root.querySelector("#fubyu-server").value
+      .trim().replace(/\/+$/, "") || DEFAULTS.serverUrl;
+    const token = state.root.querySelector("#fubyu-token").value.trim();
+
+    setSetting("serverUrl", server);
+    setSetting("ingestToken", token);
+
+    renderConfigState();
+    const result = state.root.querySelector("#fubyu-test-result");
+    if (token) {
+      result.className = "ok";
+      result.textContent = "Saved. Click Test to verify the server accepts this token.";
+    } else {
+      result.className = "error";
+      result.textContent = "Token is empty — the server will reject the request.";
+    }
+  }
+
+  function setResult(message, kind) {
+    if (!state.root) return;
+    const result = state.root.querySelector("#fubyu-test-result");
+    result.className = kind || "";
+    result.textContent = message;
+  }
+
+  /**
+   * Proves the whole handshake before the user wastes time on a long lecture.
+   *   /health              -> is a 4 U By U server actually listening?
+   *   POST with junk body  -> 422 means the token is GOOD, 401 means it is wrong.
+   *                           The junk body fails validation, so nothing is stored.
+   */
+  function testConnection() {
+    const server = (state.root.querySelector("#fubyu-server").value.trim() ||
+      DEFAULTS.serverUrl).replace(/\/+$/, "");
+    const token = state.root.querySelector("#fubyu-token").value.trim();
+
+    if (!token) {
+      setResult("Paste your ingest token first.", "error");
+      return;
+    }
+    setResult("Checking " + server + " …");
+
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: server + "/health",
+      timeout: 15000,
+      onload: (res) => {
+        if (res.status < 200 || res.status >= 300) {
+          setResult("Server answered HTTP " + res.status + ". Is that the right URL?", "error");
+          return;
+        }
+        GM_xmlhttpRequest({
+          method: "POST",
+          url: server + "/api/ingest/transcript",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          data: JSON.stringify({ video_id: "invalid" }),
+          timeout: 20000,
+          onload: (authRes) => {
+            if (authRes.status === 401) {
+              setResult("Server reached, but the token was REJECTED. It must match the server's EXTENSION_INGEST_TOKEN exactly.", "error");
+            } else if (authRes.status === 422) {
+              setResult("All good — server reachable and the token is accepted. ✅", "ok");
+            } else if (authRes.status === 503) {
+              setResult("Server reachable, but its database is unconfigured. That is fine for local use.", "warn");
+            } else {
+              setResult("Unexpected response: HTTP " + authRes.status + ".", "error");
+            }
+          },
+          onerror: () => setResult("Reached /health but the ingest endpoint refused the connection.", "error"),
+          ontimeout: () => setResult("The ingest endpoint timed out.", "error"),
+        });
+      },
+      onerror: () => setResult("Cannot reach " + server + ". Is the server running?", "error"),
+      ontimeout: () => setResult("Timed out reaching " + server + ".", "error"),
+    });
+  }
+
+  /** Keeps the headline status honest about whether setup is complete. */
+  function renderConfigState() {
+    if (!state.hint) return;
+    if (!isConfigured()) {
+      state.hint.className = "warn";
+      state.hint.textContent = "Setup needed: paste your ingest token below, then Save.";
+      // Open the panel once, so the fix is impossible to miss — but don't yank
+      // focus back every time the SPA fires a navigation event.
+      if (!state.autoOpened) {
+        state.autoOpened = true;
+        toggleSettings(true);
+      }
+      return;
+    }
+    state.hint.className = "";
+    state.hint.textContent =
+      "Ready. Captions are read locally in your browser; cookies never leave it.";
   }
 
   function showHint(message, kind) {
-    if (!state.hint || !state.root) return;
+    if (!state.hint) return;
     state.hint.textContent = message;
     state.hint.className = kind || "";
-    state.root.querySelector("#fubyu-card").classList.add("visible");
   }
 
   function toast(message, kind) {
     showHint(message, kind);
-    // Auto-hide informational toasts; errors stay until the next attempt.
     if (kind !== "error") {
       setTimeout(() => {
-        const card = state.root && state.root.querySelector("#fubyu-card");
-        if (card) card.classList.remove("visible");
+        if (isConfigured()) renderConfigState();
       }, 6000);
     }
   }
@@ -199,6 +340,33 @@
     state.button.disabled = busy;
     state.button.classList.toggle("busy", busy);
     state.label.textContent = label || (busy ? "Working…" : "Generate Study Notes");
+  }
+
+  // -------------------------------------------------------------------------
+  // Menu commands — now they just open the panel instead of using prompt(),
+  // which some Chromium builds silently block inside a userscript sandbox.
+  // -------------------------------------------------------------------------
+
+  function registerMenu() {
+    GM_registerMenuCommand("⚙️ 4 U By U settings", () => {
+      mount();
+      if (state.root) state.root.querySelector("#fubyu-card").scrollIntoView({ block: "nearest" });
+      toggleSettings(true);
+    });
+
+    GM_registerMenuCommand("🔌 Test 4 U By U connection", () => {
+      mount();
+      toggleSettings(true);
+      testConnection();
+    });
+
+    GM_registerMenuCommand("▶️ Grab this lecture's transcript", () => {
+      if (location.pathname !== "/watch") {
+        alert("Open a YouTube video first.");
+        return;
+      }
+      run();
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -288,21 +456,34 @@
       tracks[0];
 
     let url = chosen.baseUrl || "";
-    let translated = false;
     let language = chosen.languageCode || "unknown";
 
     if (!isEnglish(chosen) && chosen.isTranslatable && url) {
       // YouTube's own machine translation — better than nothing, and free.
       url += (url.includes("?") ? "&" : "?") + "tlang=en";
-      translated = true;
       language = language + " → en (auto-translated by YouTube)";
     }
 
+    return { url, language };
+  }
+
+  // -------------------------------------------------------------------------
+  // Caption transport
+  //
+  // The timedtext endpoint only answers with real data when the request carries
+  // the viewer's own YouTube session cookies. A plain same-origin fetch() from
+  // the page is the most faithful way to send them, so it is tried first;
+  // GM_xmlhttpRequest stays as a fallback for when the page's CSP blocks fetch.
+  // Every attempt is recorded so a failure explains itself.
+  // -------------------------------------------------------------------------
+
+  async function browserGet(url) {
+    const res = await fetch(url, { credentials: "include", cache: "no-store" });
     return {
-      url,
-      language,
-      translated,
-      label: chosen.name ? chosen.name.simpleText || chosen.name.runs?.[0]?.text : language,
+      status: res.status,
+      text: (await res.text()) || "",
+      type: res.headers.get("content-type") || "unknown",
+      via: "fetch",
     };
   }
 
@@ -314,13 +495,34 @@
         withCredentials: true, // the user's own YouTube session; never sent to our server
         timeout: 60000,
         onload: (res) => {
-          if (res.status >= 200 && res.status < 300) resolve(res.responseText || "");
-          else reject(new Error("YouTube returned HTTP " + res.status + " for the caption track."));
+          const headers = res.responseHeaders || "";
+          const type = (headers.match(/content-type:\s*([^\r\n;]+)/i) || [])[1] || "unknown";
+          resolve({ status: res.status, text: res.responseText || "", type, via: "GM_xmlhttpRequest" });
         },
-        onerror: () => reject(new Error("Could not reach YouTube for the caption track.")),
-        ontimeout: () => reject(new Error("Timed out reading the caption track.")),
+        onerror: () => reject(new Error("network error")),
+        ontimeout: () => reject(new Error("no response within 60s")),
       });
     });
+  }
+
+  /** Accepts either the json3 or the XML shape, whichever YouTube hands back. */
+  function parseCaptionBody(raw) {
+    const text = String(raw || "").trim();
+    if (!text) return [];
+    if (text[0] === "{") {
+      try {
+        const segments = parseJson3(text);
+        if (segments.length) return segments;
+      } catch (err) { /* not the JSON shape we hoped for — try XML below */ }
+    }
+    if (text[0] === "<") return parseTimedTextXml(text);
+    return [];
+  }
+
+  /** Swaps the fmt parameter without disturbing the signature/expire params. */
+  function setFormat(url, fmt) {
+    if (/[?&]fmt=/.test(url)) return url.replace(/([?&]fmt=)[^&]*/, "$1" + fmt);
+    return url + (url.includes("?") ? "&" : "?") + "fmt=" + fmt;
   }
 
   function decodeEntities(text) {
@@ -333,9 +535,7 @@
       .replace(/&nbsp;/g, " ");
   }
 
-  function tidy(text) {
-    return decodeEntities(String(text || "")).replace(/\s+/g, " ").trim();
-  }
+  const tidy = (text) => decodeEntities(String(text || "")).replace(/\s+/g, " ").trim();
 
   function parseJson3(raw) {
     const data = JSON.parse(raw);
@@ -355,9 +555,8 @@
 
   function parseTimedTextXml(raw) {
     const doc = new DOMParser().parseFromString(raw, "text/xml");
-    const nodes = doc.querySelectorAll("text, p");
     const segments = [];
-    nodes.forEach((node) => {
+    doc.querySelectorAll("text, p").forEach((node) => {
       const start = parseFloat(node.getAttribute("start") || node.getAttribute("t") || "0");
       const duration = parseFloat(node.getAttribute("dur") || node.getAttribute("d") || "0");
       const text = tidy(node.textContent);
@@ -371,25 +570,401 @@
     return segments;
   }
 
-  async function fetchTranscript(track) {
-    const withFormat = track.url + (track.url.includes("?") ? "&" : "?") + "fmt=json3";
-    try {
-      const raw = await gmGet(withFormat);
-      if (raw && raw.trim()) {
-        const segments = parseJson3(raw);
-        if (segments.length) return segments;
-      }
-    } catch (err) { /* fall through to the XML shape */ }
+  // -------------------------------------------------------------------------
+  // InnerTube fallback — required since YouTube's 2025 caption lockdown
+  //
+  // Many caption tracks are now gated behind a proof-of-origin token ("pot")
+  // minted by BotGuard inside the player's own JavaScript. Such a track carries
+  // an "exp=xpe" parameter, and /api/timedtext then answers HTTP 200 with an
+  // empty body — a silent failure that looks identical to "no captions".
+  //
+  // The transcript panel does not use timedtext: it calls InnerTube's
+  // get_transcript endpoint with a params blob handed out by /next. That is an
+  // ordinary same-origin API call, needs no token, and is what we fall back to.
+  // -------------------------------------------------------------------------
 
-    const raw = await gmGet(track.url);
-    if (raw && raw.trim()) {
-      const segments = parseTimedTextXml(raw);
-      if (segments.length) return segments;
+  /** Depth-first search for the first nested object satisfying `predicate`. */
+  function findDeep(node, predicate, depth) {
+    if (!node || typeof node !== "object" || (depth || 0) > 14) return null;
+    if (predicate(node)) return node;
+    for (const value of Object.values(node)) {
+      const hit = findDeep(value, predicate, (depth || 0) + 1);
+      if (hit) return hit;
     }
-    throw new Error(
-      "YouTube returned an empty caption track. Open the video's \"Show transcript\" " +
-        "panel once, then try again."
+    return null;
+  }
+
+  /** The page's own InnerTube credentials, so our calls resemble the page's own. */
+  function innertubeConfig() {
+    const html = document.documentElement.innerHTML;
+    let key = "";
+    let version = "";
+    let context = null;
+    try {
+      if (unsafeWindow.ytcfg && typeof unsafeWindow.ytcfg.get === "function") {
+        key = unsafeWindow.ytcfg.get("INNERTUBE_API_KEY") || "";
+        version = unsafeWindow.ytcfg.get("INNERTUBE_CLIENT_VERSION") || "";
+        context = unsafeWindow.ytcfg.get("INNERTUBE_CONTEXT") || null;
+      }
+    } catch (err) { /* the page may not have exposed ytcfg yet */ }
+
+    if (!key) {
+      const match = html.match(/"INNERTUBE_API_KEY":"([^"]+)"/);
+      if (match) key = match[1];
+    }
+    if (!version) {
+      const match = html.match(/"INNERTUBE_CLIENT_VERSION":"([^"]+)"/);
+      if (match) version = match[1];
+    }
+    version = version || "2.20240101.00.00";
+
+    // Prefer the page's real context (it carries visitorData); else synth one.
+    if (!context || !context.client) {
+      context = { client: { clientName: "WEB", clientVersion: version, hl: "en", gl: "US" } };
+    }
+    return { key, version, context };
+  }
+
+  async function innertube(path, body, cfg) {
+    const url =
+      "https://www.youtube.com/youtubei/v1/" + path + "?prettyPrint=false" +
+      (cfg.key ? "&key=" + encodeURIComponent(cfg.key) : "");
+    const res = await fetch(url, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Youtube-Client-Name": "1",
+        "X-Youtube-Client-Version": cfg.version,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error("InnerTube /" + path + " -> HTTP " + res.status);
+    return await res.json();
+  }
+
+  /** "1:23" or "1:02:03" -> seconds. */
+  function clockToSeconds(text) {
+    const parts = String(text || "").trim().split(":").map((n) => parseInt(n, 10));
+    if (!parts.length || parts.some((n) => Number.isNaN(n))) return null;
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 1) return parts[0];
+    return null;
+  }
+
+  /** Turns the transcript panel's segment renderers into our segment shape. */
+  function parseTranscriptPanel(data) {
+    const holder = findDeep(data, (node) => node.transcriptSegmentListRenderer);
+    if (!holder) return [];
+    const items = holder.transcriptSegmentListRenderer.initialSegments || [];
+
+    const found = [];
+    for (const item of items) {
+      const renderer = item && item.transcriptSegmentRenderer;
+      if (!renderer) continue;
+
+      const runs = (renderer.snippet && renderer.snippet.runs) || [];
+      const text = tidy(
+        runs.length
+          ? runs.map((r) => r.text || "").join("")
+          : (renderer.snippet && renderer.snippet.simpleText) || ""
+      );
+      if (!text) continue;
+
+      let start = renderer.startMs != null ? Number(renderer.startMs) / 1000 : null;
+      const end = renderer.endMs != null ? Number(renderer.endMs) / 1000 : null;
+      if (start == null || !Number.isFinite(start)) {
+        start = clockToSeconds(renderer.startTimeText && renderer.startTimeText.simpleText);
+      }
+      if (start == null || !Number.isFinite(start)) continue;
+
+      found.push({ start, end, text });
+    }
+
+    // Each line needs a duration: its own endMs, else the next line's start.
+    for (let i = 0; i < found.length; i++) {
+      const current = found[i];
+      const next = found[i + 1];
+      let duration =
+        current.end != null && current.end > current.start ? current.end - current.start : 0;
+      if (!duration && next) duration = Math.max(0, next.start - current.start);
+      if (!duration) duration = 2;
+      current.duration = duration;
+    }
+
+    return found.map((s) => ({ start: s.start, duration: s.duration, text: s.text }));
+  }
+
+  /**
+   * Asks /next for the transcript panel's params, then pulls the transcript
+   * through /get_transcript. The request is always keyed to the videoId we pass
+   * in, so a stale page can never yield a different video's text.
+   */
+  async function fetchViaTranscriptPanel(videoId) {
+    const cfg = innertubeConfig();
+    const next = await innertube("next", { context: cfg.context, videoId }, cfg);
+
+    const holder = findDeep(
+      next,
+      (node) => node.getTranscriptEndpoint && node.getTranscriptEndpoint.params
     );
+    const params = holder && holder.getTranscriptEndpoint.params;
+    if (!params) throw new Error("this video exposes no transcript panel");
+
+    const data = await innertube("get_transcript", { context: cfg.context, params }, cfg);
+    const segments = parseTranscriptPanel(data);
+    if (!segments.length) throw new Error("the transcript panel came back empty");
+    return segments;
+  }
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  /** querySelectorAll that also pierces open shadow roots. */
+  function deepQueryAll(selector) {
+    const found = [];
+    const visit = (node) => {
+      if (!node || typeof node.querySelectorAll !== "function") return;
+      node.querySelectorAll(selector).forEach((el) => found.push(el));
+      node.querySelectorAll("*").forEach((el) => {
+        if (el.shadowRoot) visit(el.shadowRoot);
+      });
+    };
+    visit(document);
+    return found;
+  }
+
+  /**
+   * YouTube creates the transcript panel lazily, and newer components attach
+   * CLOSED shadow roots, which no query can reach. Forcing every shadow root
+   * open before the panel is built makes it readable. Harmless if it fails.
+   */
+  function forceOpenShadowRoots() {
+    try {
+      const win = unsafeWindow;
+      if (!win || win.__fubyuShadowPatched) return;
+      const original = win.Element && win.Element.prototype && win.Element.prototype.attachShadow;
+      if (typeof original !== "function") return;
+      win.Element.prototype.attachShadow = function (init) {
+        return original.call(this, Object.assign({}, init, { mode: "open" }));
+      };
+      win.__fubyuShadowPatched = true;
+    } catch (err) { /* the page may forbid it; the selectors below still apply */ }
+  }
+
+  /** Locates YouTube's own "Show transcript" control, whatever it is called today. */
+  function findTranscriptButton() {
+    const direct = deepQueryAll(
+      "ytd-video-description-transcript-section-renderer button, " +
+        "ytd-video-description-transcript-section-renderer ytd-button-renderer button, " +
+        "yt-video-description-transcript-section-renderer button, " +
+        "button[aria-label*='transcript' i]"
+    );
+    if (direct.length) return direct[0];
+    return deepQueryAll("button, tp-yt-paper-button").find((el) =>
+      /show transcript/i.test(el.textContent || "")
+    );
+  }
+
+  /** The transcript panel itself, found by its target-id or its search box. */
+  function findTranscriptPanel() {
+    const selectors = [
+      "[target-id*='transcript']",
+      "ytd-engagement-panel-section-list-renderer[target-id*='transcript']",
+      "yt-engagement-panel-section-list-renderer[target-id*='transcript']",
+    ];
+    for (const selector of selectors) {
+      const hit = document.querySelector(selector) || deepQueryAll(selector)[0];
+      if (hit) return hit;
+    }
+    const search = deepQueryAll("input").find((el) =>
+      /search transcript/i.test(el.getAttribute("placeholder") || "")
+    );
+    if (!search) return null;
+    let node = search.parentElement;
+    for (let i = 0; i < 12 && node && node.parentElement; i += 1) {
+      if (node.querySelectorAll("*").length > 30) return node;
+      node = node.parentElement;
+    }
+    return search.parentElement;
+  }
+
+  /**
+   * Segment containers, by tag name. YouTube ships both the old ytd- and the
+   * newer yt- spelling depending on rollout, so both are listed.
+   */
+  function collectSegmentRows() {
+    const selectors = [
+      "ytd-transcript-segment-renderer",
+      "yt-transcript-segment-renderer",
+      "[class*='transcript-segment-renderer']",
+      "[class*='transcript-segment']",
+    ];
+    for (const selector of selectors) {
+      const rows = document.querySelectorAll(selector);
+      if (rows.length) return Array.from(rows);
+      const deep = deepQueryAll(selector);
+      if (deep.length) return deep;
+    }
+    return [];
+  }
+
+  const CLOCK_RE = /^\d{1,2}:\d{2}(?::\d{2})?$/;
+
+  /**
+   * Structure-blind fallback: any element whose entire text is a clock reading,
+   * paired with its first sibling that carries prose. Survives renamed tags.
+   */
+  function collectSegmentsStructurally() {
+    const panel = findTranscriptPanel() || document.body;
+    const found = [];
+
+    for (const el of panel.querySelectorAll("*")) {
+      const stamp = (el.textContent || "").trim();
+      if (!CLOCK_RE.test(stamp)) continue;
+
+      const parent = el.parentElement;
+      if (!parent) continue;
+
+      const sibling = Array.from(parent.children).find((child) => {
+        if (child === el) return false;
+        const value = (child.textContent || "").trim();
+        return value.length > 3 && !CLOCK_RE.test(value);
+      });
+      if (!sibling) continue;
+
+      const start = clockToSeconds(stamp);
+      const text = tidy(sibling.textContent);
+      if (start == null || !text) continue;
+      found.push({ start, text });
+    }
+    return found;
+  }
+
+  /** Reports which transcript-ish elements exist, when everything else failed. */
+  function describeTranscriptDom() {
+    const tags = new Set();
+    document.querySelectorAll("*").forEach((el) => {
+      const tag = el.tagName.toLowerCase();
+      if (tag.includes("transcript") || tag.includes("segment")) tags.add(tag);
+    });
+    return tags.size ? " [elements present: " + Array.from(tags).slice(0, 12).join(", ") + "]" : "";
+  }
+
+  function readRenderedSegments() {
+    const rows = collectSegmentRows();
+    if (rows.length) {
+      const found = [];
+      for (const row of rows) {
+        const stampEl = row.querySelector("#timestamp, .segment-timestamp");
+        const textEl = row.querySelector("#text, .segment-text");
+        const start = clockToSeconds(stampEl ? stampEl.textContent.trim() : "");
+        const text = tidy(textEl ? textEl.textContent : "");
+        if (start == null || !text) continue;
+        found.push({ start, text });
+      }
+      if (found.length) return found;
+    }
+    return collectSegmentsStructurally();
+  }
+
+  /**
+   * Last resort: read the transcript straight out of YouTube's own panel.
+   *
+   * Immune to the PO-token and FAILED_PRECONDITION gateways, because the page
+   * has already paid that cost itself — we only read the lines it rendered.
+   * This is literally the same text the user can see on screen.
+   */
+  async function fetchViaRenderedPanel() {
+    forceOpenShadowRoots();
+
+    if (!collectSegmentRows().length) {
+      const expanders = deepQueryAll("#expand");
+      if (expanders.length) {
+        expanders[0].click();
+        await wait(700);
+      }
+      const button = findTranscriptButton();
+      if (button) button.click();
+      else throw new Error("no \"Show transcript\" control found on this page");
+    }
+
+    let segments = [];
+    for (let attempt = 0; attempt < 60 && !segments.length; attempt++) {
+      segments = readRenderedSegments();
+      if (!segments.length) await wait(250);
+    }
+
+    if (!segments.length) {
+      throw new Error(
+        "YouTube did not render a transcript panel" +
+          (findTranscriptPanel() ? " (a panel exists but held no readable lines)" : "") +
+          describeTranscriptDom()
+      );
+    }
+
+    for (let i = 0; i < segments.length; i++) {
+      const next = segments[i + 1];
+      segments[i].duration =
+        next && next.start > segments[i].start ? next.start - segments[i].start : 2;
+    }
+
+    return segments.map((s) => ({ start: s.start, duration: s.duration, text: s.text }));
+  }
+
+  async function fetchTranscript(track, videoId) {
+    const attempts = [];
+    // Strategy 1: the signed timedtext URL from the player response. Skipped
+    // outright when exp=xpe announces that a PO token is required, because
+    // YouTube would only answer with an empty 200 and waste a round trip.
+    if (!track.url) {
+      attempts.push("no caption track in the player response");
+    } else if (/[?&]exp=xpe/.test(track.url)) {
+      attempts.push("timedtext skipped (exp=xpe: proof-of-origin token required)");
+    } else {
+      for (const url of [setFormat(track.url, "json3"), track.url]) {
+        for (const transport of [browserGet, gmGet]) {
+          let result;
+          try {
+            result = await transport(url);
+          } catch (err) {
+            attempts.push(transport.name + ": " + (err.message || err));
+            continue;
+          }
+          const segments = parseCaptionBody(result.text);
+          if (segments.length) return segments;
+
+          const preview = result.text.slice(0, 70).replace(/\s+/g, " ").trim();
+          attempts.push(
+            result.via + " " + result.type + " -> HTTP " + result.status + ", " +
+              result.text.length + " bytes" + (preview ? ' ["' + preview + '"]' : " [empty body]")
+          );
+        }
+      }
+    }
+
+    // Strategy 2: the transcript panel's own InnerTube endpoint. Called from
+    // the real page with the real session, which may satisfy the newer
+    // integrity checks that reject a plain server-side request.
+    try {
+      const segments = await fetchViaTranscriptPanel(videoId);
+      if (segments.length) return segments;
+      attempts.push("get_transcript -> empty");
+    } catch (err) {
+      attempts.push("get_transcript -> " + (err.message || err));
+    }
+
+    // Strategy 3: read YouTube's own rendered transcript panel.
+    try {
+      const segments = await fetchViaRenderedPanel();
+      if (segments.length) return segments;
+      attempts.push("rendered panel -> empty");
+    } catch (err) {
+      attempts.push("rendered panel -> " + (err.message || err));
+    }
+
+    throw new Error("Could not read this video's captions. " + attempts.join(" ; "));
   }
 
   /**
@@ -403,7 +978,10 @@
     for (const line of description.split(/\r?\n/)) {
       const match = line.match(lineRe);
       if (!match) continue;
-      const seconds = (parseInt(match[1] || "0", 10) * 3600) + (parseInt(match[2], 10) * 60) + parseInt(match[3], 10);
+      const seconds =
+        parseInt(match[1] || "0", 10) * 3600 +
+        parseInt(match[2], 10) * 60 +
+        parseInt(match[3], 10);
       const title = match[4].replace(/\s+/g, " ").trim();
       if (!title || title.length > 120) continue;
       found.push({ title, start_time: seconds, end_time: 0 });
@@ -421,10 +999,7 @@
     const token = getSetting("ingestToken");
     if (!token) {
       return Promise.reject(
-        new Error(
-          "No ingest token configured. Click the Tampermonkey icon → " +
-            "\"Set 4 U By U ingest token\" and paste your server's EXTENSION_INGEST_TOKEN."
-        )
+        new Error("No ingest token set. Click ⚙️ Setup and paste your token.")
       );
     }
     return new Promise((resolve, reject) => {
@@ -445,7 +1020,7 @@
             return;
           }
           if (res.status === 401) {
-            reject(new Error("Your ingest token was rejected. Re-check it in the userscript menu."));
+            reject(new Error("Your ingest token was rejected. Open ⚙️ Setup and press Test."));
             return;
           }
           if (res.status === 413) {
@@ -459,10 +1034,34 @@
           const detail = (body && body.detail) || res.responseText || "";
           reject(new Error("Ingest failed (HTTP " + res.status + "). " + String(detail).slice(0, 300)));
         },
-        onerror: () => reject(new Error("Could not reach " + serverUrl + ". Is the server running and the URL correct?")),
+        onerror: () => reject(new Error("Could not reach " + serverUrl + ". Check ⚙️ Setup.")),
         ontimeout: () => reject(new Error("The server took too long to accept the transcript.")),
       });
     });
+  }
+
+  /**
+   * Opens the workspace tab.
+   *
+   * window.open() is called after several awaits, so the page no longer has a
+   * user gesture — many browsers silently block it. GM_openInTab is not subject
+   * to that, so it is tried first, and the caller is told whether anything
+   * actually opened rather than assuming success.
+   */
+  function openWorkspace(url) {
+    try {
+      if (typeof GM_openInTab === "function") {
+        GM_openInTab(url, { active: true, insert: true, setParent: true });
+        return true;
+      }
+    } catch (err) { /* fall through to window.open */ }
+
+    try {
+      const handle = window.open(url, "_blank");
+      return Boolean(handle);
+    } catch (err) {
+      return false;
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -476,6 +1075,11 @@
       showHint("Open a YouTube video first.", "error");
       return;
     }
+    if (!isConfigured()) {
+      showHint("Setup needed: paste your ingest token first.", "warn");
+      toggleSettings(true);
+      return;
+    }
 
     setBusy(true, "Reading captions…");
     showHint("Finding this lecture's caption track…");
@@ -486,18 +1090,19 @@
         throw new Error("Could not read this page's video data. Reload the page and try again.");
       }
 
-      const track = pickCaptionTrack(playerResponse);
-      if (!track || !track.url) {
-        throw new Error(
-          "This video has no captions available, so there is nothing to turn into notes. " +
-            "Try a lecture that has subtitles."
-        );
-      }
+      // A missing caption track is no longer fatal: the InnerTube transcript
+      // panel can still have one, so fall through and let fetchTranscript try.
+      const track = pickCaptionTrack(playerResponse) || { url: "", language: "" };
 
-      showHint("Downloading the transcript (" + track.language + ")…");
-      const segments = await fetchTranscript(track);
+      showHint(
+        "Reading the transcript" + (track.language ? " (" + track.language + ")" : "") +
+          "… YouTube may briefly open its own transcript panel."
+      );
+      const segments = await fetchTranscript(track, videoId);
       if (segments.length < 5) {
-        throw new Error("Only " + segments.length + " caption lines found — this looks like a trailer, not a lecture.");
+        throw new Error(
+          "Only " + segments.length + " caption lines were found, which is too few to build notes from."
+        );
       }
 
       const details = playerResponse.videoDetails || {};
@@ -519,12 +1124,16 @@
       const { body, serverUrl } = await postToServer(payload);
 
       setBusy(false);
+      const workspaceUrl = serverUrl + "/?ingest=" + body.ingest_id;
+      const opened = openWorkspace(workspaceUrl);
       showHint(
-        "Done — " + body.segments + " lines (" + Math.round(body.transcript_chars / 1000) + "k chars) accepted. " +
-          "Opening your workspace…",
-        "ok"
+        "Done — " + body.segments + " lines (" + Math.round(body.transcript_chars / 1000) +
+          "k chars) accepted. " +
+          (opened
+            ? "Opening your workspace…"
+            : "Your browser blocked the new tab — open this link to continue: " + workspaceUrl),
+        opened ? "ok" : "warn"
       );
-      window.open(serverUrl + "/?ingest=" + body.ingest_id, "_blank");
     } catch (err) {
       setBusy(false);
       showHint(err.message || String(err), "error");
@@ -539,9 +1148,7 @@
     const onWatchPage = /^\/watch/.test(location.pathname);
     if (onWatchPage) {
       mount();
-      if (state.hint && !state.hint.textContent) {
-        showHint("Captions are read locally in your browser. Nothing else on this page is touched.");
-      }
+      renderConfigState();
     } else if (state.root) {
       unmount();
     }
