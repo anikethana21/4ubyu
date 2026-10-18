@@ -38,10 +38,17 @@ def test_real_topics_survive():
         "Backpropagation and Gradient Descent",
         "API Key Management",
         "RNN Implementation in PyTorch",
-        "Section 4",
         "Attention Mechanisms",
+        "Section-by-Section Walkthrough of a Transformer",
     ):
         assert not is_placeholder_title(title), title
+
+
+def test_a_bare_section_number_is_not_a_topic_name():
+    """It is the label this chapterizer gives a chapter it could not name."""
+    assert is_placeholder_title("Section 4")
+    assert is_placeholder_title("section 12")
+    assert is_placeholder_title("Section 4 (Part 1)")
 
 
 def test_ensure_usable_titles_replaces_only_placeholders():

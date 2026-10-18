@@ -205,6 +205,11 @@ def is_placeholder_title(title: Any) -> bool:
     # A bare clock time is a section marker, not the name of a taught topic.
     if re.fullmatch(r"\d{1,2}:\d{2}(?::\d{2})?", text):
         return True
+    # "Section 4" is the label this chapterizer itself gives a chapter it could
+    # not name, so it can never be a topic name a model supplied. Treating it as
+    # a real title made an unnamed chapter look named.
+    if re.fullmatch(r"section\s+\d+", text, flags=re.I):
+        return True
     low = text.lower()
     return any(marker in low for marker in PLACEHOLDER_TITLE_MARKERS)
 

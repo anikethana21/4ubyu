@@ -130,10 +130,14 @@ async def inspect_video_for_hitl(
     # The reason is the failure the chapterizer actually recorded, not a guess
     # between "no key" and "rate limited".
     title_warning = None
-    generic_titles = sum(1 for c in chapters_out if c.get("title_source") == "fallback")
-    if generic_titles:
-        from core.topic_chapterizer import TITLE_FAILURE
+    from core.topic_chapterizer import TITLE_FAILURE, is_placeholder_title
 
+    generic_titles = sum(
+        1
+        for c in chapters_out
+        if c.get("title_source") == "fallback" or is_placeholder_title(c.get("title"))
+    )
+    if generic_titles:
         reason = TITLE_FAILURE or "the language model did not return titles"
         title_warning = (
             f"{generic_titles} of {len(chapters_out)} chapter titles are generic "
