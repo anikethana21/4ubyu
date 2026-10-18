@@ -192,7 +192,6 @@ def _detect_chapters_with_nn_model(
     loaded so callers can fall back to embedding clustering.
     """
     try:
-        import os
         if os.environ.get("USE_NN_CHAPTERIZER", "0").lower() not in ("1", "true", "yes"):
             return None
         from core.chapter_classifier_nn import ChapterClassifierModel
