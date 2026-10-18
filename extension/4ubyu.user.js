@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://four-u-by-u-workspace.onrender.com
-// @version      1.6.0
+// @version      1.7.0
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the transcript in your own browser and hands it to your 4 U By U workspace.
 // @author       Anikethana
 // @match        https://www.youtube.com/*
@@ -1003,17 +1003,126 @@
     return segments.map((s) => ({ start: s.start, duration: s.duration, text: s.text }));
   }
 
+  /**
+   * The signed caption URL the player itself used, if it is still on the timeline.
+   *
+   * YouTube's caption URLs carry `exp=xpe`, which announces that a proof-of-origin
+   * token is required — fetching one ourselves only earns an empty 200. The player
+   * has already solved that: it fetches captions with a `pot` token attached, and
+   * the browser records every URL it requested. Reusing that exact URL returns the
+   * same bytes the player downloaded, at no extra cost and with no token juggling.
+   */
+  function findPlayerCaptionUrl(videoId) {
+    let entries = [];
+    try {
+      entries = performance.getEntriesByType("resource") || [];
+    } catch (err) {
+      return null;
+    }
+    let best = null;
+    for (const entry of entries) {
+      const url = entry.name || "";
+      if (!url.includes("/api/timedtext")) continue;
+      if (videoId && !url.includes("v=" + videoId)) continue;
+      best = url; // the last one is the most recent attempt
+    }
+    return best;
+  }
+
+  /** Makes the player fetch captions, so its signed URL lands on the timeline. */
+  function nudgePlayerCaptions() {
+    const player = document.getElementById("movie_player");
+    try {
+      if (player && player.getOption) {
+        const tracks = player.getOption("captions", "tracklist") || [];
+        const track = tracks.find((t) => t.kind === "asr") || tracks[0];
+        if (track) {
+          player.setOption("captions", "track", track);
+          return "the player's caption API";
+        }
+      }
+    } catch (err) { /* fall through to the panel */ }
+    const button = findTranscriptButton();
+    if (button) {
+      button.click();
+      return "the \"Show transcript\" control";
+    }
+    return null;
+  }
+
+  /**
+   * Strategy 1: reuse the player's own signed caption URL.
+   *
+   * The cleanest source inside the page. It is YouTube's own request, made with its
+   * own proof-of-origin token, so it works on the videos where every hand-built
+   * request is refused.
+   */
+  async function fetchViaPlayerUrl(videoId, track) {
+    let url = findPlayerCaptionUrl(videoId);
+    if (!url) {
+      const nudged = nudgePlayerCaptions();
+      const deadline = Date.now() + 8000;
+      while (!url && Date.now() < deadline) {
+        await wait(250);
+        url = findPlayerCaptionUrl(videoId);
+      }
+      if (!url) {
+        throw new Error(
+          "the player never fetched captions" +
+            (nudged ? " (tried " + nudged + ")" : " (found no way to start it)")
+        );
+      }
+    }
+
+    url = setFormat(url, "json3");
+    const language = (track && track.languageCode) || "";
+    const candidates = [];
+    if (!/^en/i.test(language)) candidates.push(url + "&tlang=en"); // ask YouTube for English
+    candidates.push(url);
+
+    const attempts = [];
+    for (const candidate of candidates) {
+      for (const transport of [browserGet, gmGet]) {
+        let result;
+        try {
+          result = await transport(candidate);
+        } catch (err) {
+          attempts.push(transport.name + ": " + (err.message || err));
+          continue;
+        }
+        const segments = parseCaptionBody(result.text);
+        if (segments.length) return segments;
+        attempts.push(
+          "player's own URL" +
+            (candidate.includes("tlang=") ? " (English)" : "") +
+            " " + result.via + " -> HTTP " + result.status + ", " + result.text.length + " bytes"
+        );
+      }
+    }
+    throw new Error(attempts.join(" ; "));
+  }
+
   async function fetchTranscript(track, videoId) {
     const attempts = [];
-    // Strategy 1: the signed timedtext URL from the player response. Skipped
+
+    try {
+      const segments = await fetchViaPlayerUrl(videoId, track);
+      if (segments.length) return segments;
+      attempts.push("player's own URL -> empty");
+    } catch (err) {
+      attempts.push("player's own URL -> " + (err.message || err));
+    }
+
+    // Strategy 2: the signed timedtext URL from the player response. Skipped
     // outright when exp=xpe announces that a PO token is required, because
     // YouTube would only answer with an empty 200 and waste a round trip.
-    if (!track.url) {
+    const trackUrl = (track && track.url) || "";
+    if (!trackUrl) {
       attempts.push("no caption track in the player response");
-    } else if (/[?&]exp=xpe/.test(track.url)) {
+    } else if (/[?&]exp=xpe/.test(trackUrl)) {
       attempts.push("timedtext skipped (exp=xpe: proof-of-origin token required)");
     } else {
-      for (const url of [setFormat(track.url, "json3"), track.url]) {
+      for (const url of [setFormat(trackUrl, "json3"), trackUrl]) {
         for (const transport of [browserGet, gmGet]) {
           let result;
           try {
@@ -1034,7 +1143,7 @@
       }
     }
 
-    // Strategy 2: the transcript panel's own InnerTube endpoint. Called from
+    // Strategy 3: the transcript panel's own InnerTube endpoint. Called from
     // the real page with the real session, which may satisfy the newer
     // integrity checks that reject a plain server-side request.
     try {
@@ -1045,7 +1154,7 @@
       attempts.push("get_transcript -> " + (err.message || err));
     }
 
-    // Strategy 3: read YouTube's own rendered transcript panel.
+    // Strategy 4: read YouTube's own rendered transcript panel.
     try {
       const segments = await fetchViaRenderedPanel();
       if (segments.length) return segments;
