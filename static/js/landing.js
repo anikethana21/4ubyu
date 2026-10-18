@@ -629,16 +629,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function openHitlModal(data) {
+  function openHitlModal(data, ingestId) {
     const meta = data.metadata || {};
     const chapters = data.suggested_chapters || data.chapters || [];
     currentInspection = {
-      url: ytUrlInput ? ytUrlInput.value.trim() : "",
+      // Prefer the server-resolved URL: on the userscript hand-off the input box
+      // is empty because the URL came from the extension, not the user.
+      url: data.url || (ytUrlInput ? ytUrlInput.value.trim() : ""),
       video_id: data.video_id,
       metadata: meta,
       chapters: chapters,
       suggested_chapters: chapters,
-      title: meta.title || data.title || "Untitled Video"
+      title: meta.title || data.title || "Untitled Video",
+      ingest_id: ingestId || null
     };
 
     if (hitlThumb) hitlThumb.src = meta.thumbnail || data.thumbnail || `https://img.youtube.com/vi/${data.video_id}/maxresdefault.jpg`;
@@ -723,11 +726,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (cb && cb.checked) {
           const idx = parseInt(cb.dataset.idx);
           const titleInput = row.querySelector(".hitl-topic-input");
-          const chaps = currentInspection.suggested_chapters || currentInspection.chapters || []; const original = chaps[idx] || {};
+          const chaps = currentInspection.suggested_chapters || currentInspection.chapters || [];
+          const original = chaps[idx] || {};
+          const startSec = original.start_time ?? original.start_seconds ?? 0;
+          const endSec = original.end_time ?? original.end_seconds ?? 0;
           approvedChapters.push({
             title: titleInput ? titleInput.value.trim() : original.title,
-            start_seconds: original.start_seconds || 0,
-            end_seconds: original.end_seconds || 0,
+            // Send both spellings. The pipeline's contract is start_time/end_time;
+            // sending only start_seconds used to zero every approved chapter.
+            start_time: startSec,
+            end_time: endSec,
+            start_seconds: Math.round(startSec),
+            end_seconds: Math.round(endSec),
             timestamp_str: original.timestamp_str || "00:00"
           });
         }
@@ -770,6 +780,9 @@ document.addEventListener("DOMContentLoaded", () => {
           youtube_url: currentInspection.url,
           video_id: currentInspection.video_id,
           approved_chapters: approvedChapters,
+          // Keeps synthesis on the same captured transcript, so YouTube is never
+          // re-fetched (that is what the bot gate blocks on a cloud host).
+          ingest_id: currentInspection.ingest_id || null,
           model_name: userSettings.default_model,
           color_palette: userSettings.preferred_theme || "dark_academic"
         })
@@ -867,7 +880,71 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------------------------------------------------------------------------
+  // BROWSER-USCRIPT HAND-OFF  (/?ingest=<id>)
+  // ---------------------------------------------------------------------------
+  // The userscript captures the transcript on YouTube (the user's own
+  // residential IP, where YouTube is not bot-gating) and redirects here with an
+  // ingest id. We pick it up immediately instead of asking for a URL.
+  async function handleIngestHandoff() {
+    let ingestId = null;
+    try {
+      ingestId = new URLSearchParams(window.location.search).get("ingest");
+    } catch (err) {
+      return;
+    }
+    if (!ingestId) return;
+
+    // Drop the parameter immediately so a refresh cannot re-trigger the job.
+    try {
+      history.replaceState({}, "", window.location.pathname);
+    } catch (err) { /* older browsers: harmless */ }
+
+    if (btnGenerate) btnGenerate.disabled = true;
+    if (progressBox) progressBox.classList.remove("hidden");
+    if (progressFill) progressFill.style.width = "35%";
+    if (progressPct) progressPct.textContent = "35%";
+    if (progressText) {
+      progressText.textContent = "Transcript received from your browser — detecting topics by content…";
+    }
+
+    try {
+      const resp = await fetch("/api/pipeline/inspect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ingest_id: ingestId,
+          api_key: userSettings.groq_api_key || userSettings.gemini_api_key || null,
+          model_name: userSettings.default_model || null
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.detail || "Could not read the captured transcript.");
+      }
+      if (!data.transcript_chars) {
+        throw new Error(data.warning || "The captured transcript came back empty.");
+      }
+
+      openHitlModal(data, ingestId);
+    } catch (err) {
+      alert(`4 U By U: ${err.message}`);
+    } finally {
+      if (btnGenerate) btnGenerate.disabled = false;
+      if (progressBox) progressBox.classList.add("hidden");
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // INITIAL BOOTSTRAP
   // ---------------------------------------------------------------------------
-  checkAuthStatus();
+  (async () => {
+    try {
+      await checkAuthStatus();
+    } catch (err) {
+      // Guests can still generate; the vault simply has no keys to offer.
+      console.warn("[4 U By U] Auth bootstrap skipped:", err);
+    }
+    await handleIngestHandoff();
+  })();
 });

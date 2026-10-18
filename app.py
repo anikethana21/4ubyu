@@ -490,7 +490,7 @@ async def hitl_inspect(req: InspectRequest, request: Request):
         data["channel"] = meta.get("channel", "YouTube")
         data["duration"] = meta.get("duration_str", "00:00")
         data["thumbnail"] = meta.get("thumbnail", f"https://img.youtube.com/vi/{data.get('video_id')}/hqdefault.jpg")
-        data["url"] = req.youtube_url
+        data["url"] = req.youtube_url or (ingested or {}).get("youtube_url", "")
         # Surface ingestion degradation (e.g. YouTube blocked the transcript
         # request from this host) so the UI can inform the user clearly.
         data["warning"] = data.get("warning")

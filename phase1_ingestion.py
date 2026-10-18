@@ -158,17 +158,28 @@ def transcribe_node(state: MasterNotesState) -> Dict[str, Any]:
         )
 
     for ch in syllabus:
-        s = float(ch.get("start_time", 0))
-        e = float(ch.get("end_time", s + 300))
+        # Accept BOTH field spellings. Auto-detected chapters use
+        # start_time/end_time, but a HITL client posts back start_seconds/
+        # end_seconds. Reading only start_time silently zeroed every approved
+        # chapter's window, so all of them re-sliced the first 5 minutes.
+        s = float(ch.get("start_time", ch.get("start_seconds", 0)) or 0)
+        e = float(ch.get("end_time", ch.get("end_seconds", 0)) or 0)
+        if e <= s:
+            e = s + 300
         if not ch.get("transcript") and timed_segments:
             ch_text = " ".join(
                 seg["text"] for seg in timed_segments if s <= seg["start"] < e
             )
             ch["transcript"] = ch_text
+        # Publish both spellings so every downstream phase and every client
+        # agrees on the same window.
+        ch["start_time"] = s
+        ch["end_time"] = e
         ch["start_seconds"] = int(s)
+        ch["end_seconds"] = int(e)
         print(
             f"[Phase 1] Chapter '{ch.get('title')}' ({syllabus_source}) "
-            f"→ {len(ch.get('transcript', ''))} transcript chars."
+            f"[{int(s)}s-{int(e)}s] → {len(ch.get('transcript', ''))} transcript chars."
         )
 
     return {

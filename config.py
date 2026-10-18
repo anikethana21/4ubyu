@@ -52,9 +52,13 @@ MAX_PUBLIC_HANDBOOKS = int(os.getenv("MAX_PUBLIC_HANDBOOKS", "150"))
 ENFORCE_PUBLIC_BYOK = os.getenv("ENFORCE_PUBLIC_BYOK", "true").lower() == "true"
 
 # Free LLM Defaults
-DEFAULT_GROQ_KEY = os.getenv('GROQ_API_KEY') or ('ZPytGlx2a9XOORCJXDyXPyWHYF3bydGWS9MDeRLVfz3NYBtAOmws_ksg'[::-1])
-DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b'
-DEFAULT_GEMINI_MODEL = 'gemini-2.0-flash'
+#
+# SECURITY: never hard-code an API key in this file. This repository is public
+# and git history is permanent, so an embedded key is a key that has leaked.
+# Supply defaults through the environment instead: .env locally, dashboard env
+# vars in production. Individual users can also bring their own key in the UI;
+# those are Fernet-encrypted in the per-user vault and never stored in code.
+DEFAULT_GROQ_KEY = os.getenv("GROQ_API_KEY", "")
 DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
