@@ -40,6 +40,7 @@ async def inspect_video_for_hitl(
         "yt_chapters": [],
         "full_transcript": "",
         "timed_transcript": [],
+        "translation_info": {},
         "audio_path": None,
         "description_resources": {},
         "labeled_transcript": [],
@@ -96,6 +97,7 @@ async def inspect_video_for_hitl(
         "missing_topics": state.get("missing_topics", []),
         "syllabus_source": syllabus_source,
         "transcript_chars": len(transcript),
+        "translation": state.get("translation_info", {}) or {},
         "warning": warning,
         "ingestion_debug": ingestion_debug,
     }
@@ -134,6 +136,7 @@ async def run_master_notes_pipeline(
         "yt_chapters": approved_chapters or [],
         "full_transcript": "",
         "timed_transcript": [],
+        "translation_info": {},
         "audio_path": None,
         "description_resources": {},
         "labeled_transcript": [],

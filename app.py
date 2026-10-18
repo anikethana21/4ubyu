@@ -377,6 +377,8 @@ async def hitl_inspect(req: InspectRequest, request: Request):
         data["warning"] = data.get("warning")
         data["syllabus_source"] = data.get("syllabus_source")
         data["transcript_chars"] = data.get("transcript_chars", 0)
+        # Machine-translation notice (non-English lecture auto-translated)
+        data["translation"] = data.get("translation") or {}
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

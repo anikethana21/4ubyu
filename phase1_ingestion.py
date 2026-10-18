@@ -9,6 +9,7 @@ from typing import Dict, Any
 from langgraph.graph import StateGraph, START, END
 from states import MasterNotesState
 from core.transcriber import extract_video_id, fetch_youtube_transcript, format_seconds
+from core.transcript_normalizer import normalize_transcript
 from core.robust_ingestion import extract_robust_metadata
 from core.chapter_detector import choose_syllabus_chapters
 
@@ -87,13 +88,22 @@ def yt_fetch_node(state: MasterNotesState) -> Dict[str, Any]:
 def transcribe_node(state: MasterNotesState) -> Dict[str, Any]:
     """Retrieves timed subtitle segments and complete transcript."""
     video_id = state["video_id"]
+    api_key = state.get("api_key")
+    model_name = state.get("model_name")
+
     full_text, timed_segments = fetch_youtube_transcript(video_id)
+
+    # Normalize non-Latin transcripts (Hindi/Hinglish, CJK, Arabic, Cyrillic …)
+    # to English *before* chapterization, so an English handbook is never built
+    # on Devanagari/Kana/Han source text. No-op for English transcripts, and it
+    # degrades to the original text if translation is unavailable.
+    full_text, timed_segments, translation_info = normalize_transcript(
+        full_text, timed_segments, api_key=api_key, model_name=model_name
+    )
 
     metadata = dict(state.get("video_metadata", {}) or {})
     yt_chapters = state.get("yt_chapters", [])
     video_duration = float(metadata.get("duration", 0) or 0)
-    api_key = state.get("api_key")
-    model_name = state.get("model_name")
 
     # Derive duration from the transcript when metadata extraction failed
     # (e.g. YouTube bot-gated the watch page on a datacenter IP). This keeps the
@@ -144,6 +154,7 @@ def transcribe_node(state: MasterNotesState) -> Dict[str, Any]:
         "yt_chapters": syllabus,
         "raw_chapters": syllabus,
         "syllabus_source": syllabus_source,
+        "translation_info": translation_info,
     }
 
 def build_phase1_graph():
