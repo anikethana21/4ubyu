@@ -508,9 +508,9 @@ def probe(video_id: str, timeout: int = 12) -> Dict[str, Any]:
 
     # Transcript API
     try:
-        from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
+        from core.transcriber import _transcript_api_client  # type: ignore
 
-        tl = YouTubeTranscriptApi().list(video_id)
+        tl = _transcript_api_client().list(video_id)
         count = sum(1 for _ in tl)
         report["transcript_api"] = {"ok": True, "tracks": count}
     except Exception as e:

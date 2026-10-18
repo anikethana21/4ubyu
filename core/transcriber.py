@@ -5,6 +5,7 @@ supporting modern FetchedTranscriptSnippet objects, multi-language detection,
 and robust time-aligned segment extraction.
 """
 
+import os
 import re
 from typing import List, Dict, Any, Tuple
 
@@ -54,11 +55,32 @@ def _normalize_segments(raw_segments: List[Dict[str, Any]]) -> Tuple[str, List[D
     return " ".join(parts), timed
 
 
-def _transcript_via_api(video_id: str) -> Tuple[str, List[Dict[str, Any]]]:
-    """Primary source: youtube-transcript-api (official/auto subtitles)."""
+def _transcript_api_client():
+    """
+    Builds a YouTubeTranscriptApi, routing through YT_PROXY_URL when configured.
+
+    youtube-transcript-api is the fastest transcript source but does not read
+    YT_PROXY_URL on its own (it uses `requests`), so on a datacenter host it must
+    be handed an explicit proxy config or it will be bot-gated.
+    """
     from youtube_transcript_api import YouTubeTranscriptApi
 
-    ytt = YouTubeTranscriptApi()
+    proxy_url = os.getenv("YT_PROXY_URL")
+    if proxy_url:
+        try:
+            from youtube_transcript_api.proxies import GenericProxyConfig
+
+            return YouTubeTranscriptApi(
+                proxy_config=GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
+            )
+        except Exception as e:
+            print(f"[Transcriber] Proxy config notice: {e}")
+    return YouTubeTranscriptApi()
+
+
+def _transcript_via_api(video_id: str) -> Tuple[str, List[Dict[str, Any]]]:
+    """Primary source: youtube-transcript-api (official/auto subtitles)."""
+    ytt = _transcript_api_client()
     transcript_list = ytt.list(video_id)
 
     target_t = None
