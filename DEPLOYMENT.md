@@ -6,6 +6,14 @@ This guide covers deployment options for the **4 U By U** Interactive Educationa
 
 ## Option 1: Render (Recommended — Free & Easiest)
 
+### Step 1 — Set up Supabase (auth, encrypted key vault, workspaces)
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor** → **New query**, paste the contents of **`supabase_schema.sql`** (in this repo) and run it. This creates the `users`, `user_settings`, `workspaces`, `token_blacklist` tables and the `workspaces` storage bucket.
+3. From **Settings → API**, copy the **Project URL** and the **`service_role`** key. (Use the service_role key server-side; never expose it in the browser.)
+
+### Step 2 — Deploy on Render
+
 1. Push your repository to **GitHub**:
    ```bash
    git init
