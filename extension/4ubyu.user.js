@@ -849,15 +849,6 @@
     return null;
   }
 
-  /**
-   * The caption that belongs to one clock reading.
-   *
-   * YouTube puts the visible clock beside a screen-reader label ("0:07" next to
-   * "7 seconds") inside the timestamp cell, while the caption sits in a cousin
-   * element under the same row. So the caption is NOT necessarily a sibling of the
-   * clock: climb a level at a time and take the first branch that carries prose,
-   * skipping the branch that holds the clock itself.
-   */
   /** True when any element at or below ``root`` reads as a clock. */
   function containsClock(root) {
     for (const node of [root].concat(Array.from(root.querySelectorAll("*")))) {
@@ -883,6 +874,15 @@
     return false;
   }
 
+  /**
+   * The caption that belongs to one clock reading.
+   *
+   * YouTube puts the visible clock beside a screen-reader label ("0:07" next to
+   * "7 seconds") inside the timestamp cell, while the caption sits in a cousin
+   * element under the same row. So the caption is NOT necessarily a sibling of the
+   * clock: climb a level at a time and take the first branch that carries prose,
+   * skipping the branch that holds the clock itself.
+   */
   function captionForClock(el) {
     let node = el.parentElement;
     for (let depth = 0; node && depth < 4; depth++, node = node.parentElement) {
