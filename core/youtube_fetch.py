@@ -159,6 +159,12 @@ def fetch_metadata_fallback(video_id: str) -> Dict[str, Any]:
     """
     out: Dict[str, Any] = {}
 
+    # Official YouTube Data API first when a key is configured — the only
+    # metadata source reliably allowed from datacenter/serverless IPs.
+    api = fetch_youtube_data_api(video_id)
+    if api:
+        out.update(api)
+
     player = innertube_player(video_id)
     if player:
         vd = player.get("videoDetails") or {}
@@ -214,6 +220,141 @@ def fetch_metadata_fallback(video_id: str) -> Dict[str, Any]:
             pass
 
     return out
+
+
+def fetch_youtube_data_api(video_id: str) -> Dict[str, Any]:
+    """
+    Official YouTube Data API v3 lookup (requires YOUTUBE_API_KEY). This is the
+    only metadata source that is reliably allowed from datacenter/serverless
+    IPs, so it is preferred when a key is configured.
+
+    Returns a dict with any of: title, channel, duration, description.
+    """
+    key = os.getenv("YOUTUBE_API_KEY") or os.getenv("YT_API_KEY")
+    if not key:
+        return {}
+    try:
+        url = (
+            "https://www.googleapis.com/youtube/v3/videos"
+            f"?id={urllib.parse.quote(video_id)}"
+            f"&part=snippet,contentDetails&key={urllib.parse.quote(key)}"
+        )
+        data = _http_json(url, headers={"User-Agent": _UA}, timeout=15)
+        items = data.get("items") or []
+        if not items:
+            return {}
+        item = items[0]
+        snippet = item.get("snippet") or {}
+        details = item.get("contentDetails") or {}
+        out: Dict[str, Any] = {}
+        if snippet.get("title"):
+            out["title"] = snippet["title"]
+        if snippet.get("channelTitle"):
+            out["channel"] = snippet["channelTitle"]
+        if snippet.get("description"):
+            out["description"] = snippet["description"]
+        thumbs = (snippet.get("thumbnails") or {})
+        if thumbs:
+            last = list(thumbs.values())[-1]
+            if last.get("url"):
+                out["thumbnail"] = last["url"]
+        iso = details.get("duration") or ""
+        m = re.match(
+            r"P(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", iso
+        )
+        if m:
+            d, h, mi, s = (int(g or 0) for g in m.groups())
+            out["duration"] = d * 86400 + h * 3600 + mi * 60 + s
+        return out
+    except Exception as e:
+        print(f"[YouTubeFetch] Data API notice: {e}")
+        return {}
+
+
+def probe(video_id: str, timeout: int = 12) -> Dict[str, Any]:
+    """
+    Diagnostics: reports what each ingestion source returns from *this* host so
+    operators can see exactly which YouTube endpoint is blocked. Never raises.
+    """
+    report: Dict[str, Any] = {}
+
+    # Watch page
+    try:
+        html = _http_bytes(
+            f"https://www.youtube.com/watch?v={video_id}",
+            headers={
+                "User-Agent": _UA,
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cookie": "CONSENT=YES+cb.20210328-17-p0.en+FX+478; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg;",
+            },
+            timeout=timeout,
+        ).decode("utf-8", "ignore")
+        tm = re.search(r"<title>(.*?)</title>", html)
+        report["watch_page"] = {
+            "ok": True,
+            "bytes": len(html),
+            "has_itemprop_duration": 'itemprop="duration"' in html,
+            "has_lengthSeconds": '"lengthSeconds"' in html,
+            "has_shortDescription": '"shortDescription"' in html,
+            "has_player_response": "ytInitialPlayerResponse" in html,
+            "html_title": tm.group(1)[:80] if tm else None,
+        }
+    except Exception as e:
+        report["watch_page"] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:160]}"}
+
+    # InnerTube per-client
+    innertube = []
+    for name, ctx, hdrs in _INNERTUBE_CLIENTS:
+        try:
+            payload = {
+                "context": {"client": ctx},
+                "videoId": video_id,
+                "contentCheckOk": True,
+                "racyCheckOk": True,
+            }
+            resp = _http_json(_INNERTUBE_URL, headers=hdrs,
+                              data=json.dumps(payload).encode(), timeout=timeout)
+            ps = resp.get("playabilityStatus") or {}
+            caps = (
+                (resp.get("captions") or {})
+                .get("playerCaptionsTracklistRenderer", {})
+                .get("captionTracks", [])
+            )
+            innertube.append({
+                "client": name,
+                "status": ps.get("status"),
+                "reason": (ps.get("reason") or "")[:80],
+                "has_details": bool(resp.get("videoDetails")),
+                "length": (resp.get("videoDetails") or {}).get("lengthSeconds"),
+                "captions": len(caps),
+            })
+        except Exception as e:
+            innertube.append({"client": name, "error": f"{type(e).__name__}: {str(e)[:120]}"})
+    report["innertube"] = innertube
+
+    # oEmbed
+    try:
+        _http_json(
+            f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json",
+            headers={"User-Agent": _UA}, timeout=timeout,
+        )
+        report["oembed"] = {"ok": True}
+    except Exception as e:
+        report["oembed"] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+    # Transcript API
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
+
+        tl = YouTubeTranscriptApi().list(video_id)
+        count = sum(1 for _ in tl)
+        report["transcript_api"] = {"ok": True, "tracks": count}
+    except Exception as e:
+        report["transcript_api"] = {"ok": False, "error": f"{type(e).__name__}: {str(e)[:160]}"}
+
+    report["youtube_api_key_set"] = bool(os.getenv("YOUTUBE_API_KEY") or os.getenv("YT_API_KEY"))
+    report["proxy_set"] = bool(os.getenv("YT_PROXY_URL"))
+    return report
 
 
 def _parse_caption_json3(payload: bytes) -> List[Dict[str, Any]]:

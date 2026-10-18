@@ -79,6 +79,13 @@ async def inspect_video_for_hitl(
             "full topic detection."
         )
 
+    try:
+        from core.youtube_fetch import probe
+
+        ingestion_debug = probe(state.get("video_id") or "")
+    except Exception as e:
+        ingestion_debug = {"error": str(e)}
+
     return {
         "status": "hitl_required",
         "video_id": state.get("video_id"),
@@ -88,6 +95,7 @@ async def inspect_video_for_hitl(
         "syllabus_source": syllabus_source,
         "transcript_chars": len(transcript),
         "warning": warning,
+        "ingestion_debug": ingestion_debug,
     }
 
 async def run_master_notes_pipeline(

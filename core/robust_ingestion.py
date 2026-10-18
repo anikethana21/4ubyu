@@ -127,9 +127,7 @@ def extract_robust_metadata(youtube_url: str) -> Tuple[str, Dict[str, Any], List
                     duration_str = format_seconds(duration)
 
             if not title or title.startswith("Educational Video"):
-                t_m = re.search(r'"title":"(.*?)"', html)
-                if t_m:
-                    title = t_m.group(1)
+                pass  # title is resolved reliably via oEmbed/InnerTube below
 
             desc_m = re.search(r'"shortDescription":"(.*?)"(?:,"isCrawlable"|,"thumbnail")', html)
             if desc_m:
