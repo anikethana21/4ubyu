@@ -245,6 +245,13 @@ def detect_chapters_from_transcript(
 ) -> Tuple[List[Dict[str, Any]], str]:
     """
     Primary chapterization from English (or translated) timed transcript.
+
+    Uses the robust topic-driven chapterizer (core.topic_chapterize) as the
+    source of truth: fine-grained semantic windows, boundary detection via
+    self-similarity drops, and hard duration/coherence criteria so every
+    chapter is a real topic block — not an arbitrary timestamp slice.
+
+    Falls back to embedding clustering only if the topic chapterizer fails.
     Returns (chapters, source_label).
     """
     if not timed_transcript:
@@ -265,7 +272,56 @@ def detect_chapters_from_transcript(
         last = timed_transcript[-1]
         video_duration = float(last.get("end", last["start"] + last.get("duration", 0)))
 
-    # Tune clustering: longer videos → slightly more granular chapters
+    # ------------------------------------------------------------------
+    # PRIMARY: robust topic-based chapterization
+    # ------------------------------------------------------------------
+    try:
+        from core.topic_chapterizer import topic_chapterize
+
+        topic_chapters, src = topic_chapterize(
+            timed_transcript,
+            full_transcript,
+            float(video_duration),
+            api_key=api_key,
+            model_name=model_name,
+            min_chapters=min_chapters,
+        )
+
+        if topic_chapters and len(topic_chapters) >= 2:
+            # Normalize into the pipeline's expected dict shape
+            chapters: List[Dict[str, Any]] = []
+            for ch in topic_chapters:
+                start = float(ch.get("start_time", 0))
+                end = float(ch.get("end_time", start + 300))
+                chapters.append(
+                    {
+                        "title": ch.get("title") or ch.get("timestamp_str", "Chapter"),
+                        "start_time": start,
+                        "end_time": end,
+                        "timestamp_str": ch.get("timestamp_str", format_seconds(start)),
+                        "transcript": ch.get("transcript")
+                        or _slice_transcript(timed_transcript, start, end),
+                        "start_seconds": int(start),
+                        "source": ch.get("source", "topic_detected"),
+                    }
+                )
+            chapters = _normalize_end_times(chapters, float(video_duration))
+            for c in chapters:
+                if not c.get("transcript"):
+                    s = float(c["start_time"])
+                    e = float(c["end_time"])
+                    c["transcript"] = _slice_transcript(timed_transcript, s, e)
+            print(
+                f"[ChapterDetector] Topic chapterization: {len(chapters)} chapters "
+                f"(duration ~{int(video_duration)}s, source={src})."
+            )
+            return chapters, src
+    except Exception as e:  # pragma: no cover - defensive
+        print(f"[ChapterDetector] Topic chapterizer failed, falling back: {e}")
+
+    # ------------------------------------------------------------------
+    # FALLBACK: original embedding clustering (kept for safety)
+    # ------------------------------------------------------------------
     duration_min = max(1, video_duration / 60)
     if duration_min > 120:
         distance_threshold = 0.34
@@ -278,29 +334,6 @@ def detect_chapters_from_transcript(
         window_sec = 60
 
     windows = build_timed_windows(timed_transcript, window_sec=window_sec)
-
-    # Opt-in neural boundary model (USE_NN_CHAPTERIZER=1); falls back to clustering
-    nn_chapters = _detect_chapters_with_nn_model(
-        timed_transcript, video_duration, window_sec,
-        api_key=api_key, model_name=model_name,
-    )
-    if nn_chapters and len(nn_chapters) >= 2:
-        chapters = nn_chapters
-        chapters = _split_oversized_chapters(
-            chapters, timed_transcript, max_duration_sec=max_chapter_duration_sec
-        )
-        chapters = _normalize_end_times(chapters, video_duration)
-        for ch in chapters:
-            if not ch.get("transcript"):
-                s = float(ch["start_time"])
-                e = float(ch["end_time"])
-                ch["transcript"] = _slice_transcript(timed_transcript, s, e)
-        print(
-            f"[ChapterDetector] NN-model chapterization: {len(chapters)} chapters "
-            f"(duration ~{int(video_duration)}s)."
-        )
-        return chapters, "transcript_nn_model"
-
     segments = cluster_windows_to_segments(windows, distance_threshold=distance_threshold)
 
     chapters = _segments_to_chapters(
