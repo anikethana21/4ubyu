@@ -113,7 +113,13 @@ def _opener() -> urllib.request.OpenerDirector:
 
 def _http_bytes(url: str, headers: Optional[Dict[str, str]] = None,
                 data: Optional[bytes] = None, timeout: int = 15) -> bytes:
-    req = urllib.request.Request(url, data=data, headers=headers or {})
+    hdrs = dict(headers or {})
+    # Authenticate YouTube requests with exported cookies when available.
+    if "youtube.com" in url and "Cookie" not in hdrs:
+        cookie_header = _cookie_header()
+        if cookie_header:
+            hdrs["Cookie"] = cookie_header
+    req = urllib.request.Request(url, data=data, headers=hdrs)
     with _opener().open(req, timeout=timeout) as res:
         raw = res.read()
         if (res.headers.get("Content-Encoding") or "").lower() == "gzip":
@@ -154,6 +160,32 @@ def _cookiefile() -> Optional[str]:
         except Exception as e:
             print(f"[YouTubeFetch] cookie decode notice: {e}")
     return None
+
+
+def _cookie_header() -> Optional[str]:
+    """
+    Builds a `Cookie:` header from the configured cookies.txt (YouTube/Google
+    entries only). Lets InnerTube, the watch page and the timedtext caption
+    endpoints authenticate, which defeats the datacenter bot check.
+    """
+    path = _cookiefile()
+    if not path:
+        return None
+    pairs: List[str] = []
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                if line.startswith("#") or not line.strip():
+                    continue
+                fields = line.rstrip("\r\n").split("\t")
+                if len(fields) < 7:
+                    continue
+                domain, name, value = fields[0], fields[5], fields[6]
+                if "youtube.com" in domain or "google.com" in domain:
+                    pairs.append(f"{name}={value}")
+    except Exception:
+        return None
+    return "; ".join(pairs) if pairs else None
 
 
 def ingestion_hint() -> str:
@@ -407,13 +439,18 @@ def probe(video_id: str, timeout: int = 12) -> Dict[str, Any]:
 
     # Watch page
     try:
+        watch_headers = {"User-Agent": _UA, "Accept-Language": "en-US,en;q=0.9"}
+        cookie_header = _cookie_header()
+        if cookie_header:
+            watch_headers["Cookie"] = cookie_header
+        else:
+            watch_headers["Cookie"] = (
+                "CONSENT=YES+cb.20210328-17-p0.en+FX+478; "
+                "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg;"
+            )
         html = _http_bytes(
             f"https://www.youtube.com/watch?v={video_id}",
-            headers={
-                "User-Agent": _UA,
-                "Accept-Language": "en-US,en;q=0.9",
-                "Cookie": "CONSENT=YES+cb.20210328-17-p0.en+FX+478; SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg;",
-            },
+            headers=watch_headers,
             timeout=timeout,
         ).decode("utf-8", "ignore")
         tm = re.search(r"<title>(.*?)</title>", html)
@@ -482,6 +519,7 @@ def probe(video_id: str, timeout: int = 12) -> Dict[str, Any]:
     report["youtube_api_key_set"] = bool(os.getenv("YOUTUBE_API_KEY") or os.getenv("YT_API_KEY"))
     report["proxy_set"] = bool(os.getenv("YT_PROXY_URL"))
     report["ytdlp_cookies_set"] = bool(_cookiefile())
+    report["cookie_header_set"] = bool(_cookie_header())
     return report
 
 
