@@ -151,6 +151,7 @@ class MasterNotesState(TypedDict):
     full_transcript: str
     timed_transcript: list[dict] # [{start: float, duration: float, text: str}]
     syllabus_source: str        # "transcript" | "description" | "fallback" | ...
+    ingest_source: str          # "extension" | "upload" | "server" (how the text arrived)
     translation_info: dict      # {detected_script, translated, note, ...}
     audio_path: Optional[str]
 

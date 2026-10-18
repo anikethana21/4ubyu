@@ -83,6 +83,74 @@ async def get_current_user(request: Request) -> Dict[str, Any]:
         )
 
 
+async def get_ingest_user(request: Request) -> Dict[str, Any]:
+    """
+    Machine-client dependency for the ingest endpoint (extension / userscript).
+
+    Deliberately **ignores the session cookie**. Only an explicit
+    ``Authorization: Bearer <token>`` is accepted, so a malicious page can never
+    use ambient browser credentials to push data into an account. Accepts either
+    a normal session token or an ingest-scoped token.
+    """
+    auth_header = request.headers.get("Authorization") or ""
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Provide an ingest token via 'Authorization: Bearer <token>'.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = auth_header[7:].strip()
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired ingest token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    scope = payload.get("scope", "session")
+    if scope not in ("session", "ingest"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token scope not permitted here.")
+
+    jti = payload.get("jti")
+    if jti and is_token_blacklisted(jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Ingest token has been revoked.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload.get("sub")
+    client = get_supabase_client()
+    if not client:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database service is unavailable. Please verify SUPABASE_URL and SUPABASE_KEY."
+        )
+
+    try:
+        res = client.table("users").select("id, email, token_version").eq("id", user_id).execute()
+        if not res.data or len(res.data) == 0:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User account not found.")
+        user = res.data[0]
+        if user.get("token_version", 1) != payload.get("token_version", 1):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Ingest token invalidated by a password change or logout.",
+            )
+        user["scope"] = scope
+        user["jti"] = jti
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database authentication error: {str(e)}"
+        )
+
+
 async def get_optional_current_user(request: Request) -> Optional[Dict[str, Any]]:
     """Lenient dependency: returns current user if authenticated, or None if guest."""
     try:

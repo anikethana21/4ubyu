@@ -4,6 +4,7 @@ Serves the Landing Page, Study Library Dashboard, Generation API, SSE Streaming 
 Persistent User Authentication, Encrypted Settings Vault, and Private Workspaces.
 """
 
+import hmac
 import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -34,7 +35,14 @@ def require_supabase_client():
     return client
 
 from core.security import hash_password, verify_password, create_access_token, blacklist_token
-from core.auth_dependency import get_current_user, get_optional_current_user
+from core.auth_dependency import get_current_user, get_optional_current_user, get_ingest_user
+from core.ingest_store import (
+    IngestValidationError,
+    load_ingest_payload,
+    normalize_payload,
+    save_ingest_payload,
+    summarize as summarize_ingest,
+)
 from core.workspace_manager import (
     save_user_workspace,
     list_user_workspaces,
@@ -56,6 +64,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Body-size guard for the machine-facing ingest endpoint. Rejecting on
+# Content-Length avoids buffering a hostile multi-hundred-MB body in memory
+# before validation ever runs.
+MAX_INGEST_BYTES = int(os.getenv("MAX_INGEST_BYTES", str(8 * 1024 * 1024)))
+
+
+@app.middleware("http")
+async def limit_ingest_body_size(request: Request, call_next):
+    if request.url.path == "/api/ingest/transcript":
+        raw_length = request.headers.get("content-length")
+        if raw_length and raw_length.isdigit() and int(raw_length) > MAX_INGEST_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={"detail": f"Payload too large. Limit is {MAX_INGEST_BYTES} bytes."},
+            )
+    return await call_next(request)
 
 # Mount Static & Output Directories
 static_dir = BASE_DIR / "static"
@@ -95,21 +120,41 @@ class SettingsUpdateRequest(BaseModel):
     gemini_api_key: Optional[str] = None
     eraser_api_key: Optional[str] = None
 
+class IngestTranscriptRequest(BaseModel):
+    """Transcript captured client-side (browser extension / userscript).
+
+    Deliberately contains NO credentials: no cookies, no authorization headers.
+    The server never contacts YouTube for this path.
+    """
+    video_id: str
+    transcript: List[Dict[str, Any]] = []
+    title: Optional[str] = None
+    channel: Optional[str] = None
+    description: Optional[str] = None
+    duration: Optional[float] = None
+    youtube_url: Optional[str] = None
+    chapters: Optional[List[Dict[str, Any]]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    source: Optional[str] = "extension"
+
+
 class InspectRequest(BaseModel):
-    youtube_url: str
+    youtube_url: str = ""
     api_key: Optional[str] = None
     model_name: Optional[str] = None
+    ingest_id: Optional[str] = None
 
 class SynthesizeRequest(BaseModel):
-    youtube_url: str
-    video_id: str
-    approved_chapters: List[Dict[str, Any]]
+    youtube_url: str = ""
+    video_id: str = ""
+    approved_chapters: List[Dict[str, Any]] = []
     api_key: Optional[str] = None
     model_name: Optional[str] = None
     eraser_api_key: Optional[str] = None
     color_palette: str = "dark_academic"
     visual_preference: str = "auto"
     output_format: str = "html"
+    ingest_id: Optional[str] = None
 
 class GenerateRequest(BaseModel):
     youtube_url: str
@@ -269,6 +314,68 @@ async def update_user_settings(req: SettingsUpdateRequest, user: Dict[str, Any] 
     return {"status": "updated", "settings": updated}
 
 # ---------------------------------------------------------------------------
+# EXTERNAL INGESTION (browser extension / userscript / upload path)
+# ---------------------------------------------------------------------------
+
+async def _resolve_ingest_identity(request: Request) -> Dict[str, Any]:
+    """
+    Resolves who is pushing a transcript.
+
+    1. A shared ``EXTENSION_INGEST_TOKEN`` match — for self-hosted single-user
+       setups where no account linking is wanted.
+    2. A signed per-user Bearer token (scope "session" or "ingest").
+
+    Never accepts the session cookie: an ingest request must present an explicit
+    token, so no ambient browser credential can be abused here.
+    """
+    auth_header = request.headers.get("Authorization") or ""
+    token = auth_header[7:].strip() if auth_header.startswith("Bearer ") else ""
+    shared = (os.getenv("EXTENSION_INGEST_TOKEN") or "").strip()
+    if shared and token and hmac.compare_digest(token, shared):
+        return {"user_id": None, "scope": "shared"}
+    user = await get_ingest_user(request)
+    return {"user_id": user["id"], "scope": user.get("scope", "session")}
+
+
+@app.post("/api/ingest/transcript", status_code=201)
+async def ingest_transcript(req: IngestTranscriptRequest, request: Request):
+    """
+    Accepts a transcript that the user's own browser captured (extension/userscript).
+
+    The server never contacts YouTube here, and never accepts browser cookies —
+    only transcript text plus public metadata. Validation limits, sanitization
+    and ownership rules live in ``core/ingest_store.py``.
+    """
+    identity = await _resolve_ingest_identity(request)
+
+    allowed, msg = check_capacity_limits()
+    if not allowed:
+        raise HTTPException(status_code=429, detail=msg)
+
+    try:
+        payload = normalize_payload(
+            req.model_dump(exclude_none=True), source=req.source or "extension"
+        )
+    except IngestValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    saved = save_ingest_payload(payload, user_id=identity["user_id"], source=payload["source"])
+
+    # Summary only — the transcript itself is never echoed back to the client.
+    return {
+        "status": "ingested",
+        "ingest_id": saved["ingest_id"],
+        "video_id": saved["video_id"],
+        "transcript_chars": saved["char_count"],
+        "segments": saved["segment_count"],
+        "expires_at": saved.get("expires_at"),
+        "deduplicated": saved.get("deduplicated", False),
+        "open_url": f"/?ingest={saved['ingest_id']}",
+        "video": summarize_ingest(payload),
+    }
+
+
+# ---------------------------------------------------------------------------
 # PRIVATE USER WORKSPACES
 # ---------------------------------------------------------------------------
 
@@ -358,11 +465,23 @@ async def hitl_inspect(req: InspectRequest, request: Request):
         if not model_name:
             model_name = vault.get("default_model")
 
+    # Client-captured transcript (browser extension / userscript). When present,
+    # Phase 1 skips YouTube entirely — that is the whole point of the seam.
+    ingested = None
+    if req.ingest_id:
+        ingested = load_ingest_payload(req.ingest_id, current_user["id"] if current_user else None)
+        if ingested is None:
+            raise HTTPException(
+                status_code=404,
+                detail="That ingested transcript was not found or has expired. Re-send it from the extension.",
+            )
+
     try:
         data = await inspect_video_for_hitl(
             youtube_url=req.youtube_url,
             api_key=api_key,
-            model_name=model_name
+            model_name=model_name,
+            ingested=ingested,
         )
         chaps = data.get("chapters", [])
         data["suggested_chapters"] = chaps
@@ -407,16 +526,29 @@ async def hitl_synthesize(req: SynthesizeRequest, request: Request):
         if color_palette == "dark_academic" and vault.get("preferred_theme"):
             color_palette = vault.get("preferred_theme")
 
+    # Same seam as inspect: reuse the transcript the user's browser captured, so
+    # synthesis never re-fetches YouTube (which is exactly what the bot gate
+    # blocks on a datacenter host).
+    ingested = None
+    if req.ingest_id:
+        ingested = load_ingest_payload(req.ingest_id, current_user["id"] if current_user else None)
+        if ingested is None:
+            raise HTTPException(
+                status_code=404,
+                detail="That ingested transcript was not found or has expired. Re-send it from the extension.",
+            )
+
     try:
         res = await run_master_notes_pipeline(
-            youtube_url=req.youtube_url,
+            youtube_url=req.youtube_url or (ingested or {}).get("youtube_url", ""),
             api_key=api_key,
             model_name=model_name,
             eraser_api_key=eraser_api_key,
             color_palette=color_palette,
             visual_preference=req.visual_preference,
             output_format=req.output_format,
-            approved_chapters=req.approved_chapters
+            approved_chapters=req.approved_chapters,
+            ingested=ingested,
         )
         video_id = res["video_id"]
         meta = res.get("video_metadata", {})

@@ -15,6 +15,15 @@ from core.chapter_detector import choose_syllabus_chapters
 
 def yt_fetch_node(state: MasterNotesState) -> Dict[str, Any]:
     """Fetches high-level metadata and chapters with 100% cloud reliability."""
+    # ── Externally ingested seam ────────────────────────────────────────────
+    # When the transcript was captured client-side (browser extension/userscript
+    # or the audio-upload path), the payload already carries metadata, chapters
+    # and text. Never touch the network in that case — that is the whole point
+    # of the seam: it lets ingestion happen where YouTube cannot bot-gate it.
+    if (state.get("full_transcript") or "").strip():
+        print("[Phase 1] Externally ingested payload detected — skipping YouTube metadata fetch.")
+        return {}
+
     url = state["youtube_url"]
     video_id = extract_video_id(url)
     
@@ -91,7 +100,22 @@ def transcribe_node(state: MasterNotesState) -> Dict[str, Any]:
     api_key = state.get("api_key")
     model_name = state.get("model_name")
 
-    full_text, timed_segments = fetch_youtube_transcript(video_id)
+    # ── Externally ingested seam ────────────────────────────────────────────
+    # A client-side capture (extension/userscript) or the upload path supplies
+    # the transcript directly. Skip every network source — YouTube never sees
+    # this request, so the datacenter bot gate cannot break it.
+    external_text = (state.get("full_transcript") or "").strip()
+    external_segments = list(state.get("timed_transcript") or [])
+
+    if external_text and external_segments:
+        full_text, timed_segments = external_text, external_segments
+        print(
+            f"[Phase 1] Using externally ingested transcript "
+            f"({len(timed_segments)} segments, {len(full_text)} chars) — no network fetch."
+        )
+    else:
+        full_text, timed_segments = fetch_youtube_transcript(video_id)
+
 
     # Normalize non-Latin transcripts (Hindi/Hinglish, CJK, Arabic, Cyrillic …)
     # to English *before* chapterization, so an English handbook is never built

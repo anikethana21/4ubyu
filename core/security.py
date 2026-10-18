@@ -109,8 +109,20 @@ def _b64url_decode(s: str) -> bytes:
     return base64.urlsafe_b64decode(s.encode("utf-8"))
 
 
-def create_access_token(user_id: str, email: str, token_version: int = 1, days: int = SESSION_DURATION_DAYS) -> str:
-    """Creates a cryptographically signed JWT access token with JTI and sliding expiry."""
+def create_access_token(
+    user_id: str,
+    email: str,
+    token_version: int = 1,
+    days: int = SESSION_DURATION_DAYS,
+    scope: str = "session",
+) -> str:
+    """
+    Creates a cryptographically signed JWT access token with JTI and sliding expiry.
+
+    ``scope`` grants least privilege to machine clients:
+      * "session" — a normal logged-in browser session (default)
+      * "ingest"  — may only hand over an already-captured transcript
+    """
     now = datetime.datetime.now(datetime.timezone.utc)
     expire = now + datetime.timedelta(days=days)
     jti = str(uuid.uuid4())
@@ -121,6 +133,7 @@ def create_access_token(user_id: str, email: str, token_version: int = 1, days: 
         "sub": str(user_id),
         "email": email,
         "token_version": token_version,
+        "scope": scope,
         "jti": jti,
         "iat": now_ts,
         "exp": exp_ts

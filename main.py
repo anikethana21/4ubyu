@@ -19,12 +19,45 @@ from phase7_renderer import html_tri_pane_workspace_renderer
 from phase8_chatbot import build_rag_index_node
 from core.library_manager import check_capacity_limits
 
+def _apply_ingest(
+    initial_state: MasterNotesState, ingested: Optional[Dict[str, Any]]
+) -> MasterNotesState:
+    """
+    Seeds state from a client-captured ingest payload.
+
+    Phase 1 treats a pre-filled ``full_transcript`` as "already ingested" and
+    skips every network source (see ``phase1_ingestion.py``). That is what lets
+    a browser extension supply the lecture text on a host YouTube would
+    otherwise bot-gate — with no proxy and no stored cookies anywhere.
+    """
+    if not ingested:
+        initial_state["ingest_source"] = "server"
+        return initial_state
+
+    meta = ingested.get("metadata")
+    initial_state["youtube_url"] = ingested.get("youtube_url") or initial_state.get("youtube_url") or ""
+    initial_state["video_id"] = ingested.get("video_id") or initial_state.get("video_id") or ""
+    initial_state["video_metadata"] = dict(meta) if isinstance(meta, dict) else {}
+    initial_state["video_description"] = ingested.get("description") or ""
+    initial_state["full_transcript"] = ingested.get("full_transcript") or ""
+    initial_state["timed_transcript"] = list(ingested.get("timed_transcript") or [])
+    chapters = ingested.get("chapters") or []
+    # Human-approved chapters (Phase 3) always win over client-scraped hints.
+    if chapters and not initial_state.get("yt_chapters"):
+        initial_state["yt_chapters"] = list(chapters)
+        initial_state["raw_chapters"] = list(chapters)
+    initial_state["ingest_source"] = ingested.get("source") or "external"
+    return initial_state
+
+
 async def inspect_video_for_hitl(
-    youtube_url: str,
+    youtube_url: str = "",
     api_key: Optional[str] = None,
-    model_name: Optional[str] = None
+    model_name: Optional[str] = None,
+    ingested: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Runs Phase 1 & 2 to extract metadata and chapters for Human-in-the-Loop review."""
+
     initial_state: MasterNotesState = {
         "youtube_url": youtube_url,
         "output_format": "html",
@@ -41,6 +74,7 @@ async def inspect_video_for_hitl(
         "full_transcript": "",
         "timed_transcript": [],
         "translation_info": {},
+        "ingest_source": "",
         "audio_path": None,
         "description_resources": {},
         "labeled_transcript": [],
@@ -59,6 +93,7 @@ async def inspect_video_for_hitl(
     }
 
     print("[4 U By U HITL] Phase 1: Ingesting video metadata and timestamps...")
+    initial_state = _apply_ingest(initial_state, ingested)
     phase1_app = build_phase1_graph()
     state = await phase1_app.ainvoke(initial_state)
 
@@ -96,6 +131,7 @@ async def inspect_video_for_hitl(
         "chapters": state.get("yt_chapters", []),
         "missing_topics": state.get("missing_topics", []),
         "syllabus_source": syllabus_source,
+        "ingest_source": state.get("ingest_source") or "server",
         "transcript_chars": len(transcript),
         "translation": state.get("translation_info", {}) or {},
         "warning": warning,
@@ -103,14 +139,15 @@ async def inspect_video_for_hitl(
     }
 
 async def run_master_notes_pipeline(
-    youtube_url: str,
+    youtube_url: str = "",
     api_key: Optional[str] = None,
     model_name: Optional[str] = None,
     eraser_api_key: Optional[str] = None,
     color_palette: str = "dark_academic",
     visual_preference: str = "auto",
     output_format: str = "html",
-    approved_chapters: Optional[List[Dict[str, Any]]] = None
+    approved_chapters: Optional[List[Dict[str, Any]]] = None,
+    ingested: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Executes all phases end-to-end for a given YouTube tutorial.
@@ -137,6 +174,7 @@ async def run_master_notes_pipeline(
         "full_transcript": "",
         "timed_transcript": [],
         "translation_info": {},
+        "ingest_source": "",
         "audio_path": None,
         "description_resources": {},
         "labeled_transcript": [],
@@ -156,6 +194,7 @@ async def run_master_notes_pipeline(
 
     # PHASE 1: Ingestion (Sequential)
     print("[4 U By U] Phase 1: Ingesting metadata and subtitles...")
+    initial_state = _apply_ingest(initial_state, ingested)
     phase1_app = build_phase1_graph()
     state = await phase1_app.ainvoke(initial_state)
 

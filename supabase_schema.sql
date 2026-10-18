@@ -51,6 +51,26 @@ create table if not exists public.workspaces (
 create index if not exists workspaces_user_id_idx on public.workspaces (user_id, created_at desc);
 
 -- ---------------------------------------------------------------------------
+-- ingest_payloads  (transcripts captured client-side by the browser extension)
+-- NOTE: this table holds transcript text + public video metadata ONLY.
+-- It must never contain cookies, credentials or authorization headers.
+-- ---------------------------------------------------------------------------
+create table if not exists public.ingest_payloads (
+    id            uuid primary key,
+    user_id       uuid references public.users(id) on delete cascade,
+    video_id      text not null,
+    source        text default 'extension',
+    char_count    integer default 0,
+    segment_count integer default 0,
+    payload       jsonb not null,
+    created_at    timestamptz not null default now(),
+    expires_at    timestamptz not null default now() + interval '24 hours'
+);
+
+create index if not exists ingest_payloads_user_idx  on public.ingest_payloads (user_id, created_at desc);
+create index if not exists ingest_payloads_video_idx on public.ingest_payloads (video_id, created_at desc);
+
+-- ---------------------------------------------------------------------------
 -- token_blacklist  (revoked JWT JTIs on logout)
 -- ---------------------------------------------------------------------------
 create table if not exists public.token_blacklist (
@@ -76,4 +96,5 @@ on conflict (id) do nothing;
 alter table public.users           disable row level security;
 alter table public.user_settings   disable row level security;
 alter table public.workspaces      disable row level security;
+alter table public.ingest_payloads disable row level security;
 alter table public.token_blacklist disable row level security;

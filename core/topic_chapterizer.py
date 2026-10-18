@@ -106,10 +106,17 @@ def _find_boundaries(
 def _enforce_duration_constraints(
     segments: List[Dict[str, Any]],
     video_duration: float,
+    timed_transcript: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Merge chapters shorter than MIN_CHAPTER_SEC with neighbors.
-    Split chapters longer than MAX_CHAPTER_SEC at best internal boundary.
+    Split chapters longer than MAX_CHAPTER_SEC at transcript-aligned points.
+
+    Both branches MUST keep the pipeline's contract fields (``start_time`` /
+    ``end_time``) in sync with the internal ``start_sec`` / ``end_sec`` pair.
+    Letting them drift was the cause of a real bug: a 3-hour lecture came out as
+    12 chapters all stamped 0:00, each carrying the *whole* lecture transcript,
+    because every split part inherited the parent's ``start_time``.
     """
     if not segments:
         return segments
@@ -127,6 +134,7 @@ def _enforce_duration_constraints(
         ):
             nxt = segments[i + 1]
             seg["end_sec"] = nxt.get("end_sec", seg["end_sec"])
+            seg["end_time"] = seg["end_sec"]  # keep contract field in sync
             seg["text"] = (seg.get("text", "") + " " + nxt.get("text", "")).strip()
             seg["merged_with"] = nxt.get("title", "untitled")
             i += 1
@@ -148,13 +156,20 @@ def _enforce_duration_constraints(
         part = 1
         while t < end - 1:
             chunk_end = min(t + step, end)
+            chunk_text = (
+                _slice_text(timed_transcript, t, chunk_end) if timed_transcript else ""
+            )
             final.append(
                 {
                     **seg,
                     "start_sec": t,
                     "end_sec": chunk_end,
+                    # Each part owns ITS OWN window — never the parent's.
+                    "start_time": t,
+                    "end_time": chunk_end,
+                    "timestamp_str": format_seconds(t),
                     "title": f"{seg.get('title', 'Section')} (Part {part})",
-                    "text": _slice_text([], t, chunk_end) or seg.get("text", ""),
+                    "text": chunk_text or seg.get("text", ""),
                     "source": "topic_split",
                 }
             )
@@ -289,7 +304,9 @@ def topic_chapterize(
         )
 
     # 4. Enforce hard duration criteria (merge short, split long)
-    segments = _enforce_duration_constraints(segments, float(video_duration))
+    segments = _enforce_duration_constraints(
+        segments, float(video_duration), timed_transcript
+    )
 
     # 5. Re-slice transcripts for final segments
     for seg in segments:
