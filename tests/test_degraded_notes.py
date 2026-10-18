@@ -131,14 +131,20 @@ def test_the_old_fabrication_cannot_return(monkeypatch):
     assert "could not be written up" in explanation
 
 
-def test_a_missing_key_is_named(monkeypatch):
-    """No key is a different situation from a quota, and says so."""
+def test_a_missing_model_is_reported_honestly(monkeypatch):
+    """No model is a different situation from a quota, and the notice says which.
+
+    It must not *guess* "no API key is configured": the router falls back to the
+    server's own environment key, and a missing model has several possible causes,
+    so naming the wrong one sends the reader to fix the wrong thing.
+    """
     monkeypatch.setattr(p5, "get_chat_model", lambda **kwargs: None)
 
     explanation = p5.theory_agent_node(_state())["explanation"]
 
     assert "could not be written up" in explanation
-    assert "no API key is configured" in explanation
+    assert "no model was available" in explanation
+    assert "no API key is configured" not in explanation
 
 
 def test_helpers_classify_provider_refusals():

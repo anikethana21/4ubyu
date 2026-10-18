@@ -11,7 +11,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 
 from states import MasterNotesState
-from core.model_router import get_chat_model
+from core.model_router import get_usable_chat_model
+from core.model_output import numbered_items
 
 def format_seconds(seconds: int) -> str:
     m, s = divmod(int(seconds), 60)
@@ -30,110 +31,16 @@ def detect_course_domain(video_title: str, video_desc: str = "", chapters_text: 
         return "machine_learning"
     return "general_tech"
 
-ML_TOPIC_SYNTHESIS = {
-    "introduction": "Course Welcome, Prerequisites & Machine Learning Foundations",
-    "content": "Curriculum Roadmap, Tools & Development Environment Setup",
-    "roadmap": "Curriculum Roadmap, Tools & Development Environment Setup",
-    "what is machine learning": "Core Philosophy of Machine Learning & Statistical Induction",
-    "applications": "Real-World Industrial Applications: Recommenders, Vision & Analytics",
-    "traditional programming": "Rule-Based Determinism vs Data-Driven Paradigm Shift",
-    "difference b/w ai,ml,dl": "Taxonomic Hierarchy: Artificial Intelligence vs Machine Learning vs Deep Learning",
-    "types of machine learning": "Taxonomy of ML: Supervised, Unsupervised & Reinforcement Learning",
-    "steps for making a machine learning model": "The Complete Machine Learning Engineering Lifecycle",
-    "eda": "Exploratory Data Analysis: Statistical Distributions & Visual Diagnostics",
-    "data cleaning": "Data Cleaning: Missing Value Imputation & Outlier Remediation",
-    "data preprocessing": "Data Preprocessing: Categorical Feature Encoding & Feature Scaling",
-    "feature engineering": "Feature Engineering: Interaction Features & Domain Transformations",
-    "feature selection": "Feature Selection: Filter, Wrapper & Embedded Methods",
-    "project 1": "End-to-End Supervised ML Pipeline: Ingestion to Validation",
-    "project 2": "Advanced Real-World ML Pipeline: Hyperparameter Tuning & Evaluation",
-    "outro": "Course Summary, Key Takeaways & Production Best Practices"
-}
-
-AGENTIC_TOPIC_SYNTHESIS = {
-    "introduction": "Course Overview & The Shift to Agentic AI Architectures",
-    "generative ai vs agentic": "Single-Prompt LLMs vs Autonomous Action Loops",
-    "why langgraph": "Cyclic Computation, State Machines & Workflow Orchestration",
-    "sequential workflow": "Sequential Workflow Fundamentals & StateGraph Basics",
-    "parallel workflow": "Concurrent Fan-Out Execution & State Reducer Patterns",
-    "conditional workflow": "Dynamic Routing & Tool Calling Architectures",
-    "iterative workflow": "Cyclic Self-Correction & Evaluator-Optimizer Feedback Loops",
-    "human in the loop": "State Persistence via MemorySaver Checkpointing & Human Review"
-}
-
 def derive_grounded_section_title(chapter_title: str, domain: str, video_title: str) -> str:
-    """Derives a rich, domain-grounded section title without foreign topic leakage."""
-    c_lower = chapter_title.lower()
-    
-    if domain == "machine_learning":
-        for key, title in ML_TOPIC_SYNTHESIS.items():
-            if key in c_lower:
-                return title
-        clean_t = re.sub(r"^\d+[\.\:\s\-]*", "", chapter_title).strip()
-        return f"{clean_t}: Core Foundations & Practical Implementation"
-        
-    elif domain == "agentic_ai":
-        for key, title in AGENTIC_TOPIC_SYNTHESIS.items():
-            if key in c_lower:
-                return title
-        clean_t = re.sub(r"^\d+[\.\:\s\-]*", "", chapter_title).strip()
-        return f"{clean_t}: Agentic Architecture & Workflow Implementation"
-        
-    else:
-        clean_t = re.sub(r"^\d+[\.\:\s\-]*", "", chapter_title).strip()
-        return f"{clean_t}: Concepts & Practical Walkthrough"
+    """The name a section falls back to: the chapter's own topic name.
 
-
-def derive_subtopic_title_fallback(
-    base_title: str,
-    sub_text: str,
-    sub_index: int,
-    total_subs: int,
-    domain: str
-) -> str:
-    """Derives domain-grounded sub-section title based on transcript keywords when LLM is unavailable."""
-    text_low = sub_text.lower()
-    
-    # Machine Learning subtopic keywords
-    if domain == "machine_learning":
-        if any(k in text_low for k in ["eda", "plot", "distribution", "histogram", "scatter", "visual", "seaborn", "matplotlib"]):
-            return f"{base_title}: Exploratory Data Analysis & Visual Diagnostics"
-        elif any(k in text_low for k in ["missing", "imput", "null", "clean", "outlier", "drop", "replace"]):
-            return f"{base_title}: Data Cleaning & Missing Value Remediation"
-        elif any(k in text_low for k in ["scale", "scaling", "encode", "encoding", "standard", "minmax", "onehot", "dummy", "preproc"]):
-            return f"{base_title}: Feature Preprocessing & Transformation Pipeline"
-        elif any(k in text_low for k in ["feature selection", "feature engineering", "correlation", "variance"]):
-            return f"{base_title}: Feature Engineering & Selection Strategy"
-        elif any(k in text_low for k in ["train", "fit", "model", "regression", "classif", "algorithm", "learn"]):
-            return f"{base_title}: Model Architecture & Parameter Optimization"
-        elif any(k in text_low for k in ["evaluat", "metric", "accuracy", "precision", "recall", "f1", "roc", "auc", "matrix"]):
-            return f"{base_title}: Evaluation Metrics & Cross-Validation Diagnostics"
-        elif any(k in text_low for k in ["math", "formula", "derivative", "gradient", "loss", "cost", "equation"]):
-            return f"{base_title}: Mathematical Formulations & Statistical Foundations"
-
-    # Agentic AI subtopic keywords
-    elif domain == "agentic_ai":
-        if any(k in text_low for k in ["state", "schema", "typeddict", "reducer", "annotat"]):
-            return f"{base_title}: State Schema Definition & Reducer Semantics"
-        elif any(k in text_low for k in ["node", "function", "tool", "call", "agent", "action"]):
-            return f"{base_title}: Node Execution Functions & Tool Integration"
-        elif any(k in text_low for k in ["edge", "routing", "conditional", "router", "branch"]):
-            return f"{base_title}: Conditional Routing & Dynamic Workflow Graph"
-        elif any(k in text_low for k in ["memory", "checkpoint", "saver", "persist", "human"]):
-            return f"{base_title}: State Persistence & Checkpoint Mechanics"
-
-    # Default structural progression
-    if total_subs == 2:
-        return f"{base_title}: Architectural Principles & Theory" if sub_index == 1 else f"{base_title}: Implementation & Applied Workflow"
-    elif total_subs == 3:
-        if sub_index == 1:
-            return f"{base_title}: Conceptual Foundations & Mathematical Setup"
-        elif sub_index == 2:
-            return f"{base_title}: Core Algorithm & Practical Architecture"
-        else:
-            return f"{base_title}: Diagnostics, Edge Cases & Production Patterns"
-
-    return f"{base_title}: Segment {sub_index}"
+    This used to append a phrase picked by keyword from a fixed table — "Core
+    Foundations & Practical Implementation" for anything machine-learning, so an
+    RNN lecture came back with sections named after preprocessing pipelines. The
+    chapter's real topic name says less, but it says nothing untrue.
+    """
+    clean = re.sub(r"^\d+[\.\:\s\-]*", "", str(chapter_title or "")).strip()
+    return clean or "Overview"
 
 
 def partition_chapter_into_semantic_sections(
@@ -231,22 +138,30 @@ def partition_chapter_into_semantic_sections(
                 + "\n".join([f"{i}. <Title>" for i in range(1, len(sub_slices) + 1)])
             )
             resp = (llm.invoke(prompt_text).content if hasattr(llm, "invoke") else str(llm(prompt_text))).strip()
-            
-            for line in resp.splitlines():
-                m = re.match(r"^\d+[\.\:\s\-]+(.+)$", line.strip())
-                if m:
-                    t_clean = m.group(1).strip().strip('"\'')
-                    if len(t_clean) > 5 and not any(bad in t_clean.lower() for bad in ["langgraph", "agentic"] if domain == "machine_learning"):
-                        sub_titles.append(f"{base_section_title}: {t_clean}")
+
+            # Read the answer by number, and tolerate decoration: the model writes
+            # "**1. Title**" as readily as "1. Title", and the strict pattern that
+            # used to be here rejected the bold form — which silently dropped every
+            # real title and left the canned fallback names in the notes.
+            proposed = numbered_items(resp)
+            for position in range(1, len(sub_slices) + 1):
+                t_clean = proposed.get(position, "").strip().strip("\"'")
+                if len(t_clean) > 5 and not any(
+                    bad in t_clean.lower()
+                    for bad in ["langgraph", "agentic"]
+                    if domain == "machine_learning"
+                ):
+                    sub_titles.append(t_clean)
+                else:
+                    sub_titles.append(f"Section {position}")
         except Exception as e:
             print(f"[Phase 4] LLM sub-section titling notice for {ch_title}: {e}")
 
-    # Fallback titling if LLM was unavailable or returned insufficient lines
+    # Any section the model did not name keeps an honest label. It is not given a
+    # topic name invented from a keyword table, because a wrong section title is
+    # indistinguishable from a right one once it is in the notes.
     while len(sub_titles) < len(sub_slices):
-        idx = len(sub_titles) + 1
-        b_start, b_end, s_slice = sub_slices[idx - 1]
-        fb_title = derive_subtopic_title_fallback(base_section_title, s_slice, idx, len(sub_slices), domain)
-        sub_titles.append(fb_title)
+        sub_titles.append(f"Section {len(sub_titles) + 1}")
 
     # Build final Section definitions
     final_sections = []
@@ -278,12 +193,16 @@ def structure_synthesis_node(state: MasterNotesState) -> Dict[str, Any]:
     
     api_key = state.get("api_key")
     selected_model = state.get("model_name")
+    # No `if api_key:` gate: the router falls back to the server's own key, which
+    # is how the rest of the pipeline runs in local mode. Gating here silently
+    # skipped section titling whenever the request carried no key of its own.
     llm = None
-    if api_key:
-        try:
-            llm = get_chat_model(api_key=api_key, model_name=selected_model, temperature=0.1)
-        except Exception:
-            llm = None
+    try:
+        llm = get_usable_chat_model(
+            api_key=api_key, model_name=selected_model, temperature=0.1
+        )
+    except Exception:
+        llm = None
 
     chapters = []
     total_raw = len(raw_chapters)

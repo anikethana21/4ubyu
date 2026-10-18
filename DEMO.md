@@ -102,8 +102,11 @@ Verify with **ℹ️ Show 4 U By U settings** — it should print your server an
 6. The agent swarm runs and the finished handbook opens.
 
 > **Non-English lectures work too.** If the video only has a Hindi (or other)
-> caption track, the userscript asks YouTube for its own English translation.
-> If that is unavailable, the server's translator normalises it instead.
+> caption track, the userscript asks YouTube for its own English translation, and
+> if that is unavailable the notes are written from the original language
+> directly. A separate translation pass of the whole lecture — dozens of model
+> calls on its own — is off by default; set `TRANSLATE_TRANSCRIPT=1` to have it
+> translated first.
 
 ---
 
@@ -143,10 +146,18 @@ a server started from a new terminal will not see it.
 | `transcript contains only timestamps` | The caption capture picked up YouTube's screen-reader timestamp labels rather than the captions | Update the userscript, reload the video page, then capture again |
 | Chapters are all `Section 1`, `Section 2`, … | The server has no usable LLM key, or the key was refused | The amber banner above the chapter list names the reason; check `GROQ_API_KEY` |
 | Chapters look wrong | Stale page data after SPA navigation | Reload the YouTube page and retry |
+| A section says **“This section could not be written up”** | That section's model call failed — most often the provider's per-minute token allowance, because the excerpt of the lecture sent with it is large enough to spend the minute on its own | The notice names the cause and quotes the instructor's words for that part. Wait a minute and regenerate, tick fewer chapters, or use a plan with a bigger allowance |
+| Every section says it could not be written up | The key is missing, refused, or constantly rate-limited | Check `GROQ_API_KEY`; the server log prints one line per degraded section, with the reason |
+| A long lecture degrades partway through | Free tiers meter tokens per minute, and a long lecture needs many sections written | Generate a few chapters at a time. Nothing is ever invented to fill a gap |
 
 > **The capture is checked before it is used.** A transcript made of nothing but
 > timestamps is refused with a clear message instead of quietly producing
 > chapters with no content behind them.
+>
+> **So are the notes.** If the model cannot write a section, the section says so,
+> names the cause, and shows the instructor's own words instead. It never
+> substitutes plausible-sounding prose — you would have no way to tell the
+> difference.
 
 ---
 
@@ -159,9 +170,44 @@ python tests/test_phase1_seam.py           # proves Phase 1 makes ZERO network c
 python tests/test_chapter_timestamps.py    # chapter windows stay correct
 python tests/test_hitl_chapter_contract.py # approved chapters keep their windows
 python tests/test_ingest_store.py          # validation, ownership, expiry, idempotency
+python tests/test_degraded_notes.py        # a failed model call never becomes invented notes
+python tests/test_section_composer.py      # one call per section, and no invented fragments
+python tests/test_chapter_titling.py       # chapter titles are batched, and only for work that is read
+python tests/test_model_output.py          # numbered answers are read however the model decorates them
+python tests/test_model_router.py          # a keyless router's notice is never mistaken for notes
 ```
 
-All 32 pass with no network access and no database.
+All 75 pass with no network access and no database.
+
+---
+
+## Running inside a free provider quota
+
+Free tiers meter **tokens per minute** (Groq's free tier allows 8,000 for
+`gpt-oss-120b`), so what a run costs is really how many times the lecture is sent
+to the model. The defaults already spend as little as the pipeline can:
+
+| Setting | Default | What it costs |
+|---|---|---|
+| Section notes | one call per section | The five specialist agents each re-sent the same excerpt; four of those calls were removed, and the two fields most likely to be invented (diagrams, code) are no longer requested |
+| Chapter titles | 6 chapters per call | One call per chapter meant 60+ requests for a four-hour course; intervals of six keep the same tokens in a sixth of the requests |
+| Section titles | one call per chapter | The model names every section of a chapter at once, and a name it does not give stays an honest "Section 2" instead of a canned topic name |
+| Translation | off | A foreign-language lecture used to cost one call every 4,500 characters — around 45 calls — before a single note was written |
+| Phase 2 cluster titling | off | It filled a field nothing read; that was one call per transcript cluster |
+
+Turn any of them back up in `.env`:
+
+```
+PHASE5_MODE=agents        # back to the five-agent fan-out
+TRANSLATE_TRANSCRIPT=1    # translate non-Latin lectures first
+TITLE_BATCH=1             # one model call per chapter title
+PHASE5_PARALLEL=6         # how many sections are written at once
+```
+
+If a long lecture still runs out of allowance, tick **two or three chapters** at
+a time instead of all of them. Nothing is lost: each chapter is saved on its own,
+and a section that could not be written says so rather than filling the gap.
+
 
 ---
 

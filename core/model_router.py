@@ -307,3 +307,22 @@ def get_chat_model(
             print(f"[ModelRouter] DirectUniversalChatModel notice: {e}")
 
     return RobustFallbackChatModel()
+
+
+def get_usable_chat_model(
+    api_key: Optional[str] = None,
+    model_name: Optional[str] = None,
+    temperature: float = 0.2,
+) -> Optional[BaseChatModel]:
+    """A model that can actually answer, or None.
+
+    When no key can be used, `get_chat_model` still returns a model: a stub that
+    answers every prompt with the same notice. Callers that must tell "the model
+    answered" apart from "the model could not be asked" need this instead, or the
+    notice itself gets read as content — a section whose explanation is a quota
+    message, a chapter titled after a Notice.
+    """
+    llm = get_chat_model(api_key=api_key, model_name=model_name, temperature=temperature)
+    if llm is None or getattr(llm, "_llm_type", "") == "robust_fallback_chat_model":
+        return None
+    return llm

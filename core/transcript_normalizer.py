@@ -3,13 +3,15 @@
 
 YouTube publishes auto-captions in the *spoken* language. For Hinglish, Hindi
 and other non-Latin lectures it therefore hands back Devanagari (or CJK, Arabic,
-Cyrillic …) text. Chapters and notes generated from that are unusable in an
-English study handbook.
+Cyrillic …) text.
 
-This module detects the script of a transcript and, only when it is non-Latin,
-translates it into clean English **segment by segment** so every timestamp is
-preserved. Translation runs through the same BYOK model router as the rest of
-the pipeline.
+This module detects the script of a transcript. Translation into English is
+available but **off by default**, because it costs one model call every few
+thousand characters and the models that write the notes read the source language
+directly — so the cheaper order of work is to pay for notes rather than for a
+translation nobody reads. Set ``TRANSLATE_TRANSCRIPT=1`` to translate instead,
+segment by segment, so every timestamp is preserved. Either way it runs through
+the same BYOK model router as the rest of the pipeline.
 
 Failure policy: never lose data. If a batch cannot be translated it is kept
 verbatim, and if translation fails entirely the original transcript is returned
@@ -18,9 +20,28 @@ unchanged (i.e. the pipeline degrades to its previous behaviour, never worse).
 
 from __future__ import annotations
 
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
+
+
+def translation_enabled() -> bool:
+    """Whether a non-Latin transcript is machine-translated before analysis.
+
+    Off by default. Translating segment by segment costs one model call every few
+    thousand characters — dozens of calls for a single lecture, and the largest
+    single expense of a run — while the models that write the notes read the
+    source language directly. Paying for notes rather than for a translation
+    nobody reads is the cheaper order of work. Set ``TRANSLATE_TRANSCRIPT=1`` to
+    restore the old behaviour.
+    """
+    return os.environ.get("TRANSLATE_TRANSCRIPT", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 # Unicode block ranges for the scripts YouTube realistically emits.
 _SCRIPT_RANGES = {
@@ -263,6 +284,14 @@ def normalize_transcript(
         return full_text, timed_segments, info
 
     label = _LANGUAGE_LABEL.get(script, "a non-Latin language")
+
+    if not translation_enabled():
+        info["note"] = (
+            f"Transcript is in {label}. Notes are written from it directly, without a "
+            "separate translation pass, to keep a run inside a free provider quota."
+        )
+        return full_text, timed_segments, info
+
     print(f"[Normalizer] Detected {label} ({script}) transcript — translating to English.")
 
     try:

@@ -13,6 +13,7 @@ Design goals (per your instruction):
 
 from __future__ import annotations
 
+import os
 import re
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -20,6 +21,7 @@ import numpy as np
 
 from core.transcriber import format_seconds
 from core.transcript_segmentation import compute_sbert_embeddings
+from core.model_output import numbered_items
 
 
 # ---------------------------------------------------------------------------
@@ -223,6 +225,17 @@ def _ensure_usable_titles(segments: List[Dict[str, Any]]) -> List[Dict[str, Any]
     return segments
 
 
+# A title needs the opening of a segment, not the whole fifteen minutes of it.
+# The free tier meters tokens per minute, and this is the only place a chapter
+# costs a model call, so the excerpt is deliberately short.
+TITLE_EXCERPT_CHARS = 600
+
+# Titles are asked for in batches. One call per chapter meant sixty-odd calls for
+# a four-hour course, and most of that wall-clock time was request latency rather
+# than thinking; a batch gets the same titles in a sixth of the requests.
+TITLE_BATCH = max(1, int(os.environ.get("TITLE_BATCH", "6")))
+
+
 def _refine_titles(
     segments: List[Dict[str, Any]],
     api_key: Optional[str],
@@ -230,21 +243,18 @@ def _refine_titles(
 ) -> List[Dict[str, Any]]:
     """Ask the LLM to give each solid segment a real topic title."""
     try:
-        from core.model_router import get_chat_model
+        from core.model_router import get_usable_chat_model
         from langchain_core.output_parsers import StrOutputParser
         from langchain_core.prompts import PromptTemplate
     except Exception:
         return segments
 
-    llm = get_chat_model(api_key=api_key, model_name=model_name, temperature=0.2)
-    if llm is None:
-        return segments
-
-    # No usable key (or a rate-limited provider) means the router returns a stub
-    # that replies with the same notice to every prompt. Calling it once per
+    # No usable key (or a rate-limited provider) means the router can only offer
+    # the stub that answers every prompt with the same notice. Calling it once per
     # chapter cannot name a topic, so skip it and let _ensure_usable_titles label
     # the chapters, rather than filling the syllabus with error text.
-    if getattr(llm, "_llm_type", "") == "robust_fallback_chat_model":
+    llm = get_usable_chat_model(api_key=api_key, model_name=model_name, temperature=0.2)
+    if llm is None:
         print(
             "[TopicChapterizer] No usable LLM key: timestamps are exact but topic "
             "titles are unavailable. Chapters will carry generic labels."
@@ -253,25 +263,41 @@ def _refine_titles(
 
     prompt = PromptTemplate.from_template(
         "You are segmenting a lecture transcript into chapters by TOPIC.\n"
-        "Given this transcript slice, return ONE specific chapter title (max 10 words)\n"
-        "that names the topic taught. No timestamps, no part numbers, no quotes.\n\n"
-        "Transcript slice:\n---\n{text}\n---\n\nTitle:"
+        "For each numbered transcript slice below, give ONE specific chapter title\n"
+        "(max 10 words) that names the topic taught.\n"
+        "No timestamps, no part numbers, no quotes.\n\n"
+        "{slices}\n\n"
+        "Answer with exactly {count} lines, each \"<number>. <title>\":"
     )
     chain = prompt | llm | StrOutputParser()
 
-    for seg in segments:
-        text = seg.get("text", "")[:1200]
-        if not text.strip():
-            continue
+    pending = [seg for seg in segments if str(seg.get("text", "")).strip()]
+    for start in range(0, len(pending), TITLE_BATCH):
+        batch = pending[start : start + TITLE_BATCH]
+        slices = "\n\n".join(
+            f"{position}. {str(seg.get('text', '')).strip()[:TITLE_EXCERPT_CHARS]}"
+            for position, seg in enumerate(batch, 1)
+        )
         try:
-            title = chain.invoke({"text": text}).strip()
-            title = re.sub(r"^(title|chapter)\s*:\s*", "", title, flags=re.I).strip("\"' `")
-            title = title.split("\n")[0].strip()
+            answer = chain.invoke({"slices": slices, "count": len(batch)})
+        except Exception:
+            # A batch that fails leaves its chapters with honest generic labels;
+            # the timestamps are unaffected and the run reports the degradation.
+            continue
+
+        # Number the answers back onto the batch, so a missing or reordered line
+        # costs one title rather than shifting every later title onto the wrong
+        # chapter.
+        titles = numbered_items(answer or "")
+
+        for position, seg in enumerate(batch, 1):
+            title = titles.get(position, "")
+            title = re.sub(r"^(title|chapter)\s*:\s*", "", title, flags=re.I)
+            title = title.strip().strip("\"' `")
             if 3 < len(title) < 60 and not is_placeholder_title(title):
                 seg["title"] = title
                 seg["title_source"] = "llm"
-        except Exception:
-            pass
+
     return segments
 
 

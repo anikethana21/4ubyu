@@ -1,4 +1,4 @@
-﻿"""
+"""
 4 U By U — PHASE 2: Parallel Fan-Out Pipeline
 Branch A: Description resource extraction
 Branch B: Transcript labeling using TextTiling + Agglomerative Clustering (SBERT-powered)
@@ -301,13 +301,9 @@ JSON array:"""
         except Exception:
             pass
 
-    # Fallback if LLM failed
-    if not missing_topics:
-        missing_topics = [
-            {"topic": "Practical Implementation Examples", "reason": "Hands-on examples reinforce theoretical concepts"},
-            {"topic": "Common Pitfalls & Debugging", "reason": "Often absent in overview-style tutorials"}
-        ]
-
+    # No model answer means no gap list. The two placeholder topics this used to
+    # substitute were not derived from the lecture at all, and they were shown to
+    # the reader as though they had been.
     return {
         "online_search_results": {
             "curated_sources": user_sources,
@@ -321,18 +317,22 @@ JSON array:"""
 # GRAPH BUILDER
 # ═══════════════════════════════════════════
 def build_phase2_graph():
-    """Compiles the Phase 2 Parallel Fan-Out StateGraph."""
+    """Compiles the Phase 2 Parallel Fan-Out StateGraph.
+
+    Branch B is deliberately not wired in. It clustered the transcript and asked
+    the model for a title per cluster — a call for each one, twenty or more on a
+    long lecture — to fill `labeled_transcript`, which nothing in the pipeline or
+    the UI ever reads. The titles that are actually used come from
+    `core.topic_chapterizer`. `branch_label_node` is kept for reference.
+    """
     graph = StateGraph(MasterNotesState)
     graph.add_node("branch_description_node", branch_description_node)
-    graph.add_node("branch_label_node", branch_label_node)
     graph.add_node("branch_online_search_node", branch_online_search_node)
 
     graph.add_edge(START, "branch_description_node")
-    graph.add_edge(START, "branch_label_node")
     graph.add_edge(START, "branch_online_search_node")
 
     graph.add_edge("branch_description_node", END)
-    graph.add_edge("branch_label_node", END)
     graph.add_edge("branch_online_search_node", END)
 
     return graph.compile()
