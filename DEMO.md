@@ -109,18 +109,23 @@ Verify with **ℹ️ Show 4 U By U settings** — it should print your server an
 
 ## Step 5 — For real content, add your LLM key
 
-Without an LLM key the pipeline still completes, but chapters are placeholders
-(`[Study Assistant Notice]`). Real notes need a key:
+Without an LLM key the pipeline still completes, but chapters are numbered
+placeholders (`Section 1`, `Section 2`, …) and the review screen shows an amber
+warning saying so. Real titles need a key:
 
 **Settings → Groq API Key** → paste a key from
 [console.groq.com](https://console.groq.com/keys) → save.
 
 It is Fernet-encrypted into your per-user vault and only decrypted for your own
-requests. Or set it globally for your local server:
+requests. Or set it for your local server by putting it in `4ubyu\.env`, where it
+survives a restart:
 
-```powershell
-$env:GROQ_API_KEY = "gsk_..."
 ```
+GROQ_API_KEY=gsk_...
+```
+
+`$env:GROQ_API_KEY = "gsk_..."` works too, but only until you close that window —
+a server started from a new terminal will not see it.
 
 ---
 
@@ -135,7 +140,13 @@ $env:GROQ_API_KEY = "gsk_..."
 | `This video has no captions available` | Video has no subtitles at all | Pick a different lecture |
 | `YouTube returned an empty caption track` | Occasionally YouTube needs a nudge | Click **⋯ → Show transcript** on the video once, then retry |
 | Card says `Only N caption lines found` | It is a short clip, not a lecture | Use a full lecture |
+| `transcript contains only timestamps` | The caption capture picked up YouTube's screen-reader timestamp labels rather than the captions | Update the userscript, reload the video page, then capture again |
+| Chapters are all `Section 1`, `Section 2`, … | The server has no usable LLM key, or the key was refused | The amber banner above the chapter list names the reason; check `GROQ_API_KEY` |
 | Chapters look wrong | Stale page data after SPA navigation | Reload the YouTube page and retry |
+
+> **The capture is checked before it is used.** A transcript made of nothing but
+> timestamps is refused with a clear message instead of quietly producing
+> chapters with no content behind them.
 
 ---
 
