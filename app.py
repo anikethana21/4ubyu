@@ -29,7 +29,7 @@ def require_supabase_client():
     if not client:
         raise HTTPException(
             status_code=503,
-            detail="Cloud Database / Authentication service is not configured. Please set SUPABASE_URL and SUPABASE_KEY in Vercel environment variables."
+            detail="Cloud Database / Authentication service is not configured. Please set SUPABASE_URL and SUPABASE_KEY in the server environment variables."
         )
     return client
 

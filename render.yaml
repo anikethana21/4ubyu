@@ -5,6 +5,12 @@
 # ("Sign in to confirm you're not a bot" / RequestBlocked). Render runs on
 # regular servers that YouTube does not block, so the full topic chapterizer
 # works with no proxy or API key.
+#
+# IMPORTANT — BYOK model:
+#   LLM keys (Groq / Gemini / Eraser) are NOT deploy-time env vars. Each user
+#   enters them in the UI; they are Fernet-encrypted and stored in the Supabase
+#   `user_settings` vault, then decrypted per request. Only the *infrastructure*
+#   secrets below belong here.
 services:
   - type: web
     name: 4-u-by-u-workspace
@@ -22,15 +28,26 @@ services:
         value: private
       - key: PYTHON_VERSION
         value: 3.12.7
-      - key: GROQ_API_KEY
+
+      # --- Supabase (auth + per-user encrypted key vault + workspaces) ---
+      - key: SUPABASE_URL
         sync: false
-      - key: GEMINI_API_KEY
+      - key: SUPABASE_KEY
         sync: false
-      - key: TAVILY_API_KEY
+
+      # --- Session & vault encryption (set once; keep stable across deploys) ---
+      # Render generates a strong random JWT signing secret.
+      - key: JWT_SECRET
+        generateValue: true
+      # Optional. If blank, the Fernet vault key is derived deterministically
+      # from JWT_SECRET, so stored user keys stay decryptable across restarts.
+      - key: FERNET_KEY
         sync: false
-      # Optional: official YouTube Data API v3 key (metadata fallback)
+
+      # --- Optional extras (leave blank unless needed) ---
+      # Official YouTube Data API v3 key (metadata fallback; not required).
       - key: YOUTUBE_API_KEY
         sync: false
-      # Optional: proxy for YouTube requests if a host is ever blocked
+      # Proxy for YouTube requests, only if a host is ever IP-blocked.
       - key: YT_PROXY_URL
         sync: false

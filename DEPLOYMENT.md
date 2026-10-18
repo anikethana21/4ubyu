@@ -19,11 +19,16 @@ This guide covers deployment options for the **4 U By U** Interactive Educationa
    *(Alternatively create a **Web Service** manually with: Environment `Python`, Build Command `pip install -r requirements.txt`, Start Command `uvicorn app:app --host 0.0.0.0 --port $PORT`, Health Check Path `/health`.)*
 3. In **Environment Variables**, add:
    - `APP_MODE`: `private` (personal, unrestricted) or `public` (BYOK + hard caps)
-   - `GROQ_API_KEY`: *(Your Groq API key)*
-   - `GEMINI_API_KEY`: *(Your Google Gemini API key)*
-   - `TAVILY_API_KEY`: *(Optional for web search)*
-   - `YOUTUBE_API_KEY`: *(Optional — official YouTube Data API v3 key, extra metadata fallback)*
-   - `YT_PROXY_URL`: *(Optional — only needed if a host ever gets IP-blocked by YouTube)*
+   - `SUPABASE_URL`: *(your Supabase project URL)*
+   - `SUPABASE_KEY`: *(your Supabase anon/service key)*
+   - `JWT_SECRET`: *(long random string — signs login sessions; Render can generate it)*
+   - `FERNET_KEY`: *(optional — encrypts the per-user key vault; derived from `JWT_SECRET` if blank)*
+   - `YOUTUBE_API_KEY` / `YT_PROXY_URL`: *(optional — leave blank on Render)*
+
+   > **No LLM keys go here.** Groq/Gemini/Eraser keys are entered by each user in
+   > the UI, encrypted with Fernet, stored in the Supabase `user_settings` vault,
+   > and decrypted per request (BYOK). Only the infrastructure secrets above are
+   > deploy-time env vars.
 4. Click **Create Web Service**. Your app is live with automatic SSL!
 
 > **Why Render instead of Vercel?** YouTube blocks datacenter/serverless IP ranges.
