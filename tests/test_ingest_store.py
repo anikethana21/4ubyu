@@ -274,6 +274,78 @@ def test_unknown_ingest_id_returns_none():
 
 
 # ---------------------------------------------------------------------------
+# Screen-reader timestamp labels are not captions
+# ---------------------------------------------------------------------------
+
+def _spoken_time(total_seconds):
+    """Format a time the way YouTube's screen-reader timestamp labels do."""
+    minutes, seconds = divmod(int(total_seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    parts = []
+    if hours:
+        parts.append(f"{hours} hour" + ("s" if hours != 1 else ""))
+        parts.append(f"{minutes} minute" + ("s" if minutes != 1 else ""))
+    elif minutes:
+        parts.append(f"{minutes} minute" + ("s" if minutes != 1 else ""))
+    parts.append(f"{seconds} second" + ("s" if seconds != 1 else ""))
+    return ", ".join(parts)
+
+
+def test_timestamp_only_transcript_is_rejected():
+    """A capture that grabs the timestamp labels contains no lecture at all.
+
+    This is the payload that produced 34 contentless chapters: every "caption"
+    was the spoken timestamp rendered beside the clock, and the server accepted
+    all 1,857 of them without complaint.
+    """
+    labels = [
+        {"start": float(i * 79), "duration": 79.0, "text": _spoken_time(i * 79)}
+        for i in range(12)
+    ]
+    with isolated_store():
+        try:
+            normalize_payload(_valid_body(transcript=labels))
+        except IngestValidationError as exc:
+            assert "only timestamps" in str(exc)
+        else:
+            raise AssertionError("a timestamp-only transcript must be rejected")
+
+
+def test_three_part_spoken_labels_are_recognised():
+    """Past an hour the labels carry three parts, and must still be caught."""
+    labels = [
+        {"start": float(3600 + i * 90), "duration": 90.0, "text": _spoken_time(3600 + i * 90)}
+        for i in range(12)
+    ]
+    assert labels[0]["text"] == "1 hour, 0 minutes, 0 seconds"
+    with isolated_store():
+        try:
+            normalize_payload(_valid_body(transcript=labels))
+        except IngestValidationError as exc:
+            assert "only timestamps" in str(exc)
+        else:
+            raise AssertionError("three-part spoken labels must still be rejected")
+
+
+def test_real_captions_are_not_mistaken_for_timestamps():
+    """Ordinary lecture prose must keep working even when it mentions times."""
+    mixed = [
+        {"start": 0.0, "duration": 5.0, "text": "Welcome back to the course."},
+        {"start": 5.0, "duration": 5.0, "text": "Today we cover recurrent networks."},
+        {"start": 10.0, "duration": 5.0, "text": "Let us start with the hidden state."},
+        {"start": 15.0, "duration": 5.0, "text": "That is 5 minutes of material."},
+        {"start": 20.0, "duration": 5.0, "text": "Next we look at backpropagation."},
+        {"start": 25.0, "duration": 5.0, "text": "Here is the gradient update rule."},
+        {"start": 30.0, "duration": 5.0, "text": "Notice the vanishing gradient."},
+        {"start": 35.0, "duration": 5.0, "text": "We fix it with a gating mechanism."},
+        {"start": 40.0, "duration": 5.0, "text": "An LSTM cell does exactly that."},
+        {"start": 45.0, "duration": 5.0, "text": "Finally, a short recap."},
+    ]
+    payload = normalize_payload(_valid_body(transcript=mixed))
+    assert payload["segment_count"] == 10
+
+
+# ---------------------------------------------------------------------------
 # Standalone runner
 # ---------------------------------------------------------------------------
 

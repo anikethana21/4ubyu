@@ -58,6 +58,16 @@ TTL_HOURS = int(os.getenv("INGEST_TTL_HOURS", "24"))
 IDEMPOTENCY_WINDOW_MIN = 10    # same user+video within N minutes reuses the id
 
 VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
+
+# YouTube renders every timestamp twice: the visible "0:07" and a screen-reader
+# label such as "7 seconds". A capture that picks up the label instead of the
+# caption produces a transcript made entirely of timestamps, which would
+# otherwise ingest cleanly and then yield chapters with nothing inside them.
+TIMESTAMP_LIKE_RE = re.compile(
+    r"^(?:\d{1,2}:\d{2}(?::\d{2})?"
+    r"|(?:\d+(?:\.\d+)?\s*(?:seconds?|minutes?|hours?|s|m|h)(?:\s*,\s*|\s+)?)+)$",
+    re.IGNORECASE,
+)
 _URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 
 LOCAL_INGEST_DIR = BASE_DIR / "storage" / "ingest"
@@ -109,6 +119,24 @@ def _as_float(value: Any, field: str) -> float:
 # ---------------------------------------------------------------------------
 # VALIDATION + NORMALIZATION
 # ---------------------------------------------------------------------------
+
+def _is_timestamp_only(segments: List[Dict[str, Any]]) -> bool:
+    """True when a captured transcript carries timestamps but no caption text.
+
+    The screen-reader label beside each clock ("7 seconds") looks like an
+    ordinary sibling of the caption, so a DOM capture can silently collect 1,800
+    of them instead of the lecture. That payload passes every structural check
+    and then yields chapters with no content behind them, so it is rejected here.
+    """
+    if len(segments) < 10:
+        return False
+    stamp_like = 0
+    for seg in segments:
+        text = str(seg.get("text") or "").strip().strip(".,;:")
+        if not text or TIMESTAMP_LIKE_RE.match(text):
+            stamp_like += 1
+    return stamp_like / len(segments) >= 0.8
+
 
 def normalize_payload(body: Dict[str, Any], source: str = "extension") -> Dict[str, Any]:
     """
@@ -162,6 +190,13 @@ def normalize_payload(body: Dict[str, Any], source: str = "extension") -> Dict[s
 
     if not segments:
         raise IngestValidationError("transcript contained no usable text.")
+    if _is_timestamp_only(segments):
+        raise IngestValidationError(
+            "transcript contains only timestamps, not caption text: YouTube's "
+            "screen-reader timestamp labels were captured instead of the captions. "
+            "Update the userscript/extension, open the video's transcript panel on "
+            "the page, and capture again."
+        )
     segments.sort(key=lambda seg: seg["start"])
     # Re-close small gaps so chapter slicing never drops trailing words.
     for i, seg in enumerate(segments[:-1]):

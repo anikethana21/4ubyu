@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://four-u-by-u-workspace.onrender.com
-// @version      1.5.0
+// @version      1.6.0
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the transcript in your own browser and hands it to your 4 U By U workspace.
 // @author       Anikethana
 // @match        https://www.youtube.com/*
@@ -813,8 +813,38 @@
   const CLOCK_RE = /^\d{1,2}:\d{2}(?::\d{2})?$/;
 
   /**
+   * YouTube renders every timestamp twice: the visible "0:07" and a screen-reader
+   * label such as "7 seconds" or "1 minute, 6 seconds". That label sits beside the
+   * clock and reads as ordinary prose to a naive sibling match, so it must be
+   * excluded explicitly or it is captured in place of the caption.
+   */
+  const SPOKEN_TIME_RE =
+    /^(?:\d+(?:\.\d+)?\s*(?:seconds?|minutes?|hours?|s|m|h)(?:\s*,\s*|\s+)?)+$/i;
+
+  function looksLikeTimestampLabel(value) {
+    const text = (value || "").trim();
+    return !text || CLOCK_RE.test(text) || SPOKEN_TIME_RE.test(text);
+  }
+
+  /** The longest text in a subtree that is not a timestamp in disguise. */
+  function longestCaption(root) {
+    let best = "";
+    const nodes = [root].concat(Array.from(root.querySelectorAll("*")));
+    for (const node of nodes) {
+      const value = (node.textContent || "").trim();
+      if (value.length > best.length && !looksLikeTimestampLabel(value)) {
+        best = value;
+      }
+    }
+    return best;
+  }
+
+  /**
    * Structure-blind fallback: any element whose entire text is a clock reading,
-   * paired with its first sibling that carries prose. Survives renamed tags.
+   * paired with the longest prose beside it. Survives renamed tags.
+   *
+   * The caption is the LONGEST text in the row, not the first one that is not a
+   * clock, because the screen-reader timestamp label is also "not a clock".
    */
   function collectSegmentsStructurally() {
     const panel = findTranscriptPanel() || document.body;
@@ -827,17 +857,18 @@
       const parent = el.parentElement;
       if (!parent) continue;
 
-      const sibling = Array.from(parent.children).find((child) => {
-        if (child === el) return false;
-        const value = (child.textContent || "").trim();
-        return value.length > 3 && !CLOCK_RE.test(value);
-      });
-      if (!sibling) continue;
-
       const start = clockToSeconds(stamp);
-      const text = tidy(sibling.textContent);
-      if (start == null || !text) continue;
-      found.push({ start, text });
+      if (start == null) continue;
+
+      let text = "";
+      for (const child of Array.from(parent.children)) {
+        if (child === el) continue;
+        const candidate = longestCaption(child);
+        if (candidate.length > text.length) text = candidate;
+      }
+      if (!text) continue;
+
+      found.push({ start, text: tidy(text) });
     }
     return found;
   }
@@ -856,15 +887,22 @@
     const rows = collectSegmentRows();
     if (rows.length) {
       const found = [];
+      let misread = false;
       for (const row of rows) {
         const stampEl = row.querySelector("#timestamp, .segment-timestamp");
         const textEl = row.querySelector("#text, .segment-text");
         const start = clockToSeconds(stampEl ? stampEl.textContent.trim() : "");
         const text = tidy(textEl ? textEl.textContent : "");
-        if (start == null || !text) continue;
+        // A selector can land on the screen-reader timestamp instead of the
+        // caption. Treat that as a miss so the structural pass can try.
+        if (!text || looksLikeTimestampLabel(text)) {
+          misread = true;
+          break;
+        }
+        if (start == null) continue;
         found.push({ start, text });
       }
-      if (found.length) return found;
+      if (found.length && !misread) return found;
     }
     return collectSegmentsStructurally();
   }
