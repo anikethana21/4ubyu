@@ -178,6 +178,51 @@ def _enforce_duration_constraints(
     return final
 
 
+# Phrases from this app's own degraded-inference message. They have leaked into
+# chapter titles before: without a usable key the router hands back a stub model
+# that answers every prompt with a "[Study Assistant Notice]" block, and keeping
+# that first line produced 34 identically-named chapters.
+PLACEHOLDER_TITLE_MARKERS = (
+    "study assistant notice",
+    "assistant notice",
+    "temporary inference delay",
+)
+
+
+def is_placeholder_title(title: Any) -> bool:
+    """True when a title is boilerplate rather than a name for a taught topic."""
+    text = str(title or "").strip()
+    # " (Part 2)" is a de-duplication suffix added later, not part of the topic
+    # name, so it must not hide a placeholder underneath it.
+    text = re.sub(r"\s*\(Part\s*\d+\)\s*$", "", text, flags=re.I).strip()
+    if len(text) < 3:
+        return True
+    # Markdown structure never belongs in a chapter name.
+    if text[:1] in ">#*_-|`" or "**" in text:
+        return True
+    # A bare clock time is a section marker, not the name of a taught topic.
+    if re.fullmatch(r"\d{1,2}:\d{2}(?::\d{2})?", text):
+        return True
+    low = text.lower()
+    return any(marker in low for marker in PLACEHOLDER_TITLE_MARKERS)
+
+
+def _ensure_usable_titles(segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Guarantee every chapter has a label that is not a model failure message.
+
+    A chapter may be titled by the LLM, but it must never be named after the
+    model's own error notice. When titling is unavailable the timestamp is still
+    exact, so the chapter stands with an honest generic label instead.
+    """
+    for i, seg in enumerate(segments, start=1):
+        if is_placeholder_title(seg.get("title")):
+            seg["title"] = f"Section {i}"
+            seg["title_source"] = "fallback"
+        else:
+            seg.setdefault("title_source", "llm")
+    return segments
+
+
 def _refine_titles(
     segments: List[Dict[str, Any]],
     api_key: Optional[str],
@@ -193,6 +238,17 @@ def _refine_titles(
 
     llm = get_chat_model(api_key=api_key, model_name=model_name, temperature=0.2)
     if llm is None:
+        return segments
+
+    # No usable key (or a rate-limited provider) means the router returns a stub
+    # that replies with the same notice to every prompt. Calling it once per
+    # chapter cannot name a topic, so skip it and let _ensure_usable_titles label
+    # the chapters, rather than filling the syllabus with error text.
+    if getattr(llm, "_llm_type", "") == "robust_fallback_chat_model":
+        print(
+            "[TopicChapterizer] No usable LLM key: timestamps are exact but topic "
+            "titles are unavailable. Chapters will carry generic labels."
+        )
         return segments
 
     prompt = PromptTemplate.from_template(
@@ -211,8 +267,9 @@ def _refine_titles(
             title = chain.invoke({"text": text}).strip()
             title = re.sub(r"^(title|chapter)\s*:\s*", "", title, flags=re.I).strip("\"' `")
             title = title.split("\n")[0].strip()
-            if 3 < len(title) < 60:
+            if 3 < len(title) < 60 and not is_placeholder_title(title):
                 seg["title"] = title
+                seg["title_source"] = "llm"
         except Exception:
             pass
     return segments
@@ -317,6 +374,8 @@ def topic_chapterize(
 
     # 6. LLM-refine titles on solid segments
     segments = _refine_titles(segments, api_key, model_name)
+    # 6b. Never let a model failure message become a chapter name.
+    segments = _ensure_usable_titles(segments)
 
     # 7. Deduplicate consecutive identical titles (append Part N)
     seen_titles: Dict[str, int] = {}
@@ -337,6 +396,7 @@ def topic_chapterize(
             )
             seg["start_seconds"] = int(float(seg["start_time"]))
         segments = _refine_titles(segments, api_key, model_name)
+        segments = _ensure_usable_titles(segments)
 
     # 8. Normalize end times chronologically
     segments = sorted(segments, key=lambda s: float(s["start_time"]))

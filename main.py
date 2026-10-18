@@ -124,17 +124,32 @@ async def inspect_video_for_hitl(
     except Exception as e:
         ingestion_debug = {"error": str(e)}
 
+    chapters_out = state.get("yt_chapters", []) or []
+    # A chapter titled after the model's own error notice is a silent failure, so
+    # the chapterizer now labels those and reports it here for the UI to show.
+    title_warning = None
+    generic_titles = sum(1 for c in chapters_out if c.get("title_source") == "fallback")
+    if generic_titles:
+        title_warning = (
+            f"{generic_titles} of {len(chapters_out)} chapter titles are generic "
+            "placeholders because the language model was unavailable — either no "
+            "API key is configured, or the provider rate-limited the request. The "
+            "timestamps are exact and every chapter is usable; add a key in "
+            "Settings and re-run to get topic names."
+        )
+
     return {
         "status": "hitl_required",
         "video_id": state.get("video_id"),
         "metadata": state.get("video_metadata", {}),
-        "chapters": state.get("yt_chapters", []),
+        "chapters": chapters_out,
         "missing_topics": state.get("missing_topics", []),
         "syllabus_source": syllabus_source,
         "ingest_source": state.get("ingest_source") or "server",
         "transcript_chars": len(transcript),
         "translation": state.get("translation_info", {}) or {},
         "warning": warning,
+        "title_warning": title_warning,
         "ingestion_debug": ingestion_debug,
     }
 

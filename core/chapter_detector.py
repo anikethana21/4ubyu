@@ -303,6 +303,9 @@ def detect_chapters_from_transcript(
                         or _slice_transcript(timed_transcript, start, end),
                         "start_seconds": int(start),
                         "source": ch.get("source", "topic_detected"),
+                        # Carried through so the HITL payload can tell the user
+                        # when titles are generic because inference was unavailable.
+                        "title_source": ch.get("title_source", "llm"),
                     }
                 )
             chapters = _normalize_end_times(chapters, float(video_duration))

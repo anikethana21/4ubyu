@@ -437,15 +437,22 @@ async def export_workspace_notebook(video_id: str):
 async def landing_page(request: Request):
     """Renders the primary landing page."""
     entries = get_library_entries()
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
             "request": request,
             "library_entries": entries,
-            "app_mode": APP_MODE
+            "app_mode": APP_MODE,
+            # Handed to the page inside the markup, so the extension hand-off
+            # cannot be lost to query-string parsing or a stale script bundle.
+            "bootstrap_ingest_id": request.query_params.get("ingest", ""),
         }
     )
+    # The page embeds a per-request ingest id, so a cached copy must never be
+    # reused — that is what silently swallowed the hand-off before.
+    response.headers["Cache-Control"] = "no-store, must-revalidate"
+    return response
 
 @app.post("/api/pipeline/inspect")
 async def hitl_inspect(req: InspectRequest, request: Request):
@@ -795,6 +802,11 @@ async def health_check():
         "env_key_prefix": key_env[:10] if key_env else "",
         "default_key_prefix": DEFAULT_GROQ_KEY[:10] if DEFAULT_GROQ_KEY else ""
     }
+
+@app.get('/v1/models')
+async def dummy_models_endpoint():
+    '''Silences automated AI extension / IDE probes.'''
+    return {'object': 'list', 'data': []}
 
 if __name__ == "__main__":
     import uvicorn

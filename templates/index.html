@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>4 U By U &bull; Interactive Educational Notes &amp; Tri-Pane Workspace</title>
-  <link rel="stylesheet" href="/static/css/landing.css">
+  <link rel="stylesheet" href="/static/css/landing.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
@@ -759,6 +759,23 @@ html, body, .landing-body, .workspace-body {
   border-bottom: 1px solid hsl(45 40% 97% / 0.08) !important;
 }
 
+/* Shown when chapter titles are generic placeholders because the language
+   model was unavailable (no key, or the provider rate-limited the request). */
+.hitl-title-warning {
+  margin: 0 1.25rem 0.85rem 1.25rem !important;
+  padding: 0.7rem 0.9rem !important;
+  border-radius: 10px !important;
+  background: rgba(217, 119, 6, 0.16) !important;
+  border: 1px solid rgba(217, 119, 6, 0.45) !important;
+  color: #fde68a !important;
+  font-size: 0.82rem !important;
+  line-height: 1.5 !important;
+}
+
+.hitl-title-warning.hidden {
+  display: none !important;
+}
+
 .modal-header-title,
 .hitl-title,
 .workplace-title {
@@ -1440,6 +1457,8 @@ html, body, .landing-body, .workspace-body {
           <p class="hitl-subtitle">Our ingestion engine extracted the following chapters and timestamps. Review, toggle, or edit topic titles below before activating the multi-agent synthesis swarm.</p>
         </div>
 
+        <div id="hitl-title-warning" class="hitl-title-warning hidden"></div>
+
         <div class="hitl-video-strip" id="hitl-video-strip">
           <img id="hitl-video-thumb" src="" alt="Thumbnail" class="hitl-thumb">
           <div class="hitl-video-details">
@@ -1592,8 +1611,13 @@ html, body, .landing-body, .workspace-body {
     <p>4 U By U &bull; Agentic AI Educational Engineering System &bull; Grounded in LangGraph Handbooks</p>
   </footer>
 
-  <script src="/static/js/landing.js"></script>
-  <script src="/static/js/constellation_grid.js"></script>
+  <!-- Server-stamped ingest id: the userscript hand-off reads this instead of
+       relying on the query string, which a cached page can hide. -->
+  <script>window.__FUBYU_INGEST_ID__ = "{{ bootstrap_ingest_id }}";</script>
+  <!-- Bump ?v= whenever landing.js changes: a stale cached bundle silently
+       drops the hand-off, which is exactly what happened before. -->
+  <script src="/static/js/landing.js?v=4"></script>
+  <script src="/static/js/constellation_grid.js?v=2"></script>
 
   <script id="navbar-interactive-helper">
     function scrollToWorkspaces() {

@@ -562,6 +562,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const hitlChannel = document.getElementById("hitl-video-channel");
   const hitlDuration = document.getElementById("hitl-video-duration");
   const hitlCount = document.getElementById("hitl-video-count");
+  const hitlTitleWarning = document.getElementById("hitl-title-warning");
 
   const workplaceModal = document.getElementById("workplace-modal");
   const workplaceTimer = document.getElementById("workplace-live-timer");
@@ -650,8 +651,30 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hitlDuration) hitlDuration.textContent = meta.duration_str || data.duration || "00:00";
     if (hitlCount) hitlCount.textContent = `${chapters.length} Topics Extracted`;
 
+    // Say so when titles are generic. Showing placeholder names with no
+    // explanation reads as a broken feature rather than a missing key.
+    if (hitlTitleWarning) {
+      const titleWarning = data.title_warning || "";
+      hitlTitleWarning.textContent = titleWarning;
+      hitlTitleWarning.classList.toggle("hidden", !titleWarning);
+    }
+
     renderHitlChapters(chapters);
     if (hitlModal) hitlModal.classList.remove("hidden");
+  }
+
+  /**
+   * Chapter titles are model output derived from a video's captions, i.e.
+   * attacker-influenced text. They get interpolated into HTML below, so they
+   * must be escaped or a crafted title could break out of the attribute.
+   */
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function renderHitlChapters(chapters) {
@@ -659,8 +682,8 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="hitl-chapter-row" id="hitl-row-${idx}">
         <input type="checkbox" class="hitl-chapter-cb" data-idx="${idx}" checked>
         <span class="hitl-chapter-num">${idx + 1}</span>
-        <span class="hitl-timestamp-pill">${ch.timestamp_str || "00:00"}</span>
-        <input type="text" class="hitl-topic-input" data-idx="${idx}" value="${ch.title}">
+        <span class="hitl-timestamp-pill">${escapeHtml(ch.timestamp_str || "00:00")}</span>
+        <input type="text" class="hitl-topic-input" data-idx="${idx}" value="${escapeHtml(ch.title)}">
       </div>
     `).join("");
 
@@ -886,11 +909,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // residential IP, where YouTube is not bot-gating) and redirects here with an
   // ingest id. We pick it up immediately instead of asking for a URL.
   async function handleIngestHandoff() {
-    let ingestId = null;
+    // The server stamps the id into the page (see the "/" route), so the
+    // hand-off survives even if the query string has already been rewritten.
+    let ingestId = "";
     try {
-      ingestId = new URLSearchParams(window.location.search).get("ingest");
-    } catch (err) {
-      return;
+      ingestId = window.__FUBYU_INGEST_ID__ || "";
+    } catch (err) { /* no server bootstrap: fall back to the query string */ }
+
+    if (!ingestId) {
+      try {
+        ingestId = new URLSearchParams(window.location.search).get("ingest") || "";
+      } catch (err) {
+        return;
+      }
     }
     if (!ingestId) return;
 
@@ -906,7 +937,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (progressText) {
       progressText.textContent = "Transcript received from your browser — detecting topics by content…";
     }
+    // Bring the box into view: it sits below the button, so a failure reported
+    // there is easy to miss on a short window.
+    if (progressBox && progressBox.scrollIntoView) {
+      progressBox.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
 
+    let failed = false;
     try {
       const resp = await fetch("/api/pipeline/inspect", {
         method: "POST",
@@ -920,7 +957,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await resp.json();
       if (!resp.ok) {
-        throw new Error(data.detail || "Could not read the captured transcript.");
+        throw new Error(data.detail || `The server rejected the captured transcript (HTTP ${resp.status}).`);
       }
       if (!data.transcript_chars) {
         throw new Error(data.warning || "The captured transcript came back empty.");
@@ -928,10 +965,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
       openHitlModal(data, ingestId);
     } catch (err) {
-      alert(`4 U By U: ${err.message}`);
+      failed = true;
+      showHandoffError(err.message || String(err));
     } finally {
       if (btnGenerate) btnGenerate.disabled = false;
-      if (progressBox) progressBox.classList.add("hidden");
+      // Keep the box on screen when something went wrong: the message is the
+      // whole point, and hiding it is what made this failure invisible before.
+      if (progressBox && !failed) progressBox.classList.add("hidden");
+    }
+  }
+
+  /**
+   * Reports a hand-off failure inline, in the progress box, instead of with an
+   * alert(). An alert is dismissed in a reflex and leaves nothing to look at,
+   * which is precisely how a failure becomes invisible.
+   */
+  function showHandoffError(message) {
+    if (!progressBox) {
+      alert(`4 U By U: ${message}`);
+      return;
+    }
+    progressBox.classList.remove("hidden");
+    if (progressFill) {
+      progressFill.style.width = "100%";
+      progressFill.style.background = "#d9534f";
+    }
+    if (progressPct) progressPct.textContent = "!";
+    if (progressText) {
+      progressText.style.color = "#ff9d9d";
+      progressText.textContent = `Could not start from the captured transcript — ${message}`;
+    }
+    if (progressBox.scrollIntoView) {
+      progressBox.scrollIntoView({ block: "center", behavior: "smooth" });
     }
   }
 
