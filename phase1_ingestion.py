@@ -24,11 +24,11 @@ def yt_fetch_node(state: MasterNotesState) -> Dict[str, Any]:
     # Primary: Fast, 100% cloud-reliable metadata and chapter extraction
     try:
         vid, meta, chaps = extract_robust_metadata(url)
-        if meta and meta.get("title") and chaps:
+        if meta and meta.get("title"):
             video_id = vid or video_id
             metadata = meta
-            yt_chapters = chaps
-            print(f"[Phase 1] Robust extractor succeeded: {len(yt_chapters)} chapters, duration {metadata.get('duration_str')}")
+            yt_chapters = chaps if chaps else []
+            print(f"[Phase 1] Robust extractor succeeded: {len(yt_chapters)} description chapters, duration {metadata.get('duration_str')}")
     except Exception as e:
         print(f"[Phase 1] Robust extractor warning: {e}")
 

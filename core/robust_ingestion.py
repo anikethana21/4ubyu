@@ -217,7 +217,11 @@ def extract_robust_metadata(youtube_url: str) -> Tuple[str, Dict[str, Any], List
             duration_str = format_seconds(int(chapters[-1]["end_time"]))
 
     # 5. Fallback curriculum outline
-    if not chapters:
+    # Only synthesize fallback chapters when we truly don't know the duration.
+    # If duration is known (from watch-page HTML), let the topic chapterizer
+    # in chapter_detector.py handle segmentation — don't inject misleading
+    # short chapters that only cover the first ~55 minutes.
+    if not chapters and duration == 0:
         base_topics = [
             ("Core Architectural Foundations & Paradigm Overview", 0),
             ("Theoretical Framework, Mathematical Foundations & Intuition", 300),
@@ -232,9 +236,8 @@ def extract_robust_metadata(youtube_url: str) -> Tuple[str, Dict[str, Any], List
                 "start_time": float(s),
                 "end_time": float(s + 600)
             })
-        if duration == 0:
-            duration = 3300
-            duration_str = format_seconds(duration)
+        duration = 3300
+        duration_str = format_seconds(duration)
 
     metadata = {
         "title": title,
