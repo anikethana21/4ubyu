@@ -366,20 +366,19 @@ Suggested Follow-ups:
     is_suggestive = any(q_clean.lower() in sq.lower() or sq.lower() in q_clean.lower() for sq in known_questions)
 
     if not is_timestamp_query and not is_suggestive and len(matched_docs) == 0 and confidence < 0.05:
-        # Gracefully handle out-of-scope query in Grounded Mode
-        suggested_topics = known_questions[:3] if known_questions else [
-            "Introduction & Fundamental Architecture",
-            "Core Algorithm Walkthrough",
-            "Production Implementation & Best Practices"
-        ]
+        # Gracefully handle out-of-scope query in Grounded Mode. When the course
+        # has no known questions, say so rather than listing three generic
+        # headings under a claim that they were verified from this course.
+        suggested_topics = known_questions[:3]
         out_msg = (
             f"> **[Grounded Mode • Topic Outside Current Lecture]**\n\n"
             f"The concept **\"{q_clean}\"** is not covered in the local notes for **{video_title}**.\n\n"
             f"💡 **Switch to Open Mode (⚡)** using the toggle at the top of this chat panel to get a full production-grade explanation and code walkthrough.\n\n"
-            f"Or explore one of the verified topics from this course:\n"
         )
-        for t in suggested_topics:
-            out_msg += f"- {t}\n"
+        if suggested_topics:
+            out_msg += "Or explore one of the verified topics from this course:\n"
+            for t in suggested_topics:
+                out_msg += f"- {t}\n"
         yield out_msg
         return
 

@@ -46,7 +46,7 @@ def describe_llm_failure(message: str) -> str:
     if is_rate_limit(message):
         return (
             "the provider's per-minute token allowance was already spent when this "
-            "section was requested"
+            "request was made"
         )
     if "401" in message or "invalid_api_key" in message:
         return "the provider rejected the API key"

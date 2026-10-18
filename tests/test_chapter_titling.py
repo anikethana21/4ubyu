@@ -145,6 +145,36 @@ def test_phase2_does_not_pay_for_cluster_titles_nothing_reads():
     assert "branch_label_node" not in p2.build_phase2_graph().get_graph().nodes
 
 
+TOO_LARGE = (
+    "Groq API Error 413: request too large for openai/gpt-oss-120b. "
+    '{"error":{"message":"Request too large for model on tokens per minute (TPM): '
+    'Limit 8000, Requested 8240","type":"tokens","code":"rate_limit_exceeded"}}'
+)
+
+
+def test_a_failed_title_batch_records_why_titles_are_missing(monkeypatch):
+    """The reader is told the failure that happened, not a guess between two."""
+    tc.TITLE_BATCH = 2
+    llm, _ = _fake_llm(
+        lambda attempt, text: (_ for _ in ()).throw(RuntimeError(TOO_LARGE))
+    )
+    monkeypatch.setattr(router, "get_usable_chat_model", lambda **kwargs: llm)
+
+    tc._refine_titles(_segments(2), api_key="k", model_name="")
+
+    assert tc.TITLE_FAILURE and "tokens in one minute" in tc.TITLE_FAILURE
+
+
+def test_no_usable_model_records_that_as_the_reason(monkeypatch):
+    monkeypatch.setattr(router, "get_usable_chat_model", lambda **kwargs: None)
+
+    segments = _segments(3)
+    tc._refine_titles(segments, api_key="", model_name="")
+
+    assert tc.TITLE_FAILURE == "no usable model was available, so no titles were requested"
+    assert all(s.get("title") is None for s in segments)
+
+
 def test_a_failed_gap_analysis_invents_no_topics(monkeypatch):
     """No model answer means no gap list — not two generic stand-ins."""
     monkeypatch.setattr(

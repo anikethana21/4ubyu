@@ -235,6 +235,22 @@ TITLE_EXCERPT_CHARS = 600
 # than thinking; a batch gets the same titles in a sixth of the requests.
 TITLE_BATCH = max(1, int(os.environ.get("TITLE_BATCH", "6")))
 
+# Why the last run could not name its chapters, in the words of the failure that
+# actually happened. The UI reports this to the reader instead of guessing between
+# "no key" and "rate limited".
+TITLE_FAILURE: Optional[str] = None
+
+
+def reset_title_failure() -> None:
+    global TITLE_FAILURE
+    TITLE_FAILURE = None
+
+
+def _note_title_failure(reason: str) -> None:
+    global TITLE_FAILURE
+    if not TITLE_FAILURE:
+        TITLE_FAILURE = reason
+
 
 def _refine_titles(
     segments: List[Dict[str, Any]],
@@ -242,6 +258,7 @@ def _refine_titles(
     model_name: Optional[str],
 ) -> List[Dict[str, Any]]:
     """Ask the LLM to give each solid segment a real topic title."""
+    reset_title_failure()
     try:
         from core.model_router import get_usable_chat_model
         from langchain_core.output_parsers import StrOutputParser
@@ -258,6 +275,9 @@ def _refine_titles(
         print(
             "[TopicChapterizer] No usable LLM key: timestamps are exact but topic "
             "titles are unavailable. Chapters will carry generic labels."
+        )
+        _note_title_failure(
+            "no usable model was available, so no titles were requested"
         )
         return segments
 
@@ -280,9 +300,13 @@ def _refine_titles(
         )
         try:
             answer = chain.invoke({"slices": slices, "count": len(batch)})
-        except Exception:
+        except Exception as exc:
             # A batch that fails leaves its chapters with honest generic labels;
-            # the timestamps are unaffected and the run reports the degradation.
+            # the timestamps are unaffected. The reason is recorded rather than
+            # assumed, so the run can say what actually happened.
+            from core.llm_failures import describe_llm_failure
+
+            _note_title_failure(describe_llm_failure(str(exc)))
             continue
 
         # Number the answers back onto the batch, so a missing or reordered line
@@ -297,6 +321,9 @@ def _refine_titles(
             if 3 < len(title) < 60 and not is_placeholder_title(title):
                 seg["title"] = title
                 seg["title_source"] = "llm"
+
+    if not any(seg.get("title_source") == "llm" for seg in segments):
+        _note_title_failure("the model's answers did not contain usable titles")
 
     return segments
 

@@ -127,15 +127,18 @@ async def inspect_video_for_hitl(
     chapters_out = state.get("yt_chapters", []) or []
     # A chapter titled after the model's own error notice is a silent failure, so
     # the chapterizer now labels those and reports it here for the UI to show.
+    # The reason is the failure the chapterizer actually recorded, not a guess
+    # between "no key" and "rate limited".
     title_warning = None
     generic_titles = sum(1 for c in chapters_out if c.get("title_source") == "fallback")
     if generic_titles:
+        from core.topic_chapterizer import TITLE_FAILURE
+
+        reason = TITLE_FAILURE or "the language model did not return titles"
         title_warning = (
             f"{generic_titles} of {len(chapters_out)} chapter titles are generic "
-            "placeholders because the language model was unavailable — either no "
-            "API key is configured, or the provider rate-limited the request. The "
-            "timestamps are exact and every chapter is usable; add a key in "
-            "Settings and re-run to get topic names."
+            f"placeholders: {reason}. The timestamps are exact and every chapter is "
+            "usable; add a key in Settings and re-run to get topic names."
         )
 
     return {
