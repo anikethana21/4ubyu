@@ -839,12 +839,70 @@
     return best;
   }
 
+  /** The first clock reading in a subtree: "0:07" outranks its "7 seconds" label. */
+  function findClockIn(root) {
+    const nodes = [root].concat(Array.from(root.querySelectorAll("*")));
+    for (const node of nodes) {
+      const value = (node.textContent || "").trim();
+      if (CLOCK_RE.test(value)) return clockToSeconds(value);
+    }
+    return null;
+  }
+
+  /**
+   * The caption that belongs to one clock reading.
+   *
+   * YouTube puts the visible clock beside a screen-reader label ("0:07" next to
+   * "7 seconds") inside the timestamp cell, while the caption sits in a cousin
+   * element under the same row. So the caption is NOT necessarily a sibling of the
+   * clock: climb a level at a time and take the first branch that carries prose,
+   * skipping the branch that holds the clock itself.
+   */
+  /** True when any element at or below ``root`` reads as a clock. */
+  function containsClock(root) {
+    for (const node of [root].concat(Array.from(root.querySelectorAll("*")))) {
+      if (CLOCK_RE.test((node.textContent || "").trim())) return true;
+    }
+    return false;
+  }
+
+  /**
+   * True when an ancestor already spans more than one transcript row.
+   *
+   * A row holds exactly one clock reading, so the first ancestor whose children
+   * carry two of them is the list itself, where the prose belongs to other lines.
+   */
+  function spansManyRows(node) {
+    let withClock = 0;
+    for (const child of Array.from(node.children)) {
+      if (containsClock(child)) {
+        withClock += 1;
+        if (withClock > 1) return true;
+      }
+    }
+    return false;
+  }
+
+  function captionForClock(el) {
+    let node = el.parentElement;
+    for (let depth = 0; node && depth < 4; depth++, node = node.parentElement) {
+      // Never reach past the row: prose taken from the list belongs to other
+      // lines, and grafting it on is worse than finding nothing at all.
+      if (spansManyRows(node)) break;
+      let best = "";
+      for (const child of Array.from(node.children)) {
+        if (child.contains(el)) continue;
+        const candidate = longestCaption(child);
+        if (candidate.length > best.length) best = candidate;
+      }
+      if (best) return best;
+    }
+    return "";
+  }
+
   /**
    * Structure-blind fallback: any element whose entire text is a clock reading,
-   * paired with the longest prose beside it. Survives renamed tags.
-   *
-   * The caption is the LONGEST text in the row, not the first one that is not a
-   * clock, because the screen-reader timestamp label is also "not a clock".
+   * paired with the caption found beside or above it. Survives renamed tags.
    */
   function collectSegmentsStructurally() {
     const panel = findTranscriptPanel() || document.body;
@@ -854,18 +912,10 @@
       const stamp = (el.textContent || "").trim();
       if (!CLOCK_RE.test(stamp)) continue;
 
-      const parent = el.parentElement;
-      if (!parent) continue;
-
       const start = clockToSeconds(stamp);
       if (start == null) continue;
 
-      let text = "";
-      for (const child of Array.from(parent.children)) {
-        if (child === el) continue;
-        const candidate = longestCaption(child);
-        if (candidate.length > text.length) text = candidate;
-      }
+      const text = captionForClock(el);
       if (!text) continue;
 
       found.push({ start, text: tidy(text) });
@@ -891,7 +941,9 @@
       for (const row of rows) {
         const stampEl = row.querySelector("#timestamp, .segment-timestamp");
         const textEl = row.querySelector("#text, .segment-text");
-        const start = clockToSeconds(stampEl ? stampEl.textContent.trim() : "");
+        // The timestamp cell wraps the clock and its screen-reader label, so look
+        // inside it for the clock instead of reading its concatenated text.
+        const start = stampEl ? findClockIn(stampEl) : null;
         const text = tidy(textEl ? textEl.textContent : "");
         // A selector can land on the screen-reader timestamp instead of the
         // caption. Treat that as a miss so the structural pass can try.
