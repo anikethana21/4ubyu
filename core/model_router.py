@@ -86,15 +86,30 @@ class DirectUniversalChatModel(BaseChatModel):
                     if res_def.status_code == 200:
                         txt = res_def.json()["choices"][0]["message"]["content"]
                         return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+            elif res.status_code == 413:
+                # The request is bigger than the provider's whole per-minute
+                # allowance, so no amount of waiting will help — the caller has to
+                # send less. Saying so precisely lets it shrink instead of
+                # inventing content to fill the gap.
+                raise RuntimeError(
+                    f"Groq API Error 413: request too large for {target}. "
+                    f"{(res.text or '')[:300]}"
+                )
             elif res.status_code == 429:
-                # Fast retry with gpt-oss-20b after brief pause
-                time.sleep(1.5)
+                # This minute's allowance is spent. Give the meter a chance to
+                # refill, then try the lighter model, which is metered separately.
+                for delay in (6, 20):
+                    time.sleep(delay)
+                    retry = requests.post(url, headers=headers, json=body, timeout=30)
+                    if retry.status_code == 200:
+                        txt = retry.json()["choices"][0]["message"]["content"]
+                        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
                 body["model"] = "openai/gpt-oss-20b"
                 res2 = requests.post(url, headers=headers, json=body, timeout=30)
                 if res2.status_code == 200:
                     txt = res2.json()["choices"][0]["message"]["content"]
                     return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
-                raise RuntimeError(f"Groq TPM Rate Limit (429). Used fallback.")
+                raise RuntimeError(f"Groq TPM Rate Limit (429). {(res.text or '')[:300]}")
             else:
                 # Try fallback model on Groq
                 body["model"] = "openai/gpt-oss-20b"

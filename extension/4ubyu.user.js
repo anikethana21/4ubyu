@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://four-u-by-u-workspace.onrender.com
-// @version      1.7.0
+// @version      1.7.1
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the transcript in your own browser and hands it to your 4 U By U workspace.
 // @author       Anikethana
 // @match        https://www.youtube.com/*
@@ -1075,10 +1075,11 @@
     }
 
     url = setFormat(url, "json3");
-    const language = (track && track.languageCode) || "";
-    const candidates = [];
-    if (!/^en/i.test(language)) candidates.push(url + "&tlang=en"); // ask YouTube for English
-    candidates.push(url);
+    // Ask YouTube for English first, then the original. Auto-generated tracks are
+    // often labelled with the page's language while the audio is in another one,
+    // and handing the pipeline a Hindi transcript costs it a translation pass over
+    // the whole lecture plus far more tokens per character inside every agent.
+    const candidates = [url + "&tlang=en", url];
 
     const attempts = [];
     for (const candidate of candidates) {

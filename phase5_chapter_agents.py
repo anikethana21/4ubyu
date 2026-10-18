@@ -22,6 +22,71 @@ from core.transcript_coverage import balanced_transcript_excerpt
 
 PHASE5_PARALLEL = max(1, int(os.environ.get("PHASE5_PARALLEL", "6")))
 
+# Providers meter tokens per minute, and a chapter's transcript excerpt is the
+# whole cost of a theory prompt. One long chapter can spend that entire budget by
+# itself — the same character count costs roughly twice as many tokens in
+# Devanagari as in English — which is enough for a request to be refused before it
+# ever runs. So these are tried in order, and the provider's own "request too
+# large" verdict is what moves us down the list.
+PHASE5_EXCERPT_STEPS = (6000, 3000, 1500)
+
+# Sections whose notes could not be written, so a run can report itself accurately.
+DEGRADED_SECTIONS: List[str] = []
+
+
+def reset_degraded_sections() -> None:
+    """Clears the per-run record of sections that fell back to an honest notice."""
+    DEGRADED_SECTIONS.clear()
+
+
+def is_request_too_large(message: str) -> bool:
+    """True when the provider refused because one request exceeded its meter."""
+    return "413" in message or "Request too large" in message
+
+
+def is_rate_limit(message: str) -> bool:
+    """True when this minute's allowance is spent.
+
+    Kept exclusive of `is_request_too_large`: the provider tags both refusals with
+    `rate_limit_exceeded`, but they call for opposite responses — one must wait,
+    the other must send less — so the size check takes precedence.
+    """
+    if is_request_too_large(message):
+        return False
+    return "429" in message or "rate_limit_exceeded" in message or "TPM Rate Limit" in message
+
+
+def describe_llm_failure(message: str) -> str:
+    """A short, human reason for a failed call, with the provider's payload stripped out."""
+    if is_request_too_large(message):
+        return "the request asked for more tokens in one minute than the provider allows"
+    if is_rate_limit(message):
+        return (
+            "the provider's per-minute token allowance was already spent when this "
+            "section was requested"
+        )
+    if "401" in message or "invalid_api_key" in message:
+        return "the provider rejected the API key"
+    return re.sub(r"\s+", " ", message).strip()[:200] or "the provider gave no reason"
+
+
+def advise_on_llm_failure(message: str) -> str:
+    """What the reader can actually do about a failed call."""
+    if is_request_too_large(message):
+        return (
+            "This is a provider quota, not a problem with your notes. Pick fewer chapters at "
+            "once, or move to a provider plan with a larger tokens-per-minute allowance."
+        )
+    if is_rate_limit(message):
+        return (
+            "This is a provider quota, not a problem with your notes. Wait about a minute and "
+            "generate this chapter again, pick fewer chapters at once, or move to a provider "
+            "plan with a larger tokens-per-minute allowance."
+        )
+    if "401" in message or "invalid_api_key" in message:
+        return "Check that the API key in Settings is still valid and has not been rotated."
+    return "Generate this chapter again; if it keeps failing the provider may be having an outage."
+
 # ── Domain-Specific Fallback Code Snippets ─────────────────────────────
 FALLBACK_ML_CODE = {
     "intro_setup": """# ==============================================================================
@@ -551,6 +616,7 @@ def theory_agent_node(state: SectionState) -> Dict[str, Any]:
 
     explanation = ""
     analogy = ""
+    failure = ""
 
     llm = get_chat_model(api_key=api_key, model_name=selected_model)
     if llm:
@@ -574,60 +640,64 @@ def theory_agent_node(state: SectionState) -> Dict[str, Any]:
             )
             prompt = PromptTemplate.from_template(prompt_str)
             chain = prompt | llm | StrOutputParser()
-            excerpt = balanced_transcript_excerpt(transcript, max_chars=14000)
-            result = chain.invoke(
-                {
-                    "title": title,
-                    "chapter_title": chapter_title,
-                    "domain": domain,
-                    "transcript": excerpt,
-                }
-            )
-            
-            if result and "EXPLANATION:" in result:
-                exp_m = re.search(r"EXPLANATION:\s*(.*?)(?=ANALOGY:|$)", result, re.DOTALL | re.IGNORECASE)
-                ana_m = re.search(r"ANALOGY:\s*(.*)", result, re.DOTALL | re.IGNORECASE)
-                if exp_m:
-                    from core.theory_formatter import clean_theory_markdown
-                    explanation = clean_theory_markdown(exp_m.group(1))
-                if ana_m:
-                    analogy = ana_m.group(1).strip()
+            for max_chars in PHASE5_EXCERPT_STEPS:
+                if explanation:
+                    break
+                try:
+                    result = chain.invoke(
+                        {
+                            "title": title,
+                            "chapter_title": chapter_title,
+                            "domain": domain,
+                            "transcript": balanced_transcript_excerpt(
+                                transcript, max_chars=max_chars
+                            ),
+                        }
+                    )
+                except Exception as e:
+                    failure = str(e).strip()
+                    print(
+                        f"[TheoryAgent] {title}: {max_chars} chars of context refused — "
+                        f"{failure[:150]}"
+                    )
+                    if not is_request_too_large(failure):
+                        break  # a spent allowance does not recover by sending less
+                    continue
+
+                if result and "EXPLANATION:" in result:
+                    exp_m = re.search(r"EXPLANATION:\s*(.*?)(?=ANALOGY:|$)", result, re.DOTALL | re.IGNORECASE)
+                    ana_m = re.search(r"ANALOGY:\s*(.*)", result, re.DOTALL | re.IGNORECASE)
+                    if exp_m:
+                        # Left as markdown on purpose: the renderer converts it later.
+                        # The old call to a non-existent cleaner is what used to throw.
+                        explanation = exp_m.group(1).strip()
+                    if ana_m:
+                        analogy = ana_m.group(1).strip()
+                break
         except Exception as e:
-            print(f"[TheoryAgent] Notice for {title}: {e}")
+            failure = str(e).strip()
+            print(f"[TheoryAgent] {title}: {failure[:150]}")
 
-    # Fallback in-depth theory documentation
+    # A model that is unavailable, rate-limited or simply silent must never be
+    # papered over with invented content. State the failure plainly and show the
+    # instructor's own words instead, so the section is still worth reading and
+    # nobody mistakes filler for teaching.
     if not explanation or len(explanation) < 150:
-        if domain == "machine_learning":
-            explanation = (
-                f"### I. Foundational Theory & Mathematical Principles\n"
-                f"In this lecture on **{title}**, the instructor systematically examines the foundational mathematics, "
-                f"statistical properties, and computational mechanics required for scalable machine learning pipelines. "
-                f"Rather than treating algorithms as black-box heuristics, the lecture establishes how empirical data "
-                f"distributions guide model selection, emphasizing the bias-variance trade-off, distribution skewness, "
-                f"and the objective functions that govern parameter convergence.\n\n"
-                f"### II. Architectural Walkthrough & Dataflow Mechanics\n"
-                f"The lecture walks through the practical end-to-end data processing workflow in Python. Using Scikit-Learn, "
-                f"Pandas, and NumPy, the instructor demonstrates how to structure reproducible transformation pipelines. "
-                f"Every operation—from exploratory distribution checks and missing value imputation to categorical encoding "
-                f"and feature scaling—is contextualized within production engineering standards. Crucially, the workflow "
-                f"strictly enforces train-test split boundaries before fitting any transformer or estimator, eliminating "
-                f"catastrophic data leakage that invalidates out-of-sample generalization.\n\n"
-                f"### III. Production Considerations & Validation Strategies\n"
-                f"Finally, the section explores practical debugging techniques, metric evaluation beyond simple raw accuracy "
-                f"(such as Precision-Recall curves, F1-scores, and ROC-AUC for imbalanced distributions), and hyperparameter "
-                f"optimization via cross-validation. Developers are taught how to validate model stability and export "
-                f"fully reproducible pipeline artifacts ready for deployment."
-            )
-        else:
-            explanation = (
-                f"In this chapter on {title}, the instructor details core computational patterns, system architectures, "
-                f"and modular engineering workflows designed to ensure deterministic execution and production reliability."
-            )
-
-    if not analogy:
-        analogy = (
-            f"Think of {title} as establishing the core blueprint: the principles and patterns introduced here "
-            f"directly determine the reliability, performance, and scalability of subsequent stages."
+        if not failure:
+            failure = "no API key is configured, so no model was called"
+        DEGRADED_SECTIONS.append(title)
+        print(f"[TheoryAgent] {title}: notes degraded ({describe_llm_failure(failure)})")
+        excerpt = balanced_transcript_excerpt(transcript, max_chars=2400)
+        explanation = (
+            f"### This section could not be written up\n\n"
+            f"4 U By U asks a language model to turn the instructor's own words into notes, and "
+            f"that call did not succeed for this section. Nothing has been invented to fill the "
+            f"gap.\n\n"
+            f"**Why:** {describe_llm_failure(failure)}.\n\n"
+            f"**What to do:** {advise_on_llm_failure(failure)}\n\n"
+            f"**What the instructor actually said in this part of the lecture** "
+            f"(verbatim transcript, trimmed):\n\n"
+            f"> {excerpt or 'This section has no transcript.'}\n"
         )
 
     return {
@@ -927,6 +997,7 @@ async def run_all_chapters_batched(notes_structure: Dict[str, Any], state: Maste
         "(theory → code → keypoints → pitfalls → visual per section)..."
     )
     reset_diagram_cache()
+    reset_degraded_sections()
 
     chapters_def = notes_structure.get("chapters", [])
     domain = notes_structure.get("domain") or state.get("domain") or "machine_learning"
@@ -991,6 +1062,16 @@ async def run_all_chapters_batched(notes_structure: Dict[str, Any], state: Maste
                 "sections": secs,
             }
         )
+
+    if DEGRADED_SECTIONS:
+        shown = "; ".join(DEGRADED_SECTIONS[:5])
+        more = f" (+{len(DEGRADED_SECTIONS) - 5} more)" if len(DEGRADED_SECTIONS) > 5 else ""
+        print(
+            f"[Phase 5] {len(DEGRADED_SECTIONS)} of {len(work)} sections could not be "
+            f"synthesised and carry an honest notice instead of notes: {shown}{more}"
+        )
+    else:
+        print(f"[Phase 5] All {len(work)} sections synthesised from the lecture.")
 
     return generated_chapters
 
