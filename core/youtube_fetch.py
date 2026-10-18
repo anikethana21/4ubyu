@@ -20,10 +20,21 @@ Transcript:
   1. InnerTube caption tracks (when the video is playable for any client).
   2. yt-dlp subtitle download (last resort; disabled if unavailable).
 
-Optional proxy:
-  Set YT_PROXY_URL (e.g. http://user:pass@host:port) to route every request
-  through a proxy. Standard HTTPS_PROXY / HTTP_PROXY env vars are also honored
-  by urllib automatically. This is the reliable cure for datacenter IP blocks.
+Escaping datacenter IP blocks (Render, Vercel, AWS, GCP ...):
+  1. YOUTUBE_API_KEY — official Data API v3. Free and never IP-blocked, but it
+     provides *metadata only* (title / channel / duration / description). It
+     cannot return transcript text.
+  2. YT_COOKIES / YT_COOKIES_B64 — a Netscape cookies.txt exported from a
+     signed-in browser. Given to yt-dlp this lets it authenticate, which
+     bypasses "Sign in to confirm you're not a bot" for *both* metadata and
+     subtitles. YT_COOKIES_B64 accepts the base64 of the file (env-var safe).
+  3. YT_PROXY_URL — route every request through a residential proxy
+     (e.g. http://user:pass@host:port). The most reliable cure; standard
+     HTTPS_PROXY / HTTP_PROXY env vars are also honored by urllib.
+
+NOTE: a *cloud* host is not a fix by itself — Render/AWS/GCP datacenter IPs are
+gated by YouTube exactly like Vercel's. Only a residential IP, proxy, cookies,
+or the official Data API escape the bot check.
 """
 
 from __future__ import annotations
@@ -115,6 +126,56 @@ def _http_json(url: str, headers: Optional[Dict[str, str]] = None,
     return json.loads(_http_bytes(url, headers=headers, data=data, timeout=timeout).decode("utf-8", "ignore"))
 
 
+def _cookiefile() -> Optional[str]:
+    """
+    Returns a path to a Netscape-format cookies.txt, or None.
+
+    Accepts either:
+      * YT_COOKIES     — a filesystem path to a cookies.txt file
+      * YT_COOKIES_B64 — the base64-encoded contents of cookies.txt
+
+    Exporting browser cookies lets yt-dlp authenticate, which reliably bypasses
+    YouTube's "Sign in to confirm you're not a bot" gate on datacenter IPs.
+    """
+    path = os.getenv("YT_COOKIES")
+    if path and os.path.exists(path):
+        return path
+    b64 = (os.getenv("YT_COOKIES_B64") or "").strip()
+    if b64:
+        try:
+            import base64
+            import tempfile
+
+            raw = base64.b64decode(b64)
+            fd, tmp = tempfile.mkstemp(prefix="4ubyu_cookies_", suffix=".txt")
+            with os.fdopen(fd, "wb") as f:
+                f.write(raw)
+            return tmp
+        except Exception as e:
+            print(f"[YouTubeFetch] cookie decode notice: {e}")
+    return None
+
+
+def ingestion_hint() -> str:
+    """Config-aware, actionable advice for restoring full ingestion."""
+    api = bool(os.getenv("YOUTUBE_API_KEY") or os.getenv("YT_API_KEY"))
+    proxy = bool(os.getenv("YT_PROXY_URL"))
+    cookies = bool(_cookiefile())
+    fixes: List[str] = []
+    if not api:
+        fixes.append(
+            "set YOUTUBE_API_KEY (free, metadata only: duration + description)"
+        )
+    if not (cookies or proxy):
+        fixes.append(
+            "set YT_COOKIES_B64 (exported browser cookies) or YT_PROXY_URL "
+            "(residential proxy) to restore transcripts"
+        )
+    if not fixes:
+        return "Configured YouTube sources could not access this video."
+    return "To fix: " + "; ".join(fixes) + "."
+
+
 def innertube_player(video_id: str, timeout: int = 15) -> Optional[Dict[str, Any]]:
     """
     Calls YouTube's InnerTube player API across several clients.
@@ -148,6 +209,61 @@ def innertube_player(video_id: str, timeout: int = 15) -> Optional[Dict[str, Any
         except Exception:
             continue
     return best
+
+
+def fetch_metadata_ytdlp(video_id: str) -> Dict[str, Any]:
+    """
+    Metadata via yt-dlp. With YT_COOKIES / YT_PROXY_URL configured this works
+    from datacenter IPs where the watch page and InnerTube are bot-gated.
+
+    Returns a dict with any of: title, channel, duration, description, thumbnail.
+    """
+    try:
+        import yt_dlp  # type: ignore
+    except Exception:
+        return {}
+
+    opts: Dict[str, Any] = {
+        "skip_download": True,
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+    }
+    cookie = _cookiefile()
+    if cookie:
+        opts["cookiefile"] = cookie
+    proxy = os.getenv("YT_PROXY_URL")
+    if proxy:
+        opts["proxy"] = proxy
+
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(
+                f"https://www.youtube.com/watch?v={video_id}", download=False
+            )
+    except Exception as e:
+        print(f"[YouTubeFetch] yt-dlp metadata notice: {e}")
+        return {}
+    if not info:
+        return {}
+
+    out: Dict[str, Any] = {}
+    if info.get("title"):
+        out["title"] = info["title"]
+    channel = info.get("uploader") or info.get("channel")
+    if channel:
+        out["channel"] = channel
+    if info.get("duration"):
+        try:
+            out["duration"] = int(info["duration"])
+        except (TypeError, ValueError):
+            pass
+    desc = (info.get("description") or "").strip()
+    if desc:
+        out["description"] = desc
+    if info.get("thumbnail"):
+        out["thumbnail"] = info["thumbnail"]
+    return out
 
 
 def fetch_metadata_fallback(video_id: str) -> Dict[str, Any]:
@@ -218,6 +334,17 @@ def fetch_metadata_fallback(video_id: str) -> Dict[str, Any]:
                     break
         except Exception:
             pass
+
+    # Final fallback: yt-dlp. Only attempted when a cookie file or proxy is
+    # configured, since a bare datacenter request would just be bot-gated (and
+    # slow). With cookies this recovers duration *and* description.
+    if (not out.get("duration") or not out.get("description")) and (
+        _cookiefile() or os.getenv("YT_PROXY_URL")
+    ):
+        yt = fetch_metadata_ytdlp(video_id)
+        for k, v in yt.items():
+            if not out.get(k):
+                out[k] = v
 
     return out
 
@@ -354,6 +481,7 @@ def probe(video_id: str, timeout: int = 12) -> Dict[str, Any]:
 
     report["youtube_api_key_set"] = bool(os.getenv("YOUTUBE_API_KEY") or os.getenv("YT_API_KEY"))
     report["proxy_set"] = bool(os.getenv("YT_PROXY_URL"))
+    report["ytdlp_cookies_set"] = bool(_cookiefile())
     return report
 
 
@@ -463,6 +591,9 @@ def fetch_subtitles_ytdlp(video_id: str) -> List[Dict[str, Any]]:
     proxy = os.getenv("YT_PROXY_URL")
     if proxy:
         opts["proxy"] = proxy
+    cookie = _cookiefile()
+    if cookie:
+        opts["cookiefile"] = cookie
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=True)

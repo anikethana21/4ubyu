@@ -150,6 +150,7 @@ class MasterNotesState(TypedDict):
     yt_chapters: list[dict]
     full_transcript: str
     timed_transcript: list[dict] # [{start: float, duration: float, text: str}]
+    syllabus_source: str        # "transcript" | "description" | "fallback" | ...
     audio_path: Optional[str]
 
     # Phase 2: Parallel Fan-Out (Merge reducers ensure zero overwrite)

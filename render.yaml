@@ -44,10 +44,15 @@ services:
       - key: FERNET_KEY
         sync: false
 
-      # --- Optional extras (leave blank unless needed) ---
-      # Official YouTube Data API v3 key (metadata fallback; not required).
+      # --- YouTube ingestion on a datacenter host ---
+      # Cloud IPs (Render/Vercel/AWS/GCP) are gated by YouTube's bot check, so
+      # duration + transcripts fail unless one of these is set:
+      #   YOUTUBE_API_KEY  (free)  -> duration + description (metadata only)
+      #   YT_COOKIES_B64   (free)  -> browser cookies for yt-dlp (metadata + transcript)
+      #   YT_PROXY_URL     (paid)  -> residential proxy (full ingestion)
       - key: YOUTUBE_API_KEY
         sync: false
-      # Proxy for YouTube requests, only if a host is ever IP-blocked.
+      - key: YT_COOKIES_B64
+        sync: false
       - key: YT_PROXY_URL
         sync: false

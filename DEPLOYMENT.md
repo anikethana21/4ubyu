@@ -31,7 +31,8 @@ This guide covers deployment options for the **4 U By U** Interactive Educationa
    - `SUPABASE_KEY`: *(your Supabase anon/service key)*
    - `JWT_SECRET`: *(long random string — signs login sessions; Render can generate it)*
    - `FERNET_KEY`: *(optional — encrypts the per-user key vault; derived from `JWT_SECRET` if blank)*
-   - `YOUTUBE_API_KEY` / `YT_PROXY_URL`: *(optional — leave blank on Render)*
+   - `YOUTUBE_API_KEY`: *(see "YouTube ingestion" below)*
+   - `YT_COOKIES_B64` / `YT_PROXY_URL`: *(optional — see "YouTube ingestion" below)*
 
    > **No LLM keys go here.** Groq/Gemini/Eraser keys are entered by each user in
    > the UI, encrypted with Fernet, stored in the Supabase `user_settings` vault,
@@ -39,12 +40,34 @@ This guide covers deployment options for the **4 U By U** Interactive Educationa
    > deploy-time env vars.
 4. Click **Create Web Service**. Your app is live with automatic SSL!
 
-> **Why Render instead of Vercel?** YouTube blocks datacenter/serverless IP ranges.
-> On Vercel the backend gets *"Sign in to confirm you're not a bot"* on the player
-> API and *RequestBlocked* on the transcript endpoint, so it cannot read a video's
-> duration or transcript (the HITL screen then shows `00:00` / no chapters). Render
-> runs on regular servers that YouTube does not block, so the full topic
-> chapterizer works with no extra configuration.
+---
+
+## ⚠️ YouTube ingestion on cloud hosts (read this)
+
+**A cloud host does not escape YouTube's bot check.** Render, Vercel, AWS and GCP
+all rent *datacenter* IP ranges, which YouTube gates: the player API returns
+*"Sign in to confirm you're not a bot"* and the transcript endpoint returns
+*RequestBlocked* (verified against a live Render instance). The result is
+`00:00` duration and no chapters. Only a **residential IP** (your own machine) is
+unaffected out of the box.
+
+To restore ingestion on Render, set **one or more** of:
+
+| Var | Cost | What it restores |
+|---|---|---|
+| `YOUTUBE_API_KEY` | Free | Duration + description (+ description chapters). **No transcript.** |
+| `YT_COOKIES_B64` | Free | Cookies from a signed-in browser, fed to `yt-dlp` → metadata **and** transcripts. |
+| `YT_PROXY_URL` | Paid (~$2–7/mo) | Residential proxy → full ingestion, most reliable. |
+
+- **Get a free Data API key:** [console.cloud.google.com](https://console.cloud.google.com) → new project → *APIs & Services → Library* → enable **YouTube Data API v3** → *Credentials → Create API key*.
+- **Get cookies:** install a "Get cookies.txt LOCALLY" browser extension, export `cookies.txt` while signed in to YouTube, then base64-encode it:
+  ```powershell
+  [Convert]::ToBase64String([IO.File]::ReadAllBytes("cookies.txt"))
+  ```
+  and paste the result as `YT_COOKIES_B64`. (Cookies expire after some weeks — re-export when transcripts stop.)
+
+> **Local / residential hosting needs none of this.** Running on your own machine
+> (Option 3) or a home server works with no key, cookies or proxy.
 >
 > Render's free instance spins down after ~15 min idle (first request then takes
 > ~30–60s to wake) and has 512 MB RAM. If you generate very long handbooks, use a

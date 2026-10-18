@@ -72,11 +72,13 @@ async def inspect_video_for_hitl(
     syllabus_source = state.get("syllabus_source", "unknown")
     warning = None
     if not transcript.strip():
+        from core.youtube_fetch import ingestion_hint
+
         warning = (
-            "No transcript could be retrieved from YouTube. Chapters shown come "
-            "from the video description, not the spoken content. Set YT_PROXY_URL "
-            "or run the backend on a non-serverless host (e.g. Render) to restore "
-            "full topic detection."
+            "No transcript could be retrieved from YouTube: this host's IP is "
+            "gated by YouTube's bot check (datacenter hosts such as Render and "
+            "Vercel are affected alike). Chapters can only come from the video "
+            "description. " + ingestion_hint()
         )
 
     try:
