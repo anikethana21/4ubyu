@@ -33,69 +33,117 @@ def format_seconds(seconds: float) -> str:
         return f"{hours:02d}:{minutes:02d}:{secs:02d}"
     return f"{minutes:02d}:{secs:02d}"
 
+def _normalize_segments(raw_segments: List[Dict[str, Any]]) -> Tuple[str, List[Dict[str, Any]]]:
+    """Normalizes heterogeneous transcript dicts to the pipeline's segment shape."""
+    timed: List[Dict[str, Any]] = []
+    parts: List[str] = []
+    for item in raw_segments:
+        start = float(item.get("start", 0.0) or 0.0)
+        dur = float(item.get("duration", 0.0) or 0.0)
+        text = str(item.get("text", "")).strip()
+        if not text:
+            continue
+        timed.append({
+            "start": start,
+            "duration": dur,
+            "end": start + dur,
+            "timestamp_str": format_seconds(start),
+            "text": text,
+        })
+        parts.append(text)
+    return " ".join(parts), timed
+
+
+def _transcript_via_api(video_id: str) -> Tuple[str, List[Dict[str, Any]]]:
+    """Primary source: youtube-transcript-api (official/auto subtitles)."""
+    from youtube_transcript_api import YouTubeTranscriptApi
+
+    ytt = YouTubeTranscriptApi()
+    transcript_list = ytt.list(video_id)
+
+    target_t = None
+    for lang in ["en", "en-US", "en-GB"]:
+        try:
+            target_t = transcript_list.find_transcript([lang])
+            if target_t:
+                break
+        except Exception:
+            pass
+
+    if not target_t:
+        for t in transcript_list:
+            try:
+                target_t = t.translate("en")
+                print(f"[Transcriber] Translated transcript from "
+                      f"'{getattr(t, 'language_code', 'auto')}' → English.")
+                break
+            except Exception:
+                continue
+
+    if not target_t:
+        for t in transcript_list:
+            target_t = t
+            break
+
+    if not target_t:
+        return "", []
+
+    data = target_t.fetch()
+    raws: List[Dict[str, Any]] = []
+    for item in data:
+        start = float(getattr(item, 'start', 0.0) if not isinstance(item, dict) else item.get('start', 0.0))
+        dur = float(getattr(item, 'duration', 0.0) if not isinstance(item, dict) else item.get('duration', 0.0))
+        text = str(getattr(item, 'text', '') if not isinstance(item, dict) else item.get('text', '')).strip()
+        raws.append({"start": start, "duration": dur, "text": text})
+    return _normalize_segments(raws)
+
+
 def fetch_youtube_transcript(video_id: str) -> Tuple[str, List[Dict[str, Any]]]:
     """
-    Fetches official or auto-generated timed transcript.
-    Returns (full_text, timed_segments_list)
+    Fetches official or auto-generated timed transcript using layered sources so
+    datacenter / serverless IP gating never yields a silent empty result:
+
+      1. youtube-transcript-api
+      2. InnerTube caption tracks (core.youtube_fetch)
+      3. yt-dlp subtitle download (core.youtube_fetch)
     """
+    # 1. Primary: youtube-transcript-api
     try:
-        from youtube_transcript_api import YouTubeTranscriptApi
-        ytt = YouTubeTranscriptApi()
-        transcript_list = ytt.list(video_id)
-        
-        target_t = None
-        for lang in ["en", "en-US", "en-GB"]:
-            try:
-                target_t = transcript_list.find_transcript([lang])
-                if target_t:
-                    break
-            except Exception:
-                pass
-
-        translated_from = None
-        if not target_t:
-            for t in transcript_list:
-                try:
-                    target_t = t.translate("en")
-                    translated_from = getattr(t, "language_code", "auto")
-                    print(f"[Transcriber] Translated transcript from '{translated_from}' → English.")
-                    break
-                except Exception:
-                    continue
-
-        if not target_t:
-            for t in transcript_list:
-                target_t = t
-                break
-
-        if not target_t:
-            print("[Transcriber] No transcripts available.")
-            return "", []
-
-        data = target_t.fetch()
-        
-        timed_segments = []
-        full_text_parts = []
-        
-        for item in data:
-            start_sec = float(getattr(item, 'start', 0.0) if not isinstance(item, dict) else item.get('start', 0.0))
-            duration_sec = float(getattr(item, 'duration', 0.0) if not isinstance(item, dict) else item.get('duration', 0.0))
-            text = str(getattr(item, 'text', '') if not isinstance(item, dict) else item.get('text', '')).strip()
-            
-            if text:
-                timed_segments.append({
-                    "start": start_sec,
-                    "duration": duration_sec,
-                    "end": start_sec + duration_sec,
-                    "timestamp_str": format_seconds(start_sec),
-                    "text": text
-                })
-                full_text_parts.append(text)
-            
-        full_transcript = " ".join(full_text_parts)
-        print(f"[Transcriber] Successfully fetched {len(timed_segments)} subtitle segments ({len(full_transcript)} chars) for {video_id}!")
-        return full_transcript, timed_segments
-
+        full_text, timed_segments = _transcript_via_api(video_id)
+        if timed_segments:
+            print(f"[Transcriber] Successfully fetched {len(timed_segments)} subtitle "
+                  f"segments ({len(full_text)} chars) for {video_id} (transcript-api)!")
+            return full_text, timed_segments
     except Exception as e:
-        print(f"[Transcriber] Warning: Transcript fetch error: {e}")
-        return "", []
+        print(f"[Transcriber] Transcript-API notice: {e}")
+
+    # 2. InnerTube caption tracks
+    try:
+        from core.youtube_fetch import fetch_captions
+
+        caps = fetch_captions(video_id)
+        if caps:
+            full_text, timed_segments = _normalize_segments(caps)
+            if timed_segments:
+                print(f"[Transcriber] InnerTube captions: {len(timed_segments)} "
+                      f"segments ({len(full_text)} chars) for {video_id}.")
+                return full_text, timed_segments
+    except Exception as e:
+        print(f"[Transcriber] InnerTube caption notice: {e}")
+
+    # 3. Last resort: yt-dlp subtitles
+    try:
+        from core.youtube_fetch import fetch_subtitles_ytdlp
+
+        subs = fetch_subtitles_ytdlp(video_id)
+        if subs:
+            full_text, timed_segments = _normalize_segments(subs)
+            if timed_segments:
+                print(f"[Transcriber] yt-dlp subtitles: {len(timed_segments)} "
+                      f"segments ({len(full_text)} chars) for {video_id}.")
+                return full_text, timed_segments
+    except Exception as e:
+        print(f"[Transcriber] yt-dlp subtitle notice: {e}")
+
+    print(f"[Transcriber] All transcript sources failed for {video_id}.")
+    return "", []

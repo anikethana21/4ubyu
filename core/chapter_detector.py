@@ -415,4 +415,19 @@ def choose_syllabus_chapters(
             )
         return _normalize_end_times(normalized, video_duration), "youtube"
 
+    # Absolute last resort: never return an empty syllabus. A "0 Topics" screen
+    # is a dead end; instead show a single actionable chapter spanning the video
+    # so the human can still review/rename, and the UI can flag the degradation.
+    if video_duration and video_duration > 0:
+        return [
+            {
+                "title": "Full Lecture",
+                "start_time": 0.0,
+                "end_time": float(video_duration),
+                "timestamp_str": "00:00",
+                "transcript": (full_transcript or "")[:120000],
+                "source": "full_lecture_fallback",
+            }
+        ], "full_lecture_fallback"
+
     return detected, src

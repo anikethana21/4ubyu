@@ -372,6 +372,11 @@ async def hitl_inspect(req: InspectRequest, request: Request):
         data["duration"] = meta.get("duration_str", "00:00")
         data["thumbnail"] = meta.get("thumbnail", f"https://img.youtube.com/vi/{data.get('video_id')}/hqdefault.jpg")
         data["url"] = req.youtube_url
+        # Surface ingestion degradation (e.g. YouTube blocked the transcript
+        # request from this host) so the UI can inform the user clearly.
+        data["warning"] = data.get("warning")
+        data["syllabus_source"] = data.get("syllabus_source")
+        data["transcript_chars"] = data.get("transcript_chars", 0)
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

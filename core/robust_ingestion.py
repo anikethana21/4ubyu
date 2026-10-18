@@ -119,6 +119,17 @@ def extract_robust_metadata(youtube_url: str) -> Tuple[str, Dict[str, Any], List
                 s = int(dur_match.group(3) or 0)
                 duration = h * 3600 + m * 60 + s
                 duration_str = format_seconds(duration)
+            else:
+                # Newer pages expose the raw length instead of itemprop.
+                ls = re.search(r'"lengthSeconds":"(\d+)"', html)
+                if ls:
+                    duration = int(ls.group(1))
+                    duration_str = format_seconds(duration)
+
+            if not title or title.startswith("Educational Video"):
+                t_m = re.search(r'"title":"(.*?)"', html)
+                if t_m:
+                    title = t_m.group(1)
 
             desc_m = re.search(r'"shortDescription":"(.*?)"(?:,"isCrawlable"|,"thumbnail")', html)
             if desc_m:
@@ -128,6 +139,30 @@ def extract_robust_metadata(youtube_url: str) -> Tuple[str, Dict[str, Any], List
                     desc_text = desc_m.group(1)
     except Exception as e:
         print(f"[RobustIngest] Watch HTML notice: {e}")
+
+    # 2b. InnerTube player API fallback. On datacenter/hosting IPs (Vercel,
+    # Render, AWS Lambda) YouTube frequently replaces the watch page with a
+    # bot-check page, so the HTML parse above returns nothing. The lighter
+    # InnerTube API still returns videoDetails (duration/title/description).
+    if duration == 0 or (not title or title.startswith("Educational Video")) or not desc_text:
+        try:
+            from core.youtube_fetch import fetch_metadata_fallback
+
+            fb = fetch_metadata_fallback(video_id)
+            if fb.get("duration") and duration == 0:
+                duration = int(fb["duration"])
+                duration_str = format_seconds(duration)
+            if fb.get("title") and (not title or title.startswith("Educational Video")):
+                title = fb["title"]
+            if fb.get("channel") and channel == "YouTube Creator":
+                channel = fb["channel"]
+            if fb.get("description") and not desc_text:
+                desc_text = fb["description"]
+            if fb.get("thumbnail"):
+                thumbnail = fb["thumbnail"]
+            print(f"[RobustIngest] InnerTube fallback → duration={duration}s, title='{(title or '')[:40]}'")
+        except Exception as e:
+            print(f"[RobustIngest] InnerTube notice: {e}")
 
     # 3. Fallback to oEmbed for title & channel
     if not title or title.startswith("Educational Video"):

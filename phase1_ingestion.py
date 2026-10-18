@@ -88,11 +88,24 @@ def transcribe_node(state: MasterNotesState) -> Dict[str, Any]:
     """Retrieves timed subtitle segments and complete transcript."""
     video_id = state["video_id"]
     full_text, timed_segments = fetch_youtube_transcript(video_id)
-    
+
+    metadata = dict(state.get("video_metadata", {}) or {})
     yt_chapters = state.get("yt_chapters", [])
-    video_duration = float(state.get("video_metadata", {}).get("duration", 0) or 0)
+    video_duration = float(metadata.get("duration", 0) or 0)
     api_key = state.get("api_key")
     model_name = state.get("model_name")
+
+    # Derive duration from the transcript when metadata extraction failed
+    # (e.g. YouTube bot-gated the watch page on a datacenter IP). This keeps the
+    # HITL badge and chapter end-times accurate instead of showing 00:00.
+    if timed_segments:
+        last = timed_segments[-1]
+        derived = float(last.get("end", last["start"] + last.get("duration", 0)))
+        if derived > video_duration:
+            video_duration = derived
+            metadata["duration"] = int(derived)
+            metadata["duration_str"] = format_seconds(derived)
+            print(f"[Phase 1] Derived duration {metadata['duration_str']} from transcript.")
 
     if state.get("hitl_approved") and yt_chapters:
         syllabus = yt_chapters
@@ -127,6 +140,7 @@ def transcribe_node(state: MasterNotesState) -> Dict[str, Any]:
     return {
         "full_transcript": full_text,
         "timed_transcript": timed_segments,
+        "video_metadata": metadata,
         "yt_chapters": syllabus,
         "raw_chapters": syllabus,
         "syllabus_source": syllabus_source,
