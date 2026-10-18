@@ -15,19 +15,27 @@ This guide covers deployment options for the **4 U By U** Interactive Educationa
    git push -u origin main
    ```
 
-2. Open [dashboard.render.com](https://dashboard.render.com) and click **New +** -> **Web Service**.
-3. Select your GitHub repository.
-4. Render will automatically detect `render.yaml` or you can enter:
-   - **Environment**: `Python`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
-   - **Health Check Path**: `/health`
-5. In **Environment Variables**, add:
-   - `APP_MODE`: `public`
+2. Open [dashboard.render.com](https://dashboard.render.com) and click **New +** -> **Blueprint**, then select your GitHub repository. Render will read `render.yaml` automatically.
+   *(Alternatively create a **Web Service** manually with: Environment `Python`, Build Command `pip install -r requirements.txt`, Start Command `uvicorn app:app --host 0.0.0.0 --port $PORT`, Health Check Path `/health`.)*
+3. In **Environment Variables**, add:
+   - `APP_MODE`: `private` (personal, unrestricted) or `public` (BYOK + hard caps)
    - `GROQ_API_KEY`: *(Your Groq API key)*
    - `GEMINI_API_KEY`: *(Your Google Gemini API key)*
    - `TAVILY_API_KEY`: *(Optional for web search)*
-6. Click **Create Web Service**. Your app is live with automatic SSL!
+   - `YOUTUBE_API_KEY`: *(Optional — official YouTube Data API v3 key, extra metadata fallback)*
+   - `YT_PROXY_URL`: *(Optional — only needed if a host ever gets IP-blocked by YouTube)*
+4. Click **Create Web Service**. Your app is live with automatic SSL!
+
+> **Why Render instead of Vercel?** YouTube blocks datacenter/serverless IP ranges.
+> On Vercel the backend gets *"Sign in to confirm you're not a bot"* on the player
+> API and *RequestBlocked* on the transcript endpoint, so it cannot read a video's
+> duration or transcript (the HITL screen then shows `00:00` / no chapters). Render
+> runs on regular servers that YouTube does not block, so the full topic
+> chapterizer works with no extra configuration.
+>
+> Render's free instance spins down after ~15 min idle (first request then takes
+> ~30–60s to wake) and has 512 MB RAM. If you generate very long handbooks, use a
+> paid instance.
 
 ---
 

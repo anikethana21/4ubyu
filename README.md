@@ -3,7 +3,10 @@
 > **"For You, By You"**  
 > AI-Synthesized Educational Study Workspace for Technical Video Lectures & Masterclasses.  
 > Sibling project to **R-Prep** (AI Resume Preparation Suite on Vercel).  
-> Live Deployment: [4ubyu.vercel.app](https://4ubyu.vercel.app/)
+> Live Deployment (demo): [4ubyu.vercel.app](https://4ubyu.vercel.app/)  
+> **Recommended production host: [Render](DEPLOYMENT.md)** — YouTube blocks Vercel's
+> serverless IP ranges, so video metadata/transcripts (and therefore chapter
+> detection) only work fully on a regular server. See `DEPLOYMENT.md`.
 
 ---
 

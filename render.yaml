@@ -1,16 +1,36 @@
+# 4 U By U — Render Blueprint (recommended production host)
+#
+# Why Render (and not Vercel)? YouTube blocks datacenter/serverless IP ranges,
+# so on Vercel the backend cannot read a video's duration or transcript
+# ("Sign in to confirm you're not a bot" / RequestBlocked). Render runs on
+# regular servers that YouTube does not block, so the full topic chapterizer
+# works with no proxy or API key.
 services:
   - type: web
     name: 4-u-by-u-workspace
-    env: python
+    runtime: python
+    plan: free
+    region: oregon
+    branch: master
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
+      # "private" = your personal unrestricted mode; "public" = BYOK + hard caps
       - key: APP_MODE
-        value: public
+        value: private
+      - key: PYTHON_VERSION
+        value: 3.12.7
       - key: GROQ_API_KEY
         sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: TAVILY_API_KEY
+        sync: false
+      # Optional: official YouTube Data API v3 key (metadata fallback)
+      - key: YOUTUBE_API_KEY
+        sync: false
+      # Optional: proxy for YouTube requests if a host is ever blocked
+      - key: YT_PROXY_URL
         sync: false
