@@ -175,9 +175,10 @@ python tests/test_section_composer.py      # one call per section, and no invent
 python tests/test_chapter_titling.py       # chapter titles are batched, and only for work that is read
 python tests/test_model_output.py          # numbered answers are read however the model decorates them
 python tests/test_model_router.py          # a keyless router's notice is never mistaken for notes
+python tests/test_notes_document.py        # saved notes draw the same page, and nothing else is kept
 ```
 
-All 75 pass with no network access and no database.
+All 95 pass with no network access and no database.
 
 ---
 

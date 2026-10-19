@@ -53,6 +53,7 @@ from core.workspace_manager import (
     get_user_settings_safe_preview,
     update_user_settings_vault
 )
+from core.notes_document import build_notes_document
 
 app = FastAPI(title="4 U By U - Educational Workspace Generator")
 
@@ -563,18 +564,16 @@ async def hitl_synthesize(req: SynthesizeRequest, request: Request):
         channel = meta.get("channel", "YouTube")
         duration = meta.get("duration_str", "00:00")
         chapters_count = len(res.get("chapter_contents", []))
-        html_content = res.get("compiled_html", "")
 
-        # If html_content not in memory, read from generated file
-        if not html_content and res.get("output_html_path"):
-            with open(res["output_html_path"], "r", encoding="utf-8") as f:
-                html_content = f.read()
+        # What is stored is the notes, not the page: a workspace has to be
+        # drawable later from the data rather than from the run that made it.
+        notes_document = build_notes_document(res)
 
         workspace_url = f"/output/notes_{video_id}.html"
         workspace_id = None
 
         # Private user workspace isolation
-        if current_user and html_content:
+        if current_user:
             ws_meta = save_user_workspace(
                 user_id=current_user["id"],
                 youtube_url=req.youtube_url,
@@ -583,7 +582,7 @@ async def hitl_synthesize(req: SynthesizeRequest, request: Request):
                 channel_name=channel,
                 duration=duration,
                 chapter_count=chapters_count,
-                html_content=html_content
+                notes_document=notes_document
             )
             workspace_url = ws_meta["workspace_url"]
             workspace_id = ws_meta["workspace_id"]
@@ -641,16 +640,14 @@ async def generate_notes(req: GenerateRequest, request: Request):
         channel = meta.get("channel", "YouTube")
         duration = meta.get("duration_str", "00:00")
         chapters_count = len(res.get("chapter_contents", []))
-        html_content = res.get("compiled_html", "")
 
-        if not html_content and res.get("output_html_path"):
-            with open(res["output_html_path"], "r", encoding="utf-8") as f:
-                html_content = f.read()
+        # Same seam as the HITL endpoint: what is stored is the notes data.
+        notes_document = build_notes_document(res)
 
         workspace_url = f"/output/notes_{video_id}.html"
         workspace_id = None
 
-        if current_user and html_content:
+        if current_user:
             ws_meta = save_user_workspace(
                 user_id=current_user["id"],
                 youtube_url=req.youtube_url,
@@ -659,7 +656,7 @@ async def generate_notes(req: GenerateRequest, request: Request):
                 channel_name=channel,
                 duration=duration,
                 chapter_count=chapters_count,
-                html_content=html_content
+                notes_document=notes_document
             )
             workspace_url = ws_meta["workspace_url"]
             workspace_id = ws_meta["workspace_id"]

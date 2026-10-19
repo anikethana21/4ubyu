@@ -1,7 +1,7 @@
 """
 4 U By U - User Workspace & Storage Manager
-Provides strictly isolated workspace CRUD, local + Supabase Storage persistence,
-and user-encrypted settings vault.
+Provides strictly isolated workspace CRUD over stored notes data (local file +
+Supabase row, re-rendered on request), and a user-encrypted settings vault.
 Guaranteed to operate cleanly even when cloud database is offline or unconfigured.
 """
 
@@ -13,6 +13,13 @@ from typing import Optional, List, Dict, Any
 from config import BASE_DIR, OUTPUT_DIR
 from core.db import get_supabase_client
 from core.cipher import encrypt_secret, decrypt_secret, mask_secret
+from core.notes_document import (
+    NOTES_SCHEMA_VERSION,
+    coerce_notes_document,
+    notes_document_to_json,
+    render_notes_html,
+    validate_notes_document,
+)
 
 try:
     STORAGE_USERS_DIR = BASE_DIR / "storage" / "users"
@@ -23,7 +30,45 @@ except (OSError, PermissionError):
 
 # ---------------------------------------------------------------------------
 # WORKSPACE CRUD & ISOLATED STORAGE
+#
+# A workspace is stored as its notes data and drawn back into HTML on request.
+# The page itself is a function of that data, more than half of it is the same
+# stylesheet copied into every workspace, and a stored page cannot be improved
+# later; the data can.
 # ---------------------------------------------------------------------------
+
+def _user_workspace_dir(user_id: str, create: bool = True) -> Path:
+    """The user's own directory, so one user's id can never name another's file."""
+    for base in (STORAGE_USERS_DIR, Path(tempfile.gettempdir()) / "4ubyu" / "storage" / "users"):
+        path = base / user_id / "workspaces"
+        try:
+            if create:
+                path.mkdir(parents=True, exist_ok=True)
+            if path.exists():
+                return path
+        except (OSError, PermissionError):
+            continue
+    return STORAGE_USERS_DIR / user_id / "workspaces"
+
+
+def _write_local_document(user_id: str, workspace_id: str, document: Dict[str, Any]) -> None:
+    try:
+        path = _user_workspace_dir(user_id) / f"{workspace_id}.json"
+        path.write_text(notes_document_to_json(document), encoding="utf-8")
+    except Exception as e:
+        print(f"[WorkspaceManager] Local notes write notice: {e}")
+
+
+def _read_local_document(user_id: str, workspace_id: str) -> Optional[Dict[str, Any]]:
+    path = _user_workspace_dir(user_id, create=False) / f"{workspace_id}.json"
+    if not path.exists():
+        return None
+    try:
+        return coerce_notes_document(path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[WorkspaceManager] Local notes read notice: {e}")
+        return None
+
 
 def save_user_workspace(
     user_id: str,
@@ -33,49 +78,25 @@ def save_user_workspace(
     channel_name: Optional[str],
     duration: Optional[str],
     chapter_count: int,
-    html_content: str
+    notes_document: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Saves generated workspace privately for user in local storage, Supabase Storage, and DB."""
+    """Saves generated notes privately for the user, locally and in Supabase."""
     client = get_supabase_client()
     workspace_id = str(uuid.uuid4())
-    storage_path = f"{user_id}/{workspace_id}.html"
+    document = notes_document or {}
 
-    # 1. Local user-partitioned file
-    try:
-        user_ws_dir = STORAGE_USERS_DIR / user_id / "workspaces"
-        user_ws_dir.mkdir(parents=True, exist_ok=True)
-    except (OSError, PermissionError):
-        user_ws_dir = Path(tempfile.gettempdir()) / "4ubyu" / "storage" / "users" / user_id / "workspaces"
-        user_ws_dir.mkdir(parents=True, exist_ok=True)
+    problems = validate_notes_document(document)
+    if problems:
+        print(
+            f"[WorkspaceManager] Workspace {workspace_id} saved with notes that "
+            f"cannot be rendered yet: {'; '.join(problems)}"
+        )
 
-    local_file_path = user_ws_dir / f"{workspace_id}.html"
-    try:
-        with open(local_file_path, "w", encoding="utf-8") as f:
-            f.write(html_content)
-    except Exception as e:
-        print(f"[WorkspaceManager] Local file write notice: {e}")
+    # 1. Local copy, so a local run reads its own notes without a database
+    _write_local_document(user_id, workspace_id, document)
 
-    # 2. Also keep in output/ for backward compatibility
-    legacy_file = OUTPUT_DIR / f"notes_{video_id}.html"
-    try:
-        with open(legacy_file, "w", encoding="utf-8") as f:
-            f.write(html_content)
-    except Exception:
-        pass
-
-    # 3. Supabase Storage upload (if client connected)
+    # 2. The row itself, carrying the notes
     if client:
-        try:
-            html_bytes = html_content.encode("utf-8")
-            client.storage.from_("workspaces").upload(
-                storage_path,
-                html_bytes,
-                file_options={"content-type": "text/html; charset=utf-8", "upsert": "true"}
-            )
-        except Exception as e:
-            print(f"[WorkspaceManager] Supabase Storage upload notice: {e}")
-
-        # 4. Insert DB record
         try:
             record = {
                 "id": workspace_id,
@@ -87,7 +108,8 @@ def save_user_workspace(
                 "duration": duration or "00:00",
                 "chapter_count": chapter_count,
                 "status": "completed",
-                "storage_path": storage_path
+                "notes_schema_version": NOTES_SCHEMA_VERSION,
+                "notes_data": document,
             }
             client.table("workspaces").insert(record).execute()
         except Exception as e:
@@ -108,11 +130,27 @@ def list_user_workspaces(user_id: str) -> List[Dict[str, Any]]:
     """Retrieves all workspaces belonging exclusively to the current user."""
     client = get_supabase_client()
     if not client:
-        # Fallback to local user partition
+        # Fallback to the local partition. Both shapes are listed: workspaces
+        # stored as notes data, and pages saved before that was the case.
         workspaces = []
-        user_ws_dir = STORAGE_USERS_DIR / user_id / "workspaces"
+        user_ws_dir = _user_workspace_dir(user_id, create=False)
         if user_ws_dir.exists():
-            for f in user_ws_dir.glob("*.html"):
+            for f in sorted(user_ws_dir.glob("*.json")):
+                ws_id = f.stem
+                document = _read_local_document(user_id, ws_id) or {}
+                meta = document.get("video_metadata") or {}
+                workspaces.append({
+                    "id": ws_id,
+                    "user_id": user_id,
+                    "video_title": meta.get("title") or f"Workspace {ws_id[:8]}",
+                    "channel_name": meta.get("channel") or "Local Storage",
+                    "duration": meta.get("duration_str") or "00:00",
+                    "chapter_count": len(document.get("chapters") or []),
+                    "view_url": f"/api/workspaces/{ws_id}/view"
+                })
+            for f in sorted(user_ws_dir.glob("*.html")):
+                if f.stem in {w["id"] for w in workspaces}:
+                    continue
                 ws_id = f.stem
                 workspaces.append({
                     "id": ws_id,
@@ -126,7 +164,18 @@ def list_user_workspaces(user_id: str) -> List[Dict[str, Any]]:
         return workspaces
 
     try:
-        res = client.table("workspaces").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+        # The notes themselves are deliberately not selected: they are the bulk of
+        # the row, and a library listing does not render them.
+        res = (
+            client.table("workspaces")
+            .select(
+                "id, user_id, youtube_url, video_id, video_title, channel_name, "
+                "duration, chapter_count, status, created_at"
+            )
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
         workspaces = res.data or []
         for ws in workspaces:
             ws["view_url"] = f"/api/workspaces/{ws['id']}/view"
@@ -137,58 +186,73 @@ def list_user_workspaces(user_id: str) -> List[Dict[str, Any]]:
 
 
 def get_user_workspace_html(workspace_id: str, user_id: str) -> Optional[str]:
-    """Retrieves HTML content after verifying ownership."""
-    # 1. Check local cache first
-    local_file = STORAGE_USERS_DIR / user_id / "workspaces" / f"{workspace_id}.html"
-    if local_file.exists():
-        try:
-            with open(local_file, "r", encoding="utf-8") as f:
-                return f.read()
-        except Exception:
-            pass
-
+    """Returns the workspace page for its owner, drawn from the stored notes."""
     client = get_supabase_client()
-    if not client:
-        return None
 
-    try:
-        res = client.table("workspaces").select("*").eq("id", workspace_id).eq("user_id", user_id).execute()
-        if not res.data or len(res.data) == 0:
-            return None
-        ws = res.data[0]
-
-        # 2. Fallback to output/ directory
-        legacy_file = OUTPUT_DIR / f"notes_{ws.get('video_id')}.html"
-        if legacy_file.exists():
-            with open(legacy_file, "r", encoding="utf-8") as f:
-                return f.read()
-
-        # 3. Download from Supabase Storage
-        storage_path = ws.get("storage_path") or f"{user_id}/{workspace_id}.html"
-        data = client.storage.from_("workspaces").download(storage_path)
-        content = data.decode("utf-8")
-        # Cache locally for future requests
+    # The row is fetched first when there is a database, because it is also the
+    # ownership check.
+    row: Dict[str, Any] = {}
+    if client:
         try:
-            local_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(local_file, "w", encoding="utf-8") as f:
-                f.write(content)
-        except Exception:
-            pass
-        return content
-    except Exception as e:
-        print(f"[WorkspaceManager] Fetch workspace HTML error: {e}")
-        return None
+            res = client.table("workspaces").select("*").eq("id", workspace_id).eq("user_id", user_id).execute()
+            row = (res.data or [{}])[0]
+        except Exception as e:
+            print(f"[WorkspaceManager] Workspace lookup notice: {e}")
+        if not row:
+            return None
+
+    # 1. The notes data: local copy first, since a local run has no database.
+    document = _read_local_document(user_id, workspace_id)
+    if document is None:
+        document = coerce_notes_document(row.get("notes_data"))
+        if document is not None:
+            _write_local_document(user_id, workspace_id, document)
+
+    if document is not None:
+        problems = validate_notes_document(document)
+        if problems:
+            print(
+                f"[WorkspaceManager] Workspace {workspace_id} has notes that cannot be "
+                f"rendered: {'; '.join(problems)}"
+            )
+        try:
+            return render_notes_html(document)
+        except Exception as e:
+            print(f"[WorkspaceManager] Workspace {workspace_id} render notice: {e}")
+
+    # 2. Workspaces written before the notes were kept as data. Readable, but
+    # they cannot be re-rendered — only the page was kept.
+    legacy_paths = [
+        _user_workspace_dir(user_id, create=False) / f"{workspace_id}.html",
+        OUTPUT_DIR / f"notes_{row.get('video_id')}.html" if row.get("video_id") else None,
+    ]
+    for path in legacy_paths:
+        if path and path.exists():
+            try:
+                return path.read_text(encoding="utf-8")
+            except Exception as e:
+                print(f"[WorkspaceManager] Legacy workspace read notice: {e}")
+
+    if client and row.get("storage_path"):
+        try:
+            return client.storage.from_("workspaces").download(row["storage_path"]).decode("utf-8")
+        except Exception as e:
+            print(f"[WorkspaceManager] Storage download notice: {e}")
+
+    return None
 
 
 def delete_user_workspace(workspace_id: str, user_id: str) -> bool:
-    """Deletes workspace from database, local storage, and Supabase Storage."""
-    # 1. Delete local file
-    local_file = STORAGE_USERS_DIR / user_id / "workspaces" / f"{workspace_id}.html"
-    if local_file.exists():
-        try:
-            local_file.unlink()
-        except Exception:
-            pass
+    """Deletes workspace notes from the database and the local partition."""
+    # 1. Local copies, both shapes
+    user_ws_dir = _user_workspace_dir(user_id, create=False)
+    for suffix in (".json", ".html"):
+        local_file = user_ws_dir / f"{workspace_id}{suffix}"
+        if local_file.exists():
+            try:
+                local_file.unlink()
+            except Exception:
+                pass
 
     client = get_supabase_client()
     if not client:
@@ -200,12 +264,13 @@ def delete_user_workspace(workspace_id: str, user_id: str) -> bool:
             return False
         ws = res.data[0]
 
-        # Delete from Supabase Storage
-        try:
-            storage_path = ws.get("storage_path") or f"{user_id}/{workspace_id}.html"
-            client.storage.from_("workspaces").remove([storage_path])
-        except Exception as e:
-            print(f"[WorkspaceManager] Storage remove notice: {e}")
+        # Workspaces saved before this change may still have their page in
+        # Storage; removing it keeps the deletion complete.
+        if ws.get("storage_path"):
+            try:
+                client.storage.from_("workspaces").remove([ws["storage_path"]])
+            except Exception as e:
+                print(f"[WorkspaceManager] Storage remove notice: {e}")
 
         # Delete DB record
         client.table("workspaces").delete().eq("id", workspace_id).eq("user_id", user_id).execute()

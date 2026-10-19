@@ -71,6 +71,10 @@ def theory_agent_node(state: SectionState) -> Dict[str, Any]:
     failure = ""
 
     llm = get_chat_model(api_key=api_key, model_name=selected_model)
+    if not llm:
+        # Recorded where the fact is known, rather than left blank for the notice
+        # to fill in with a cause nobody checked.
+        failure = "no model was available, so no attempt was made"
     if llm:
         try:
             prompt_str = (

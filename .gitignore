@@ -39,6 +39,10 @@ notes_vectordb/
 # Runtime ingest payload cache (transcripts captured client-side; never committed)
 storage/ingest/
 
+# The extension's development output: generated notes pages, written per run.
+# Reproducible from a saved document with `npm run render`, so it is scratch.
+extension/dev/out/
+
 # ML chapter-classifier artifacts (train locally, don't commit)
 models/
 data/chapter_classification/

@@ -13,6 +13,13 @@ from langchain_core.messages import BaseMessage, AIMessage, HumanMessage, System
 from langchain_core.outputs import ChatResult, ChatGeneration, ChatGenerationChunk
 from langchain_core.messages.ai import AIMessageChunk
 
+# A reasoning model spends reasoning tokens out of the same response budget as the
+# answer, so a budget that fits a plain chat model can be gone before the first
+# word of the answer is written — the provider then returns HTTP 200 with empty
+# content. This leaves room for both. It is an upper bound, not a request to write
+# more: answers here run to roughly 1,200 tokens.
+GROQ_MAX_COMPLETION_TOKENS = int(os.environ.get("GROQ_MAX_COMPLETION_TOKENS", "3072"))
+
 from config import DEFAULT_GROQ_MODEL, DEFAULT_GEMINI_MODEL
 
 def detect_key_provider(api_key: str) -> Optional[str]:
@@ -29,6 +36,31 @@ def detect_key_provider(api_key: str) -> Optional[str]:
     elif k.startswith("sk-"):
         return "openai"
     return None
+
+def _answer_from_groq(payload: Dict[str, Any], model: str) -> str:
+    """The answer text, or a refusal that says why there is none.
+
+    A reasoning model can spend the whole response budget before writing any
+    answer, and the provider returns HTTP 200 with empty content when it does.
+    Returning that empty string would reach the reader as "the model returned an
+    empty answer" — true, but it hides the two facts that make it fixable:
+    whether the answer was cut off at the budget, and how much of it the reasoning
+    used. Raising says both.
+    """
+    choice = (payload.get("choices") or [{}])[0]
+    message = choice.get("message") or {}
+    text = message.get("content") or ""
+    if text.strip():
+        return text
+    usage = payload.get("usage") or {}
+    reasoning_tokens = (usage.get("completion_tokens_details") or {}).get("reasoning_tokens")
+    raise RuntimeError(
+        f"Groq returned no answer for {model}: finish_reason="
+        f"{choice.get('finish_reason')}, completion_tokens="
+        f"{usage.get('completion_tokens')}, reasoning_tokens={reasoning_tokens}. "
+        "The response budget may have been spent before the answer began."
+    )
+
 
 class DirectUniversalChatModel(BaseChatModel):
     provider: str = "groq"
@@ -72,20 +104,33 @@ class DirectUniversalChatModel(BaseChatModel):
             body = {
                 "model": target,
                 "messages": payload_messages,
-                "temperature": self.temperature
+                "temperature": self.temperature,
+                "max_completion_tokens": GROQ_MAX_COMPLETION_TOKENS
             }
             res = requests.post(url, headers=headers, json=body, timeout=25)
             if res.status_code == 200:
-                txt = res.json()["choices"][0]["message"]["content"]
-                return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+                return ChatResult(
+                    generations=[
+                        ChatGeneration(
+                            message=AIMessage(content=_answer_from_groq(res.json(), target))
+                        )
+                    ]
+                )
             elif res.status_code == 401:
                 from config import DEFAULT_GROQ_KEY
                 if DEFAULT_GROQ_KEY and self.api_key != DEFAULT_GROQ_KEY:
                     headers["Authorization"] = f"Bearer {DEFAULT_GROQ_KEY}"
                     res_def = requests.post(url, headers=headers, json=body, timeout=25)
                     if res_def.status_code == 200:
-                        txt = res_def.json()["choices"][0]["message"]["content"]
-                        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+                        return ChatResult(
+                            generations=[
+                                ChatGeneration(
+                                    message=AIMessage(
+                                        content=_answer_from_groq(res_def.json(), target)
+                                    )
+                                )
+                            ]
+                        )
             elif res.status_code == 413:
                 # The request is bigger than the provider's whole per-minute
                 # allowance, so no amount of waiting will help — the caller has to
@@ -96,27 +141,58 @@ class DirectUniversalChatModel(BaseChatModel):
                     f"{(res.text or '')[:300]}"
                 )
             elif res.status_code == 429:
-                # This minute's allowance is spent. Give the meter a chance to
-                # refill, then try the lighter model, which is metered separately.
-                for delay in (6, 20):
-                    time.sleep(delay)
-                    retry = requests.post(url, headers=headers, json=body, timeout=30)
-                    if retry.status_code == 200:
-                        txt = retry.json()["choices"][0]["message"]["content"]
-                        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+                # Two different allowances answer with 429. A per-minute one
+                # refills, so waiting helps and the seconds buy a real retry. A
+                # daily one does not refill until tomorrow, so waiting is time
+                # spent to arrive at the same refusal — and the lighter model is
+                # metered separately, so it is worth trying either way.
+                from core.llm_failures import is_daily_limit
+
+                daily = is_daily_limit(res.text or "")
+                if not daily:
+                    for delay in (6, 20):
+                        time.sleep(delay)
+                        retry = requests.post(url, headers=headers, json=body, timeout=30)
+                        if retry.status_code == 200:
+                            return ChatResult(
+                                generations=[
+                                    ChatGeneration(
+                                        message=AIMessage(
+                                            content=_answer_from_groq(retry.json(), target)
+                                        )
+                                    )
+                                ]
+                            )
                 body["model"] = "openai/gpt-oss-20b"
                 res2 = requests.post(url, headers=headers, json=body, timeout=30)
                 if res2.status_code == 200:
-                    txt = res2.json()["choices"][0]["message"]["content"]
-                    return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
-                raise RuntimeError(f"Groq TPM Rate Limit (429). {(res.text or '')[:300]}")
+                    return ChatResult(
+                        generations=[
+                            ChatGeneration(
+                                message=AIMessage(
+                                    content=_answer_from_groq(res2.json(), "openai/gpt-oss-20b")
+                                )
+                            )
+                        ]
+                    )
+                quota = "tokens per day (TPD)" if daily else "tokens per minute (TPM)"
+                raise RuntimeError(
+                    f"Groq {quota} Rate Limit (429). {(res.text or '')[:300]}"
+                )
             else:
                 # Try fallback model on Groq
                 body["model"] = "openai/gpt-oss-20b"
                 res2 = requests.post(url, headers=headers, json=body, timeout=30)
                 if res2.status_code == 200:
-                    txt = res2.json()["choices"][0]["message"]["content"]
-                    return ChatResult(generations=[ChatGeneration(message=AIMessage(content=txt))])
+                    return ChatResult(
+                        generations=[
+                            ChatGeneration(
+                                message=AIMessage(
+                                    content=_answer_from_groq(res2.json(), "openai/gpt-oss-20b")
+                                )
+                            )
+                        ]
+                    )
                 raise RuntimeError(f"Groq API Error {res.status_code}: {res.text}")
 
         elif self.provider == "gemini":

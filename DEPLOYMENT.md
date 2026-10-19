@@ -9,8 +9,26 @@ This guide covers deployment options for the **4 U By U** Interactive Educationa
 ### Step 1 — Set up Supabase (auth, encrypted key vault, workspaces)
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Open **SQL Editor** → **New query**, paste the contents of **`supabase_schema.sql`** (in this repo) and run it. This creates the `users`, `user_settings`, `workspaces`, `token_blacklist` tables and the `workspaces` storage bucket.
+2. Open **SQL Editor** → **New query**, paste the contents of **`supabase_schema.sql`** (in this repo) and run it. This creates the `users`, `user_settings`, `workspaces`, `ingest_payloads` and `token_blacklist` tables.
+   - Re-running it is safe: the script uses `create table if not exists` and `add column if not exists`, and ends with `notify pgrst, 'reload schema'`. That last line matters — without it a running API keeps answering *"column workspaces.notes_data does not exist"* until it restarts.
 3. From **Settings → API**, copy the **Project URL** and the **`service_role`** key. (Use the service_role key server-side; never expose it in the browser.)
+
+### What is stored, and what it costs
+
+A saved workspace is kept as its **notes data** (chapter titles, sections, key
+points, timestamps, video metadata) in a `jsonb` column, and the page is drawn
+from it on request. The rendered HTML is not stored: it is a function of that
+data, more than half of it is the same inlined stylesheet copied into every
+workspace, and a stored page cannot be re-rendered when the template improves.
+
+That is **9% of the page it draws**: one twelve-minute chapter's notes came to
+15 KB where its rendered page was 168 KB. Extrapolating from that per-section
+size, a four-hour course lands near 1 MB — so the free tier's 1 GB holds roughly
+a thousand of them, or tens of thousands of single chapters. It also means a
+formatting fix reaches every workspace already saved.
+
+A workspace saved by an older version holds the page instead; those still open
+(they are read as a page, not re-rendered), so no migration is needed.
 
 ### Step 2 — Deploy on Render
 
@@ -31,8 +49,8 @@ This guide covers deployment options for the **4 U By U** Interactive Educationa
    - `SUPABASE_KEY`: *(your Supabase anon/service key)*
    - `JWT_SECRET`: *(long random string — signs login sessions; Render can generate it)*
    - `FERNET_KEY`: *(optional — encrypts the per-user key vault; derived from `JWT_SECRET` if blank)*
-   - `YOUTUBE_API_KEY`: *(see "YouTube ingestion" below)*
-   - `YT_COOKIES_B64` / `YT_PROXY_URL`: *(optional — see "YouTube ingestion" below)*
+   - `EXTENSION_INGEST_TOKEN`: *(required for capture — the userscript presents it when posting a transcript)*
+   - `INGEST_TTL_HOURS`: *(optional, default 24 — how long a captured transcript is kept)*
 
    > **No LLM keys go here.** Groq/Gemini/Eraser keys are entered by each user in
    > the UI, encrypted with Fernet, stored in the Supabase `user_settings` vault,
@@ -42,16 +60,23 @@ This guide covers deployment options for the **4 U By U** Interactive Educationa
 
 ---
 
-## ⚠️ YouTube ingestion on cloud hosts (read this)
+## Ingestion: the browser reads the captions, not the server
 
-**A cloud host does not escape YouTube's bot check.** Render, Vercel, AWS and GCP
-all rent *datacenter* IP ranges, which YouTube gates: the player API returns
-*"Sign in to confirm you're not a bot"* and the transcript endpoint returns
-*RequestBlocked* (verified against a live Render instance). The result is
-`00:00` duration and no chapters. Only a **residential IP** (your own machine) is
-unaffected out of the box.
+**The server does not fetch YouTube, and on a cloud host it cannot.** Render's
+datacenter IPs are gated exactly like Vercel's: the player API returns *"Sign in
+to confirm you're not a bot"* and the caption endpoint returns *RequestBlocked*,
+which is why a naive deploy reports `00:00` duration and no chapters.
 
-To restore ingestion on Render, set **one or more** of:
+The userscript (`extension/4ubyu.user.js`) captures the transcript **in the
+user's own browser**, on the page where the lecture is already playing, and posts
+it to `/api/ingest/transcript`. Their residential IP is not gated, and their
+cookies never leave their machine — nothing needs them there. This is why no
+YouTube configuration is needed on the host at all.
+
+Server-side ingestion still exists and still works **on a residential machine**
+(local development, Option 3, a home server): when a request carries no
+`ingest_id`, the server fetches the video itself. If you want that path to work
+on a datacenter host as well:
 
 | Var | Cost | What it restores |
 |---|---|---|
@@ -66,12 +91,11 @@ To restore ingestion on Render, set **one or more** of:
   ```
   and paste the result as `YT_COOKIES_B64`. (Cookies expire after some weeks — re-export when transcripts stop.)
 
-> **Local / residential hosting needs none of this.** Running on your own machine
-> (Option 3) or a home server works with no key, cookies or proxy.
->
-> Render's free instance spins down after ~15 min idle (first request then takes
-> ~30–60s to wake) and has 512 MB RAM. If you generate very long handbooks, use a
-> paid instance.
+> Render's free instance spins down after ~15 min idle (the first request then
+> takes ~30–60s to wake) and has 512 MB RAM. The pipeline runs in that budget for
+> a normal lecture; a four-hour one is better segmented with **Generate notes** per
+> chapter, which also keeps each request inside a free provider's per-minute
+> token allowance.
 
 ---
 

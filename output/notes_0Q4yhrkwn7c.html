@@ -4470,14 +4470,14 @@ article.chapter-card {
 <!-- Chapter Sections -->
 <div class="sections-list">
             
-            <section class="section-block" data-chapter-title="Applying tanh Activation to RNN Hidden States" data-timestamp-seconds="7020" id="ch_01_s01">
+            <section class="section-block" data-chapter-title="Applying Tanh Activation to Recurrent Hidden States" data-timestamp-seconds="7020" id="ch_01_s01">
 <div class="section-header">
-<h3 class="section-heading">Applying tanh Activation to RNN Hidden States</h3>
+<h3 class="section-heading">Applying Tanh Activation to Recurrent Hidden States</h3>
 <div class="section-tools">
 <button class="ts-pill-sm" data-seconds="7020" onclick="seekVideo(7020)">
                     ▶ 01:57:00
                   </button>
-<button class="btn-ask-ai" onclick="askAboutSection('Applying tanh Activation to RNN Hidden States', '01:57:00')">
+<button class="btn-ask-ai" onclick="askAboutSection('Applying Tanh Activation to Recurrent Hidden States', '01:57:00')">
                     Ask AI
                   </button>
 </div>
@@ -4486,11 +4486,19 @@ article.chapter-card {
               
               <div class="theory-block">
                 
-                <div class="theory-content"><p>The instructor begins by explaining that the hidden state of an RNN, denoted (h_t), is transformed by a hyperbolic‑tangent (tanh) activation. The tanh function is applied after the linear combination of the current input (x_t) and the previous hidden state (h_{t-1}). In the example “Riya is a doctor,” the four words produce four input vectors; each is combined with the previous hidden state (which itself is a vector of length 6 in the example) and then passed through tanh.  </p>
-<p>Next, the lecture describes the element‑wise operations that occur inside the RNN cell. The network performs point‑wise (element‑wise) multiplication of the transformed input and hidden state vectors, followed by an element‑wise addition. The instructor also shows how an “one‑minus” operation is applied element‑wise to produce complementary values. These operations are part of the dot‑product calculations that feed into the activation functions.  </p>
-<p>The second filtering step is introduced: a sigmoid gate that outputs values between 0 and 1. This gate decides whether a particular component of the candidate cell state should be passed on to the next time step. If the sigmoid output is close to 0, that component is effectively blocked; if it is close to 1, it is fully transmitted.  </p>
-<p>Finally, the instructor ties the pieces together: the tanh‑activated hidden state (h_t) and the sigmoid‑controlled gating together form the updated hidden state that will be used for the next time step.</p></div>
+                <div class="theory-content"><p>The instructor explains that in a recurrent network the new hidden state (h_t) is computed by first combining the previous hidden state (h_{t-1}) and the current input (x_t). This combination is done with element‑wise (pointwise) multiplication, then an activation function is applied. The activation used for the hidden state is the hyperbolic tangent (tanh), which squashes the result into the range ([-1,1]).<br />
+They illustrate this with a simple sentence example: “Riya is a doctor.” The four words become four input vectors, and the network processes them one time step at a time, each time applying the tanh to the combined vector.<br />
+The lecture also mentions that this process is part of a filtering mechanism: the tanh output is a filtered candidate for the next cell state. A second filtering step, involving a sigmoid gate, decides how much of this candidate should be kept. The sigmoid outputs a value between 0 and 1, effectively turning the candidate on or off.<br />
+Finally, the instructor clarifies the difference between dot products and element‑wise operations, giving a concrete example of multiplying two vectors ((1,2,3)) and ((3,4,5)) to get ((3,8,15)).</p></div>
                 
+                
+                <div class="analogy-card">
+                  <div class="analogy-icon">💡</div>
+                  <div class="analogy-body">
+                    <div class="analogy-title">Mental Model & Intuition</div>
+                    <div class="analogy-text">Think of the hidden state as a thermostat in a room. The previous temperature (\(h_{t-1}\)) and the new heat input (\(x_t\)) are mixed together (element‑wise multiplication). The tanh function is the thermostat’s control panel that limits the temperature to a comfortable range, preventing it from getting too hot or too cold. The sigmoid gate is like a window that decides whether to let in fresh air (the new candidate) or keep the room sealed.</div>
+                  </div>
+                </div>
                 
               </div>
               
@@ -4502,8 +4510,30 @@ article.chapter-card {
 
               <!-- Key Takeaways -->
               
+              <div class="keypoints-card">
+<h4>Key Takeaways</h4>
+<ul>
+                  
+                  <li>The hidden state \(h_t\) is computed by element‑wise multiplying \(h_{t-1}\) and \(x_t\) before applying tanh.</li>
+                  
+                  <li>Tanh squashes the combined vector into \([-1,1]\), acting as a filter for the next cell state.</li>
+                  
+                  <li>A second sigmoid gate decides how much of the tanh output to keep, outputting a value between 0 and 1.</li>
+                  
+                  <li>Dot product and element‑wise multiplication are distinct; the former is a single scalar, the latter preserves vector shape.</li>
+                  
+                  <li>The sizes of \(x_t\), \(h_{t-1}\), and the resulting \(h_t\) remain the same throughout the operation.</li>
+                  
+                </ul>
+</div>
+              
 
               <!-- Practical Examples -->
+              
+              <div class="example-card">
+
+<span class="example-text">The instructor used the sentence “Riya is a doctor” as an example, treating each word as an input vector and showing how the network processes them one by one, applying tanh to the combined hidden state at each step.</span>
+</div>
               
 
               <!-- Supplement Block -->
@@ -4527,24 +4557,19 @@ article.chapter-card {
               
               <div class="theory-block">
                 
-                <div class="theory-content"><p>The instructor began by stressing that the first step before any vectorization is to <strong>pre‑process</strong> the raw text. The first operation is to convert everything to <strong>lowercase</strong> so that “T HE” and “t he” are treated as the same token. He showed how to do this in Python with the <code>string</code> module:  </p>
-<pre><code class="language-python">import string  
-text = text.lower()
-</code></pre>
-<p>Next, the instructor explained the need to <strong>remove punctuation</strong> because commas, periods, and other symbols can create spurious tokens. He demonstrated using <code>string.translate</code> with a translator that strips all characters in <code>string.punctuation</code>:  </p>
-<pre><code class="language-python">translator = str.maketrans('', '', string.punctuation)  
-clean_text = text.translate(translator)
-</code></pre>
-<p>He noted that these two steps—lowercasing and punctuation removal—reduce the vocabulary size and make the subsequent <strong>tokenization</strong> step (splitting the cleaned string into words) more reliable. The instructor also mentioned that many developers rely on AI tools or online resources to remember these small but essential snippets of code.</p></div>
+                <div class="theory-content"><h3>This section could not be written up</h3>
+<p>4 U By U asks a language model to turn the instructor's own words into notes, and that call did not succeed for this section. Nothing has been invented to fill the gap.</p>
+<p><strong>Why:</strong> the model returned an empty answer.</p>
+<p><strong>What to do:</strong> Generate this chapter again; if it keeps failing the provider may be having an outage.</p>
+<p><strong>What the instructor actually said in this part of the lecture</strong> (verbatim transcript, trimmed):</p>
+<blockquote>
+<p>Ok? and even before vectorization your One thing will have to be done. And that is I Think pre-process will have to be done. Ok? Hey man, I don't know where this epic pen is going. Used to be. I'm not sure a little bit There is a problem with this. [ __ ] lagged. Why wasn't it going up? That's ok. They I will show you the steps now. by itself You will understand it yourself. Ok? so you got All the codes. Now first of all in the codes People convert it to lower case. As you can see here, there is a T HE is written and any other D is written next to it It has happened. So it's going to have a small t in it. So we just want lower case first of all. So what will we do for that? Import Strings will do. Ok? and string You can also do this in addition to importing Are. I Guess Q U O T E S Codes I</p>
+</blockquote>
+<p>--- [mid-lecture excerpt] ---</p>
+<p>ow you never give You also write words. He also writes three words If yes, you can say this 713 I am making a comma. Hey 73 commas 62 Will Give You 29. I hope you understand Is. If I am writing these two words together As I'm writing The World, then After that should come 29 And That Will Be Yours The edge should come. So this way I now Multiple sequences have to be created. Correct Is? Now to create this sequence You have something known as N grams. Ok? You can either use engrams or Then you can create a basic for loop. Yes, I will make it because I have Python I have read it. So you can create a for loop In which you hold each one and move on to the next one. Going. Then hold two and the next one You are going to Then hold three and move to the next You are going to the one. Then catch f</p>
+<p>--- [late-lecture excerpt] ---</p>
+<p>each one of them has Rs 10,000 What is? An array of 10,000 is created. Why is it worth Rs 10,000? because your You have increased the maximum vocabulary size to 10,000. It is kept. A I think instead of 10,000, I will get the maximum. How much should the vocabulary size be 80? What was the total 8978 Should be done. Why 8978 know why? Because your if max You have also written down the vocab size but Still that is your length of word index That is 8978 But it's okay. You can even walk away with 10,000. yes. I don't think it will create any mess. No friend, let's do it. We do it. We do it. We do it. We do it. Just wait a second. Ware Was it? Because understand that your maximum Vocabulary Side 8978 I had just come. A copy I had 8 9 7 8 Edge The The word index is fine and you can see the edge</p></div>
                 
-                
-                <div class="analogy-card">
-                  <div class="analogy-icon">💡</div>
-                  <div class="analogy-body">
-                    <div class="analogy-title">Mental Model & Intuition</div>
-                    <div class="analogy-text">Think of the text as a messy toolbox. Lowercasing is like putting every tool in the same color‑coded drawer so you can find it regardless of its original label. Removing punctuation is like clearing out the dust and debris that might hide or misidentify a tool. Once the toolbox is clean and organized, you can easily pick out each tool (token) for the job ahead.</div>
-                  </div>
-                </div>
                 
               </div>
               
@@ -4556,30 +4581,8 @@ clean_text = text.translate(translator)
 
               <!-- Key Takeaways -->
               
-              <div class="keypoints-card">
-<h4>Key Takeaways</h4>
-<ul>
-                  
-                  <li>Convert all text to lowercase to unify tokens.</li>
-                  
-                  <li>Remove punctuation using `string.translate` and `string.punctuation`.</li>
-                  
-                  <li>These cleaning steps reduce vocabulary size before tokenization.</li>
-                  
-                  <li>Tokenization follows the cleaning to split the text into individual words.</li>
-                  
-                  <li>Using AI helpers can aid in remembering the exact code snippets.</li>
-                  
-                </ul>
-</div>
-              
 
               <!-- Practical Examples -->
-              
-              <div class="example-card">
-
-<span class="example-text">The instructor used the example “T HE” next to a “D” to illustrate that after `text.lower()` it becomes “t he”, and that commas and other punctuation are removed so that “Hello, world!” becomes “hello world”.</span>
-</div>
               
 
               <!-- Supplement Block -->
@@ -4587,14 +4590,14 @@ clean_text = text.translate(translator)
 
             </section>
             
-            <section class="section-block" data-chapter-title="Vocabulary Management and One-Hot Encoding" data-timestamp-seconds="11215" id="ch_01_s03">
+            <section class="section-block" data-chapter-title="Setting Vocabulary Size and One-Hot Encoding" data-timestamp-seconds="11215" id="ch_01_s03">
 <div class="section-header">
-<h3 class="section-heading">Vocabulary Management and One-Hot Encoding</h3>
+<h3 class="section-heading">Setting Vocabulary Size and One-Hot Encoding</h3>
 <div class="section-tools">
 <button class="ts-pill-sm" data-seconds="11215" onclick="seekVideo(11215)">
                     ▶ 03:06:55
                   </button>
-<button class="btn-ask-ai" onclick="askAboutSection('Vocabulary Management and One-Hot Encoding', '03:06:55')">
+<button class="btn-ask-ai" onclick="askAboutSection('Setting Vocabulary Size and One-Hot Encoding', '03:06:55')">
                     Ask AI
                   </button>
 </div>
@@ -4603,8 +4606,18 @@ clean_text = text.translate(translator)
               
               <div class="theory-block">
                 
-                <div class="theory-content"><p>The instructor starts by setting a <strong>vocabulary size</strong> of 10 000, even though the actual maximum vocabulary is 8 978, to keep the input dimensions consistent across the network. He explains that the <strong>one‑hot encoding</strong> will therefore be a vector of length 10 000, with a single 1 at the index of the word and 0s elsewhere.  </p>
-<p>Next, the lecture moves to <strong>tokenization and vectorization</strong>: each word is turned into an integer ID, and the sequence of IDs is fed into the model. The <strong>Embedding</strong> layer is then added to the <strong>Sequential</strong> model. The layer is</p></div>
+                <div class="theory-content"><h3>This section could not be written up</h3>
+<p>4 U By U asks a language model to turn the instructor's own words into notes, and that call did not succeed for this section. Nothing has been invented to fill the gap.</p>
+<p><strong>Why:</strong> the model returned an empty answer.</p>
+<p><strong>What to do:</strong> Generate this chapter again; if it keeps failing the provider may be having an outage.</p>
+<p><strong>What the instructor actually said in this part of the lecture</strong> (verbatim transcript, trimmed):</p>
+<blockquote>
+<p>Word Index wait a second Look, I want to keep it raw. You guys too Look how I work. And my vocab size I manually Set Age 10,000 Ok. So should i do the one hot Encoding with 8000 so much so much Number of classes Number of Classes. Let's See will tell you this. anyway I think he should do 8000 also. Why We're Coming Going Up To 10,000 All two will look like zeros ahead but when Its maximum vocabulary size is 8,978 Why do I have to go up to 10,000? So just wait for one second. One is this Je Since the new update has been released Gemini 2.5 I am not able to use flash j3. Yes friend. Bro you are right. Write you notice The Difference Between Length of Word Vocab Size while itnait itna ah expected input Size for these networks which will be built Based on your vocab size 10,000 Consistent dime</p>
+</blockquote>
+<p>--- [mid-lecture excerpt] ---</p>
+<p>means one after the other One layer is stacked. Ok? and in RN You can do this directly. Now our What are you going to do? Now let's create the Embedding layer. Meaning of each word Converting to Embeddings. from A let's You have an input ID of 73. Ok? So Your output will be in 50 Vectors. For example, very well Understand. Zero 0 73. Ok? Doing this, lots of zeros And this is a word. Now what about Zero? Will you convert? 50 dimensions for zero I will become zero. Ok? But 73 will be Converted into an embedding like 0.12 comma A - 0.03 And by doing this you will have a lot of There are going to be values ​​that are ones and zeros. She is going to live in the middle. Ok? and these Will be your 50 numbers. And that is what Embedding Means. inside each vector Create embeddings for each value. W</p>
+<p>--- [late-lecture excerpt] ---</p>
+<p>odel dot Summary. I have just fitted my data into it. Haven't done it. Ok? So right now if you You will see you have the first layer that is the Embedding layer from which your embeddings Will be created. You have the second layer that Will Be the Simple RNA Layer Embeddings There will be 128 units inside it and the The last layer will be the dense layer and these dense What the layer will provide you is an output will provide obviously we have Provided any parameters right now I have created a model inside it now. We will put our data, so this is our model That We Have Created for Our RNN Now I'm directly inside the RNA data right now I will not put put I first LSTM I will make you a model and I want to showcase you That is exactly the same for LSTM. There is no difference. I've used LSTM</p></div>
                 
                 
               </div>

@@ -32,21 +32,32 @@ create table if not exists public.user_settings (
 );
 
 -- ---------------------------------------------------------------------------
--- workspaces  (saved handbooks)
+-- workspaces  (saved handbooks, kept as notes data and drawn on request)
+--
+-- The rendered page is NOT stored: it is a function of notes_data, more than
+-- half of it is the same inlined stylesheet copied into every workspace, and a
+-- stored page cannot be improved later. storage_path is kept for workspaces
+-- saved before this change, whose pages live in the storage bucket below.
 -- ---------------------------------------------------------------------------
 create table if not exists public.workspaces (
-    id            uuid primary key,
-    user_id       uuid not null references public.users(id) on delete cascade,
-    youtube_url   text,
-    video_id      text,
-    video_title   text,
-    channel_name  text default 'YouTube',
-    duration      text default '00:00',
-    chapter_count integer default 0,
-    status        text default 'completed',
-    storage_path  text,
-    created_at    timestamptz not null default now()
+    id                   uuid primary key,
+    user_id              uuid not null references public.users(id) on delete cascade,
+    youtube_url          text,
+    video_id             text,
+    video_title          text,
+    channel_name         text default 'YouTube',
+    duration             text default '00:00',
+    chapter_count        integer default 0,
+    status               text default 'completed',
+    notes_schema_version integer,
+    notes_data           jsonb,
+    storage_path         text,
+    created_at           timestamptz not null default now()
 );
+
+-- Added after the first release, which stored the rendered page instead.
+alter table public.workspaces add column if not exists notes_data jsonb;
+alter table public.workspaces add column if not exists notes_schema_version integer;
 
 create index if not exists workspaces_user_id_idx on public.workspaces (user_id, created_at desc);
 
@@ -85,6 +96,8 @@ create index if not exists token_blacklist_jti_idx on public.token_blacklist (jt
 
 -- ---------------------------------------------------------------------------
 -- Storage bucket for saved handbook HTML
+-- Only workspaces saved before notes were kept as data (schema v1) have an
+-- object here. New workspaces store notes_data and render on request.
 -- ---------------------------------------------------------------------------
 insert into storage.buckets (id, name, public)
 values ('workspaces', 'workspaces', false)
@@ -98,3 +111,10 @@ alter table public.user_settings   disable row level security;
 alter table public.workspaces      disable row level security;
 alter table public.ingest_payloads disable row level security;
 alter table public.token_blacklist disable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Reload PostgREST's schema cache.
+-- Without this, a running API keeps answering "column workspaces.notes_data
+-- does not exist" until it restarts, even though the column was just added.
+-- ---------------------------------------------------------------------------
+notify pgrst, 'reload schema';

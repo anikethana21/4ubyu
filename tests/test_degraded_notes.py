@@ -15,6 +15,7 @@ import pytest
 from langchain_core.runnables import RunnableLambda
 
 import phase5_chapter_agents as p5
+from core import llm_failures as lf
 
 TOO_LARGE = (
     "Groq API Error 413: request too large for openai/gpt-oss-120b. "
@@ -22,6 +23,13 @@ TOO_LARGE = (
     'Limit 8000, Requested 8240","type":"tokens","code":"rate_limit_exceeded"}}'
 )
 RATE_LIMITED = "Groq TPM Rate Limit (429). rate_limit_exceeded"
+DAILY_LIMITED = (
+    "Groq tokens per day (TPD) Rate Limit (429). "
+    '{"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in '
+    'organization `org_x` service tier `on_demand` on tokens per day (TPD): Limit '
+    '200000, Used 198971, Requested 2265. Please try again in 8m53.952s","type":'
+    '"tokens","code":"rate_limit_exceeded"}}'
+)
 
 LECTURE = (
     "Recurrent neural networks carry a hidden state from one timestep to the next. "
@@ -145,6 +153,77 @@ def test_a_missing_model_is_reported_honestly(monkeypatch):
     assert "could not be written up" in explanation
     assert "no model was available" in explanation
     assert "no API key is configured" not in explanation
+
+
+def test_a_daily_quota_is_not_reported_as_a_minute_long_wait():
+    """Both limits answer with 429, but only one refills while you wait.
+
+    Groq's free tier meters tokens per minute *and* per day. Treating the daily
+    refusal as a per-minute one tells the reader to wait sixty seconds and try
+    again, which cannot work, and hides the thing that would: the allowance resets
+    tomorrow, or another model resets it now.
+    """
+    assert lf.is_daily_limit(DAILY_LIMITED)
+    assert lf.is_rate_limit(DAILY_LIMITED) is False
+    assert lf.is_request_too_large(DAILY_LIMITED) is False
+
+    assert "daily token allowance" in lf.describe_llm_failure(DAILY_LIMITED)
+    advice = lf.advise_on_llm_failure(DAILY_LIMITED)
+    assert "Wait about a minute" not in advice
+    assert "resets tomorrow" in advice
+
+
+def test_a_daily_quota_is_not_retried_with_less_context(monkeypatch):
+    """Sending a smaller excerpt cannot help a metered day, so it is not tried."""
+
+    def behaviour(attempt, text):
+        raise RuntimeError(DAILY_LIMITED)
+
+    llm, prompts = _fake_llm(behaviour)
+    monkeypatch.setattr(p5, "get_chat_model", lambda **kwargs: llm)
+
+    explanation = p5.theory_agent_node(_state())["explanation"]
+
+    assert len(prompts) == 1, "a spent daily allowance must not be retried"
+    assert "daily token allowance" in explanation
+    assert "Retrying in a minute will not help" in explanation
+
+
+def test_an_empty_answer_is_not_reported_as_a_missing_model(monkeypatch):
+    """The notice used to fill a blank failure with a cause it had not checked.
+
+    A model that answers with nothing at all is not a missing model: the call
+    happened, it was paid for, and it returned nothing. Saying "no model was
+    available" sends the reader to settings that are already correct, under a
+    heading that promises the reason.
+    """
+
+    def behaviour(attempt, text):
+        return "   \n  "
+
+    llm, _ = _fake_llm(behaviour)
+    monkeypatch.setattr(p5, "get_chat_model", lambda **kwargs: llm)
+
+    explanation = p5.theory_agent_node(_state())["explanation"]
+
+    assert "could not be written up" in explanation
+    assert "empty answer" in explanation
+    assert "no model was available" not in explanation
+
+
+def test_an_exception_with_no_message_is_named_not_guessed(monkeypatch):
+    """A client error with no text still has a name, and that name is true."""
+
+    def behaviour(attempt, text):
+        raise RuntimeError()
+
+    llm, _ = _fake_llm(behaviour)
+    monkeypatch.setattr(p5, "get_chat_model", lambda **kwargs: llm)
+
+    explanation = p5.theory_agent_node(_state())["explanation"]
+
+    assert "RuntimeError" in explanation
+    assert "no model was available" not in explanation
 
 
 def test_helpers_classify_provider_refusals():
