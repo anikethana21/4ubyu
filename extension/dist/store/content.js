@@ -432,11 +432,15 @@
   // -------------------------------------------------------------------------
 
   const COMPOSER_PROMPT =
-    "You are writing study notes for one section of a recorded lecture, so that a student " +
-    "who attended it can revise from your notes alone.\n\n" +
+    "You are writing a chapter section for a professional engineer-grade study handbook. " +
+    "The student who reads this must be able to understand, implement, and reason about the " +
+    "material without watching the lecture. Quality, depth, and completeness matter far more " +
+    "than brevity.\n\n" +
     "Write ONLY from the transcript below. Leave out anything the transcript does not cover " +
     "rather than filling the gap from general knowledge — a missing point is far better than " +
-    "an invented one.\n\n" +
+    "an invented one. If a crucial concept is absent from the transcript but essential to " +
+    "understanding the section, you MAY add it but MUST mark it explicitly with " +
+    "[OUTSIDE SYLLABUS] at the start of the relevant paragraph.\n\n" +
     'Section: "{title}"\n' +
     'Chapter: "{chapter_title}"\n' +
     "Subject: {domain}\n\n" +
@@ -444,16 +448,45 @@
     "Answer in exactly this shape. Write each heading on its own line, with nothing else on " +
     "that line:\n\n" +
     "EXPLANATION\n" +
-    "Three or four short markdown paragraphs on what the instructor taught, in the order they " +
-    "taught it. Keep their terms and examples.\n\n" +
+    "A thorough, detailed explanation of what the instructor taught in this section, in the " +
+    "order they taught it. Write multiple substantial paragraphs (not 2-3 sentences). " +
+    "Preserve the instructor's own terminology, variable names, function names, and examples. " +
+    "If code or algorithms are discussed, describe the logic step by step. If mathematical " +
+    "concepts appear, explain the intuition and the formula. Do not summarize — explain. " +
+    "Write MORE not less; depth is the goal.\n\n" +
+    "CODE\n" +
+    "If the transcript contains code, algorithmic pseudocode, configuration, command-line " +
+    "snippets, or concrete implementation steps, extract them here as annotated code blocks. " +
+    "Each block must include: the language tag, inline comments explaining non-obvious lines, " +
+    "and a brief preamble saying what the code does and where it fits. If the transcript " +
+    "mentions a file, class, or function name, include it. If the transcript is missing code " +
+    "that the instructor clearly wrote on screen, write [CODE NOT IN TRANSCRIPT] and describe " +
+    "what was shown. If no code appears in this section, write NONE.\n\n" +
     "ANALOGY\n" +
-    "One vivid mental model for the central idea of this section.\n\n" +
-    "KEY POINTS\n" +
-    '- three to five one-line takeaways, each starting with "- "\n\n' +
-    "PITFALLS\n" +
-    '- one or two mistakes students make with this material, as "mistake -> fix" or "NONE"\n\n' +
-    "EXAMPLE\n" +
-    '- one concrete example the instructor actually used, or "NONE"\n';
+    "One vivid, precise mental model for the central idea of this section. Avoid clichés. " +
+    "The analogy must map concretely to the mechanism (e.g., \"gradient descent is a hiker " +
+    "in fog taking steps downhill by feeling the slope with their feet\" not just " +
+    "\"it's like walking downhill\"). If no good analogy exists, write NONE.\n\n" +
+    "KEY TAKEAWAYS\n" +
+    "Five to seven substantive takeaways, each a full sentence starting with \"- \". " +
+    "Each must be something a student would write on a cheat sheet before an exam. " +
+    "Prefer: \"- The learning rate scales the gradient step; too large diverges, too small " +
+    "stalls — start at 1/sqrt(n_features) and tune by factors of 10.\" over " +
+    " \"- Learning rate matters.\"\n\n" +
+    "COMMON MISTAKES\n" +
+    "Two to three specific mistakes students make with this exact material, written as " +
+    "\"Mistake: ... -> Fix: ...\". Be concrete: reference the exact function, parameter, " +
+    "or step from the transcript. If none come to mind, write NONE.\n\n" +
+    "CONCRETE EXAMPLES\n" +
+    "Every example the instructor actually used in this section, with enough detail to " +
+    "reproduce it. If the instructor ran code with specific inputs/outputs, include them. " +
+    "If they walked through a numerical example, show the numbers. Write NONE if the " +
+    "transcript has no examples here.\n\n" +
+    "DIAGRAM HINT\n" +
+    "If a diagram would genuinely help this section (architecture, data flow, state " +
+    "machine, mathematical relationship, tree/graph structure), describe exactly what it " +
+    "should show and suggest Mermaid syntax. Write NONE if no diagram adds value. " +
+    "Do not force diagrams everywhere — only where they clarify something text cannot.";
 
   /** Fill a prompt's `{placeholders}` from a values object, leaving others alone. */
   function fillTemplate(template, values) {
