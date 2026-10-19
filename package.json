@@ -4,9 +4,10 @@
   "private": true,
   "description": "Lecture captions to chapterized, topic-based study notes — the pipeline that runs in the browser, and the page it writes.",
   "scripts": {
-    "test": "node --test tests/js/core.test.js tests/js/markdown.test.js tests/js/workspace.test.js",
-    "test:pipeline": "node --test tests/js/core.test.js",
+    "test": "node --test tests/js/core.test.js tests/js/markdown.test.js tests/js/workspace.test.js tests/js/pipeline.test.js",
+    "test:core": "node --test tests/js/core.test.js",
     "test:page": "node --test tests/js/markdown.test.js tests/js/workspace.test.js",
+    "test:lecture": "node --test tests/js/pipeline.test.js",
     "assets": "node extension/tools/extract-assets.js",
     "assets:check": "node extension/tools/extract-assets.js --check",
     "render": "node extension/dev/render.js",
