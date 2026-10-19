@@ -1,0 +1,17 @@
+{
+  "name": "4ubyu",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Lecture captions to chapterized, topic-based study notes — the pipeline that runs in the browser, and the page it writes.",
+  "scripts": {
+    "test": "node --test tests/js/core.test.js tests/js/markdown.test.js tests/js/workspace.test.js",
+    "test:pipeline": "node --test tests/js/core.test.js",
+    "test:page": "node --test tests/js/markdown.test.js tests/js/workspace.test.js",
+    "assets": "node extension/tools/extract-assets.js",
+    "assets:check": "node extension/tools/extract-assets.js --check",
+    "render": "node extension/dev/render.js",
+    "serve": "node extension/dev/serve.js",
+    "try": "node extension/dev/run.js --fake",
+    "run": "node extension/dev/run.js"
+  }
+}
