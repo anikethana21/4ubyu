@@ -278,6 +278,9 @@ test("a page opened without an origin creates its own player, and explains a ref
   assert.match(epilogue, /explainRefusedEmbed/);
   assert.match(epilogue, /refused to play inside a page opened from disk/);
   assert.match(epilogue, /youtube\.com\/watch\?v=/, "and offers the link that does work");
+  assert.match(epilogue, /button\[data-seconds\]/, "the timestamps keep doing something useful");
+  assert.match(epilogue, /"&t=" \+ at \+ "s"/, "by opening the lecture at their own second");
+  assert.match(epilogue, /btn-sync-toggle/, "and the player-only controls stand down");
   assert.match(workspace.PAGE_STYLE, /\.embed-refused \{/);
 });
 

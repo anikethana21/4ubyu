@@ -399,12 +399,36 @@
       "<p>YouTube refused to play inside a page opened from disk, because a page " +
       "like that has no address for it to identify. It said " +
       "<code>" + escapeText(code) + "</code>.</p>" +
-      "<p>The notes are complete and every timestamp in them still works; only the " +
-      "player is missing. Opening the lecture on YouTube is the way to watch it " +
-      "beside these notes.</p>" +
+      "<p>The notes are complete. Every timestamp now opens the lecture on YouTube " +
+      "at that moment instead of seeking a player that is not here, which is the " +
+      "one thing a downloaded page cannot do by itself.</p>" +
       '<p><a href="https://www.youtube.com/watch?v=' + encodeURIComponent(videoId) +
       '" target="_blank" rel="noopener noreferrer">Open the lecture on YouTube</a></p>' +
       "</div>";
+
+    // Every timestamp button was written to seek this player. Rather than leave
+    // them quietly doing nothing, each one opens the lecture at its own second.
+    // The table of contents is left alone: it still scrolls, which is its other
+    // job, and a scroll should not also open a tab.
+    var stamps = document.querySelectorAll("button[data-seconds]");
+    for (var index = 0; index < stamps.length; index += 1) {
+      (function (element) {
+        var at = Number(element.getAttribute("data-seconds") || 0);
+        element.onclick = function () {
+          window.open(
+            "https://www.youtube.com/watch?v=" + encodeURIComponent(videoId) + "&t=" + at + "s",
+            "_blank",
+            "noopener"
+          );
+        };
+      })(stamps[index]);
+    }
+
+    // Auto-sync and the running clock describe a player, and there is none.
+    var syncButton = document.querySelector(".btn-sync-toggle");
+    if (syncButton) syncButton.style.display = "none";
+    var runningClock = document.getElementById("current-playback-time");
+    if (runningClock) runningClock.style.display = "none";
   }
 
   if (typeof window.seekVideo === "function") window.seekVideoTo = window.seekVideo;
