@@ -15,6 +15,7 @@
  *
  *   node extension/dev/render.js extension/dev/out/notes-a3b72fed-7020.json
  *   node extension/dev/render.js notes.json --out page.html
+ *   node extension/dev/render.js notes.json --player
  */
 
 const fs = require("node:fs");
@@ -33,19 +34,23 @@ function usage(message) {
 function parseArgs(argv) {
   const files = [];
   let out = null;
+  let player = false;
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--out") {
       out = argv[index + 1];
       if (!out) usage("--out needs a path");
       index += 1;
+    } else if (arg === "--player") {
+      // Draw the other shape of page: the one that tries to play the lecture.
+      player = true;
     } else if (arg.startsWith("--")) {
       usage(`unknown option ${arg}`);
     } else {
       files.push(arg);
     }
   }
-  return { files, out };
+  return { files, out, player };
 }
 
 /** Turn either shape into a notes document, or say why it cannot. */
@@ -76,7 +81,7 @@ function toDocument(value) {
   return null;
 }
 
-const { files, out } = parseArgs(process.argv.slice(2));
+const { files, out, player } = parseArgs(process.argv.slice(2));
 if (!files.length) usage();
 
 for (const file of files) {
@@ -106,13 +111,14 @@ for (const file of files) {
   const target = out
     ? path.resolve(out)
     : path.join(path.dirname(input), path.basename(input).replace(/\.json$/i, "") + ".html");
-  fs.writeFileSync(target, workspace.renderNotesHtml(document), "utf8");
+  fs.writeFileSync(target, workspace.renderNotesHtml(document, { player }), "utf8");
 
   const sections = document.chapters.reduce((count, chapter) => count + chapter.sections.length, 0);
   const notices = workspace.degradedSections(document).length;
   console.log(
     `${path.relative(ROOT, input)} → ${path.relative(ROOT, target)}  ` +
       `(${document.chapters.length} chapter(s), ${sections} section(s)` +
-      `${notices ? `, ${notices} written as a notice` : ""})`
+      `${notices ? `, ${notices} written as a notice` : ""}, ` +
+      `${player ? "with the video beside the notes" : "notes only"})`
   );
 }

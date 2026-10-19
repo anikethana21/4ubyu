@@ -30,7 +30,7 @@ function sampleChapters() {
           title: "Forget, Input and Output Gates",
           timestamp_seconds: 7080,
           explanation:
-            "The **forget gate** decides what leaves the cell state.\n\n\\[ f_t = \\sigma(W_f h_{t-1}) \\]",
+            "The **forget gate** decides what leaves the cell state.\n\n\\[ f_t = \\sigma(W_f h_{t-1}) \\]\n\nInline: \\(h_{t-1}\\) is the hidden state a moment ago.",
           analogy: "A water filter that keeps the clean part.",
           key_points: ["the cell state carries long-term memory", "each gate has its own weights"],
           pitfalls: ["confusing h_t with c_t -> keep the two names separate"],
@@ -140,20 +140,69 @@ test("which sections are notices rather than notes is answerable from the docume
 // The page
 // ---------------------------------------------------------------------------
 
-/** Render without the 128 KB stylesheet; the page's shape is what is under test. */
-function renderWithoutStylesheet(document) {
-  return workspace.renderNotesHtml(document, { css: "" });
+/** Render without the 250 KB stylesheet; the page's shape is what is under test. */
+function renderWithoutStylesheet(document, options = {}) {
+  return workspace.renderNotesHtml(document, Object.assign({ css: "" }, options));
 }
 
-test("the page is one self-contained file", () => {
+/** The other shape: the same page with the lecture asked to play beside it. */
+function renderWithPlayer(document) {
+  return renderWithoutStylesheet(document, { player: true });
+}
+
+test("the page a reader downloads is one file, and asks no server for anything", () => {
   const html = renderWithoutStylesheet(sampleDocument());
   assert.match(html, /^<!DOCTYPE html>/);
   assert.match(html, /<\/html>\s*$/);
+  assert.match(html, /<input id="notes-search"/);
+  // No player, and nothing that would fetch one. A downloaded page cannot count on
+  // youtube.com answering or on having an address YouTube will accept, and the
+  // iframe API is the one script that used to be able to leave the page half-broken.
+  assert.doesNotMatch(html, /yt-player-frame/);
+  assert.doesNotMatch(html, /iframe_api/);
+  assert.doesNotMatch(html, /id="right-column"/);
+  assert.doesNotMatch(html, /id="v-resizer"/);
+  assert.doesNotMatch(html, /id="tab-btn-video"/);
+  assert.doesNotMatch(html, /id="floating-companion-fab"/);
+  assert.doesNotMatch(html, /<script src=/, "nothing is loaded from anywhere");
+  assert.match(html, /class="workspace-container notes-only"/, "and the notes get the whole window");
+  // The only addresses in the file are the ones a reader may choose to follow.
+  const urls = html.match(/https?:\/\/[^\s"'<)]+/g) || [];
+  assert.ok(urls.length, "the timestamps do lead somewhere");
+  for (const url of urls) {
+    assert.match(
+      url,
+      /^https:\/\/www\.youtube\.com\/watch\?v=0Q4yhrkwn7c&amp;t=\d+s$/,
+      `unexpected address in the page: ${url}`
+    );
+  }
+});
+
+test("the notes-only page carries only the wire it needs, not the server's controller", () => {
+  const html = renderWithoutStylesheet(sampleDocument());
+  assert.match(html, /window\.handleSearchInput = function/, "search is wired");
+  assert.match(html, /window\.toggleTocFold = function/, "and so is folding the index");
+  assert.match(html, /window\.clearHandbookSearch = function/);
+  assert.match(html, /constellation-bg-canvas/, "the background is inlined");
+  // 29 KB of script that runs a player, a chat pane, a phone's tab bar and a
+  // draggable gutter has no business on a page that has none of them.
+  assert.doesNotMatch(html, /function seekVideo\(/);
+  assert.doesNotMatch(html, /window\.setMobileView = function/);
+  assert.doesNotMatch(html, /function trackVideoPlaybackTime/);
+});
+
+test("a page with the player is the other shape, and has to be asked for", () => {
+  const html = renderWithPlayer(sampleDocument());
   assert.match(html, /<div data-video-id="0Q4yhrkwn7c" id="yt-player-frame"><\/div>/);
   assert.match(html, /<script src="https:\/\/www\.youtube\.com\/iframe_api"><\/script>/);
-  assert.match(html, /id="notes-search"oninput|<input id="notes-search"/);
-  assert.match(html, /id="tab-btn-notes"/);
+  assert.match(html, /id="right-column"/);
+  assert.match(html, /id="v-resizer"/);
   assert.match(html, /id="tab-btn-video"/);
+  assert.match(html, /function seekVideo\(/, "the controller is inlined");
+  assert.match(html, /window\.setMobileView = function/, "and so is the splitter");
+  assert.match(html, /onclick="seekVideo\(7080\)"/, "the timestamps seek instead of opening a tab");
+  assert.match(html, /<div class="workspace-container" id="app-workspace">/, "and there is no notes-only class");
+  assert.match(html, /id="search-empty" hidden/, "the empty-search note is there and stays out of the way");
 });
 
 test("the page shows the notes, the timestamps and the takeaways", () => {
@@ -161,10 +210,53 @@ test("the page shows the notes, the timestamps and the takeaways", () => {
   assert.match(html, /Chapter 2: Gating the Hidden State/, "the chapter is titled");
   assert.match(html, /Gating the Hidden State<\/h2>/, "without repeating the label");
   assert.match(html, /<strong>forget gate<\/strong>/, "the explanation is rendered markdown");
-  assert.match(html, /class="math-display-card"/, "and the equation is left for MathJax");
+  assert.match(html, /class="math-display-card"/, "the equation is set apart");
   assert.match(html, /the cell state carries long-term memory/, "key points are shown");
-  assert.match(html, /onclick="seekVideo\(7080\)"/, "a timestamp seeks the video");
+  assert.match(
+    html,
+    /<a class="ts-pill-sm ts-link" data-seconds="7080" href="https:\/\/www\.youtube\.com\/watch\?v=0Q4yhrkwn7c&amp;t=7080s"/,
+    "a timestamp opens the lecture at its own second"
+  );
   assert.match(html, /▶ 1:58:00/);
+});
+
+test("printing, and saving a PDF, is the browser's job rather than a library's", () => {
+  const css = workspace.PAGE_STYLE;
+  assert.match(css, /@media print/);
+  assert.match(css, /article\.chapter-card \+ article\.chapter-card \{ break-before: page; \}/);
+  assert.match(css, /html body #handbook-pane \* \{/, "the dark screen theme is undone for ink");
+  assert.match(css, /\.handbook-controls/, "and the toolbar does not print itself");
+  const html = renderWithoutStylesheet(sampleDocument());
+  assert.match(html, /onclick="window\.print\(\)"/, "the page offers the button");
+  assert.match(html, /Save as PDF/);
+  assert.doesNotMatch(html, /jspdf|pdf-lib|html2pdf/i, "with no PDF library to load");
+});
+
+test("an equation is readable on a page that renders no LaTeX", () => {
+  const document = sampleDocument();
+  const html = renderWithoutStylesheet(document);
+  assert.match(html, /class="math-display-card"/);
+  assert.match(html, /f_t = \\sigma\(W_f h_\{t-1\}\)/, "the equation is there as text");
+  assert.match(html, /Inline: h_\{t-1\} is the hidden state a moment ago/, "and so is an inline one");
+  assert.doesNotMatch(html, /\\\[|\\\]/, "with no delimiters left for a renderer that never loads");
+  // The document keeps them, so a renderer that does have real math can still use
+  // them: the page is a rendering, the document is the work.
+  assert.match(document.chapters[0].sections[0].theory_block.explanation, /\\\[ f_t = \\sigma/);
+});
+
+test("a search that matches nothing says so instead of showing an empty column", () => {
+  const html = renderWithoutStylesheet(sampleDocument());
+  assert.match(html, /id="search-empty"/);
+  assert.match(html, /No section of these notes mentions that/);
+  assert.match(workspace.NOTES_SCRIPT, /empty\.hidden = !\(query && shown === 0\)/);
+  assert.match(workspace.PAGE_STYLE, /\.search-empty\[hidden\] \{ display: none !important; \}/);
+});
+
+test("folding the index does something, which it never did before", () => {
+  // `toggleTocFold` has always toggled `toc-folded` and no rule in the template's
+  // stylesheet answered it, so the button looked broken.
+  assert.match(workspace.PAGE_STYLE, /#handbook-toc\.toc-folded \.toc-list \{ display: none !important; \}/);
+  assert.match(workspace.NOTES_SCRIPT, /window\.toggleTocFold = function/);
 });
 
 test("pitfalls are shown, which the server's page never did", () => {
@@ -214,24 +306,31 @@ test("a title from a stranger's video cannot become markup", () => {
   assert.match(html, /&lt;script&gt;/);
 });
 
-test("a document with no video id still renders, and says there is nothing to play", () => {
+test("a document with no video id still renders, and its timestamps say where they are", () => {
   const document = sampleDocument();
   document.video_id = "";
   document.video_metadata = { title: "Untitled" };
   const html = renderWithoutStylesheet(document);
-  assert.match(html, /nothing to play beside the notes/);
   assert.match(html, /<h1 class="video-title">Untitled<\/h1>/);
+  // No id means no link to make, so the timestamp stays a label rather than
+  // becoming a link to a video that does not exist.
+  assert.match(html, /<span class="ts-pill-sm" data-seconds="7080">▶ 1:58:00<\/span>/);
+  assert.doesNotMatch(html, /youtube\.com\/watch/);
+  // The player page is where "there is nothing to play" is a thing to say.
+  assert.match(renderWithPlayer(document), /nothing to play beside the notes/);
 });
 
-test("the full page ships the stylesheet and the scripts that make it live", () => {
+test("the full page ships the real stylesheet and the page's own wire", () => {
   const html = workspace.renderNotesHtml(sampleDocument());
   assert.match(html, /<style id="4ubyu-workspace-stylesheet">/);
   assert.match(html, /glassmorphic|backdrop-filter|--theme-accent/, "the real stylesheet is in there");
-  assert.match(html, /function seekVideo\(/, "the player controller is inlined");
-  assert.match(html, /window.toggleSidebar = function/, "the pane splitter is inlined");
-  assert.match(html, /window.seekVideoTo = window.seekVideo/, "and the search index's jump works");
-  assert.match(html, /class ConstellationGrid|constellation/i, "the background is inlined");
+  assert.match(html, /constellation-bg-canvas/, "the background is inlined");
+  assert.match(html, /window\.handleSearchInput = function/, "the search is the page's own");
   assert.ok(html.length > 100000, `a self-contained page is large but complete: ${html.length}`);
+  const withPlayer = workspace.renderNotesHtml(sampleDocument(), { player: true });
+  assert.match(withPlayer, /function seekVideo\(/, "the player page inlines the controller");
+  assert.match(withPlayer, /window\.toggleSidebar = function/, "and the pane splitter");
+  assert.match(withPlayer, /window\.seekVideoTo = window\.seekVideo/, "and the search index's jump works");
 });
 
 test("the stylesheet comes from the template, and says which revision", () => {
@@ -241,7 +340,7 @@ test("the stylesheet comes from the template, and says which revision", () => {
   assert.match(workspace.renderNotesHtml(sampleDocument()), new RegExp(assets.SOURCE.css_sha256_12));
 });
 
-test("the stylesheet carries the files it points at instead of a path to a server", () => {
+test("the stylesheet carries the files it points at, and asks no server for anything", () => {
   // The brand font is the only local file the stylesheet referenced, and on a
   // downloaded page `/static/fonts/...` is a 404. It is embedded as a data URI.
   assert.doesNotMatch(assets.WORKSPACE_CSS, /url\(["']?\/static\//, "no server paths survive");
@@ -250,6 +349,15 @@ test("the stylesheet carries the files it points at instead of a path to a serve
     assets.SOURCE.embedded.some((entry) => entry.path === "/static/fonts/gagalin-regular.woff2"),
     "and the generator recorded what it embedded"
   );
+  // The remaining two references were addresses: a font stylesheet pulled in with
+  // `@import` and a font CDN named as a fallback. A page opened from disk should
+  // tell nobody that it was opened, and the invariant is asserted in the generator
+  // rather than trusted here.
+  assert.doesNotMatch(assets.WORKSPACE_CSS, /https?:\/\//, "no address survives in the stylesheet");
+  assert.doesNotMatch(assets.WORKSPACE_CSS, /@import/);
+  assert.equal(assets.SOURCE.remote_removed.length, 2);
+  assert.ok(assets.SOURCE.remote_removed.some((entry) => entry.kind === "import"));
+  assert.ok(assets.SOURCE.remote_removed.some((entry) => entry.kind === "font-src"));
 });
 
 test("focus mode and the button that undoes it are actually wired", () => {

@@ -195,7 +195,8 @@ async function main() {
     process.exit(1);
   }
   const pagePath = path.join(outDir, `page-${ingestId.slice(0, 8)}-${start}.html`);
-  fs.writeFileSync(pagePath, workspace.renderNotesHtml(document), "utf8");
+  const withPlayer = Boolean(arg("player"));
+  fs.writeFileSync(pagePath, workspace.renderNotesHtml(document, { player: withPlayer }), "utf8");
   // What is saved is the document, not this run: the page is a rendering of it, and
   // `render.js` can draw it again without a model. A saved run that could not be
   // re-rendered would be a screenshot of the work rather than the work.

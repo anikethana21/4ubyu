@@ -19,6 +19,16 @@
  * What is not: rag_chat_client.js, which talks to the server's chat endpoint. The
  * extension has no server and no chatbot.
  *
+ * One thing is changed rather than copied: the stylesheet points at two third-party
+ * font servers, and both references are removed. A downloaded page is opened from
+ * disk with no server behind it, and a page that quietly calls out to a font CDN
+ * gives the reader's address to a stranger for a serif, and then renders whatever
+ * comes back. Neither font is load-bearing: the brand face is already embedded as
+ * bytes (see inlineLocalUrls), and every other font in the stack has a substitute
+ * one step behind it. Removing them makes the page's network behaviour a property
+ * that can be checked rather than hoped for, so this script now *asserts* that the
+ * stylesheet mentions no address at all.
+ *
  *   node extension/tools/extract-assets.js           write extension/src/assets.js
  *   node extension/tools/extract-assets.js --check   fail if it is out of date
  */
@@ -97,6 +107,52 @@ function inlineLocalUrls(css) {
   return { css: out, embedded };
 }
 
+/**
+ * Remove every reference the stylesheet makes to another server.
+ *
+ * Two shapes occur: a remote stylesheet pulled in with `@import`, and a remote
+ * fallback inside an `@font-face src` list that already has the embedded font in
+ * front of it. The second is the more dangerous of the two, because it looks
+ * harmless — the browser only reaches it if the first source fails — while a page
+ * opened off a laptop with a flaky connection is exactly where a data URI is most
+ * likely to be the one that did load. Both go, and what went is recorded in the
+ * provenance so the removal is visible rather than silent.
+ */
+function stripRemoteRequests(css) {
+  const removed = [];
+
+  let out = css.replace(
+    /@import\s+url\((['"]?)(https?:[^)'"]+)\1\)\s*;?/gi,
+    (whole, quote, url) => {
+      removed.push({ kind: "import", url });
+      // The address deliberately does not appear in the comment: the point of this
+      // function is that the finished stylesheet contains no address, and a comment
+      // is part of the stylesheet.
+      return "/* a remote font stylesheet was removed here by extract-assets.js */";
+    }
+  );
+
+  out = out.replace(
+    /,?\s*url\((['"]?)(https?:[^)'"]+)\1\)(\s*format\((['"])[^'"]*\4\))?/gi,
+    (whole, quote, url) => {
+      removed.push({ kind: "font-src", url });
+      return "";
+    }
+  );
+
+  // The invariant, stated as code. If a future edit to the template adds a third
+  // remote reference, this says so instead of shipping a page that phones home.
+  const stillRemote = out.match(/https?:\/\/[^\s)"']+/g) || [];
+  if (stillRemote.length) {
+    console.error(
+      "The stylesheet would still request these addresses, and a downloaded page must " +
+        `request none: ${stillRemote.join(", ")}`
+    );
+    process.exit(1);
+  }
+  return { css: out, removed };
+}
+
 function read(file) {
   if (!fs.existsSync(file)) {
     console.error(`Missing ${path.relative(ROOT, file)} — run this from the project root.`);
@@ -116,7 +172,11 @@ function main() {
     process.exit(1);
   }
   const rawCss = cssBlocks.join("\n");
-  const { css, embedded } = inlineLocalUrls(rawCss);
+  const inlined = inlineLocalUrls(rawCss);
+  const stripped = stripRemoteRequests(inlined.css);
+  const css = stripped.css;
+  const embedded = inlined.embedded;
+  const removed = stripped.removed;
 
   const scripts = {};
   for (const [name, file] of Object.entries(PAGE_SCRIPTS)) {
@@ -153,6 +213,8 @@ function main() {
         css_blocks: cssBlocks.length,
         css_chars: css.length,
         css_sha256_12: digest(css),
+        // Addresses deliberately removed: the page fetches nothing.
+        remote_removed: removed,
         embedded: embedded.map((entry) => ({
           path: entry.path,
           from: entry.from,
@@ -194,6 +256,9 @@ function main() {
   console.log(`  stylesheet : ${cssBlocks.length} blocks, ${kb(css)}, sha ${digest(css)}`);
   for (const entry of embedded) {
     console.log(`  embedded   : ${entry.path} (${kb("x".repeat(entry.bytes))} from ${entry.from})`);
+  }
+  for (const entry of removed) {
+    console.log(`  not fetched: ${entry.url} (${entry.kind})`);
   }
   for (const [name, text] of Object.entries(scripts)) {
     console.log(`  ${name.padEnd(11)}: ${kb(text)}, sha ${digest(text)}`);

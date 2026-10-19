@@ -4,25 +4,37 @@
  * A note run produces data — chapters, sections, key points, timestamps — and this
  * turns that data into one self-contained HTML file. Self-contained is the point:
  * the reader downloads one file, it opens with no server anywhere, and the only
- * thing it reaches out for is the video it is about. There is no session to expire
- * and no account to be deleted, because there is nothing on a server to hold.
+ * thing it reaches out for is the video it is about — by a link the reader clicks,
+ * never by a request the page makes on its own. There is no session to expire and
+ * no account to be deleted, because there is nothing on a server to hold.
  *
- * The stylesheet is the server page's, lifted verbatim by tools/extract-assets.js,
- * so this is the same design rather than a second design that resembles it. The
- * body is ported from templates/base_workspace.html, minus the parts that only
- * made sense with a server behind them: the chat assistant, "Ask AI" per section,
- * the Current Frame button, and the brand link home. What is kept is what a
- * reader actually studies from: the table of contents, the notes, timestamps that
- * seek the video, auto-sync, search, and the focus mode that gives the notes the
- * whole window.
+ * Two shapes of page come out of here, and the only difference is whether the
+ * lecture plays beside the notes:
  *
- * Two deliberate departures from the server page:
+ *   - Notes only, the default. No player, no iframe API, no pane to break: each
+ *     timestamp is a link that opens YouTube at that second, and the notes get the
+ *     whole window. This is the page a reader downloads.
+ *   - Notes and video, when `options.player` is set. The player sits beside the
+ *     notes, which needs an address YouTube will accept — a page served over
+ *     http(s), never a file opened from disk — so it is never the default and the
+ *     page says so plainly if it is refused.
+ *
+ * The stylesheet is the server page's, lifted by tools/extract-assets.js, so this
+ * is the same design rather than a second design that resembles it. The body is
+ * ported from templates/base_workspace.html, minus the parts that only made sense
+ * with a server behind them: the chat assistant, "Ask AI" per section, the Current
+ * Frame button, and the brand link home.
+ *
+ * Three deliberate departures from the server page:
  *
  *   - The explanation is rendered to HTML here, by a whitelist renderer, instead
  *     of being handed to `marked` in the browser. See src/markdown.js.
  *   - Pitfalls are shown. The composer has always asked the model for them and the
  *     server page never displayed them, so a section's most useful paragraph was
  *     being paid for and thrown away.
+ *   - Nothing is loaded from anywhere. The stylesheet used to `@import` a font
+ *     stylesheet and name a font CDN as a fallback; both are gone, and printing
+ *     uses the browser's own printer rather than a PDF library to paste in.
  */
 
 (function (root, factory) {
@@ -41,6 +53,29 @@
   const escapeHtml = markdown.escapeHtml;
   const renderMarkdown = markdown.renderMarkdown;
   const clock = core.clock;
+
+  /**
+   * LaTeX delimiters, made readable as text.
+   *
+   * The model writes equations as `\( ... \)` and `\[ ... \]`. Nothing on this page
+   * renders LaTeX — a math renderer is another megabyte, another thing that has to
+   * load before the notes can be read, and one more dependency that can fail on a
+   * page opened offline — so the delimiters come off and the equation is left as
+   * the text it also always was: `\(h_{t-1}\)` reads as `h_{t-1}`, which is what a
+   * reader needs in order to follow the sentence around it. The delimiters stay in
+   * the document, so a renderer that does have real math can still use them.
+   */
+  function readableMath(value) {
+    return String(value === undefined || value === null ? "" : value)
+      .replace(/\\\(|\\\)/g, "")
+      .replace(/\\\[([\s\S]*?)\\\]/g, "$1");
+  }
+
+  /** Text as the page shows it: escaped for HTML, then made readable. Attributes
+   *  keep plain escapeHtml, since LaTeX in an attribute is not read by anyone. */
+  function text(value) {
+    return readableMath(escapeHtml(value));
+  }
 
   // Version 1 was the page file itself. Version 2 is the data the page is drawn
   // from, which is what this module builds and renders.
@@ -293,6 +328,103 @@
     "   typed. This page has no assistant, so that row is removed by the page's glue",
     "   and hidden here in case it is ever rendered before the glue runs. */",
     ".suggestion-item.suggestion-ai-ask { display: none !important; }",
+    "/* On the notes-only page nothing sits beside the notes, so they take the whole",
+    "   window instead of the 58% a video column would leave them. The id and the",
+    "   class together outweigh the stylesheet's own width rules at every width. */",
+    "#app-workspace.notes-only #handbook-pane {",
+    "  flex: 1 1 100% !important; width: 100% !important; max-width: 100% !important;",
+    "}",
+    "/* A timestamp on this page is a link to YouTube at that second. It has to look",
+    "   exactly like the button it replaces, which means no underline and no colour",
+    "   change on hover — it is a jump, not a citation. */",
+    "a.ts-pill, a.ts-pill-sm, a.ts-pill:hover, a.ts-pill-sm:hover {",
+    "  text-decoration: none !important; cursor: pointer;",
+    "}",
+    "/* What the notes say when the search matches nothing. Saying so is better than",
+    "   an empty column, which reads as a broken page. */",
+    ".search-empty {",
+    "  margin: 0.5rem 0 2rem 0; padding: 0.9rem 1.1rem; border-radius: 12px;",
+    "  font-size: 0.85rem; line-height: 1.6; color: #cbd5e1;",
+    "  background: rgba(148, 163, 184, 0.1); border: 1px dashed rgba(148, 163, 184, 0.35);",
+    "}",
+    ".search-empty[hidden] { display: none !important; }",
+    "/* Folding the index. `toggleTocFold` has always added a `toc-folded` class that",
+    "   no rule in the stylesheet answered, so the button looked broken. */",
+    "#handbook-toc .toc-fold-icon { transition: transform 0.2s ease; }",
+    "#handbook-toc.toc-folded .toc-list { display: none !important; }",
+    "#handbook-toc.toc-folded .toc-fold-icon { transform: rotate(-90deg); }",
+    "/* An equation with its delimiters off is still an equation, so it gets the",
+    "   monospace face rather than the prose one. */",
+    ".math-display-card {",
+    "  font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;",
+    "}",
+    "/* -------------------------------------------------------------------------",
+    "   Printing — which is also how a reader saves a PDF, because that is what a",
+    "   browser's print dialog does. The stylesheet above is built for a dark screen",
+    "   and ink is white; these rules apply only while printing, so nothing on screen",
+    "   changes. Every selector is anchored to an id so it outranks the !important",
+    "   rules the screen stylesheet sets on classes. */",
+    "@media print {",
+    "  @page { margin: 14mm; }",
+    "  /* Anchored to the body's own class as well as the elements, because the",
+    "     screen sheet sets the dark background on `.workspace-body` with !important",
+    "     and a bare `html body` loses that fight. */",
+    "  html, html body.workspace-body,",
+    "  html body.workspace-body #app-workspace,",
+    "  html body.workspace-body #handbook-pane {",
+    "    background: #ffffff !important; color: #111827 !important;",
+    "  }",
+    "  /* One window's worth of interface, and the panes that only exist beside a",
+    "     reader in a browser. None of it belongs on paper. */",
+    "  #constellation-bg-canvas, #mobile-nav-bar, #floating-companion-fab, #v-resizer,",
+    "  #right-column, #sync-toast, .handbook-controls, #search-suggestions-dropdown,",
+    "  .search-empty { display: none !important; }",
+    "  /* Paper is not a window with a scrollbar: the page has to be able to be as",
+    "     long as it needs to be. */",
+    "  html body #app-workspace, html body #handbook-pane, html body #handbook-chapters {",
+    "    display: block !important; position: static !important;",
+    "    height: auto !important; max-height: none !important; overflow: visible !important;",
+    "    width: 100% !important; max-width: 100% !important; flex: none !important;",
+    "  }",
+    "  html body #handbook-toc {",
+    "    position: static !important; max-height: none !important; overflow: visible !important;",
+    "    break-inside: avoid; break-after: page;",
+    "  }",
+    "  /* Ink on white, so nothing prints as a pale block on a pale block. */",
+    "  html body #handbook-pane * {",
+    "    color: #1f2937 !important; background-color: transparent !important;",
+    "    background-image: none !important; box-shadow: none !important;",
+    "    text-shadow: none !important; backdrop-filter: none !important;",
+    "    border-color: #d1d5db !important;",
+    "  }",
+    "  html body #handbook-pane .chapter-heading,",
+    "  html body #handbook-pane .section-heading,",
+    "  html body #handbook-pane .video-title, html body #handbook-pane h1,",
+    "  html body #handbook-pane h2, html body #handbook-pane h3,",
+    "  html body #handbook-pane h4 { color: #111827 !important; }",
+    "  html body #handbook-pane a { color: #1d4ed8 !important; text-decoration: underline !important; }",
+    "  html body #handbook-pane .ts-pill, html body #handbook-pane .ts-pill-sm,",
+    "  html body #handbook-pane .chapter-num, html body #handbook-pane .degraded-badge {",
+    "    background: #f3f4f6 !important; border: 1px solid #d1d5db !important;",
+    "    color: #374151 !important;",
+    "  }",
+    "  html body #handbook-pane .theory-block,",
+    "  html body #handbook-pane .keypoints-card,",
+    "  html body #handbook-pane .analogy-card,",
+    "  html body #handbook-pane .example-card,",
+    "  html body #handbook-pane .supplement-card,",
+    "  html body #handbook-pane .chapter-card,",
+    "  html body #handbook-pane .math-display-card {",
+    "    background: #ffffff !important; border: 1px solid #e5e7eb !important;",
+    "  }",
+    "  /* Chapters start on their own page, and the small cards are not split across",
+    "     one. A section is allowed to be long, so it may break where it must. */",
+    "  article.chapter-card + article.chapter-card { break-before: page; }",
+    "  .keypoints-card, .analogy-card, .example-card, .supplement-card,",
+    "  .math-display-card, .section-header { break-inside: avoid; }",
+    "  .chapter-heading, .section-heading { break-after: avoid; }",
+    "  .handbook-toc .toc-list { columns: 2; }",
+    "}",
   ].join("\n");
 
   /**
@@ -475,15 +607,127 @@
 })();
 `;
 
-  function renderToc(document) {
+  /**
+   * The wire for the notes-only page: search, and folding the index. Nothing else.
+   *
+   * The server page's splitter and sync controller exist to run a player, a chat
+   * pane, a phone's tab bar and a draggable gutter. This page has none of those, so
+   * it does not carry them: 29 KB of script describing panes that are not here is
+   * 29 KB whose only possible contribution is a defect. What is left is the two
+   * things a reader does with the notes — filter them as they type, and fold the
+   * index — published under the same names the markup already calls, which is how
+   * the controller was wired to it too.
+   */
+  const NOTES_SCRIPT = `
+(function () {
+  "use strict";
+
+  var chapters = document.getElementById("handbook-chapters");
+  var empty = document.getElementById("search-empty");
+  var clearButton = document.getElementById("search-clear-btn");
+
+  function filter() {
+    var input = document.getElementById("notes-search");
+    if (!input || !chapters) return;
+    var query = String(input.value || "").toLowerCase().trim();
+    var cards = chapters.querySelectorAll("article.chapter-card");
+    var shown = 0;
+    for (var i = 0; i < cards.length; i += 1) {
+      var card = cards[i];
+      var hit = false;
+      var title = String(card.getAttribute("data-chapter-title") || "").toLowerCase();
+      if (query && title.indexOf(query) !== -1) hit = true;
+      var own = card.querySelectorAll(".section-block");
+      for (var j = 0; j < own.length; j += 1) {
+        var match = !query || own[j].textContent.toLowerCase().indexOf(query) !== -1;
+        own[j].style.display = match ? "" : "none";
+        if (match) { hit = true; shown += 1; }
+      }
+      card.style.display = hit ? "" : "none";
+    }
+    // An empty column reads as a broken page, so it is said out loud instead.
+    if (empty) empty.hidden = !(query && shown === 0);
+  }
+
+  window.handleSearchInput = function (value) {
+    if (clearButton) clearButton.style.display = value && value.length ? "block" : "none";
+    filter();
+  };
+
+  // There is nothing to suggest. The notes filter as you type, which is the job.
+  window.handleSearchFocus = function () {};
+
+  window.clearHandbookSearch = function () {
+    var input = document.getElementById("notes-search");
+    if (input) { input.value = ""; input.focus(); }
+    if (clearButton) clearButton.style.display = "none";
+    filter();
+  };
+
+  window.toggleTocFold = function () {
+    var toc = document.getElementById("handbook-toc");
+    if (!toc) return;
+    var folded = toc.classList.toggle("toc-folded");
+    var hint = document.getElementById("toc-fold-hint");
+    if (hint) hint.innerText = folded ? "(Click to expand)" : "(Click to fold)";
+    try { localStorage.setItem("4u_toc_folded", folded ? "true" : "false"); } catch (error) {}
+  };
+
+  try {
+    if (localStorage.getItem("4u_toc_folded") === "true") {
+      var toc = document.getElementById("handbook-toc");
+      var hint = document.getElementById("toc-fold-hint");
+      if (toc) toc.classList.add("toc-folded");
+      if (hint) hint.innerText = "(Click to expand)";
+    }
+  } catch (error) {}
+})();
+`;
+
+  /**
+   * Where a timestamp goes on a page with no player: YouTube, at that second.
+   *
+   * The link is written into the markup rather than wired up afterwards, so it
+   * works before any script has run, works if a script does not run at all, opens
+   * in a new tab, and shows its destination in the status bar on hover. A player
+   * seeks silently; a link is honest about what clicking it will do.
+   */
+  function watchUrl(videoId, seconds) {
+    if (!videoId) return "";
+    return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&t=${Math.max(
+      0,
+      Math.round(Number(seconds) || 0)
+    )}s`;
+  }
+
+  /** One timestamp, as the button the stylesheet draws or as a link to the lecture. */
+  function renderTimestamp(view, seconds, label, className) {
+    const at = Number(seconds || 0);
+    const label_html = `▶ ${escapeHtml(label)}`;
+    if (view.player) {
+      return `<button class="${className}" data-seconds="${at}" onclick="seekVideo(${at})">${label_html}</button>`;
+    }
+    const href = watchUrl(view.videoId, at);
+    if (!href) return `<span class="${className}" data-seconds="${at}">${label_html}</span>`;
+    return (
+      `<a class="${className} ts-link" data-seconds="${at}" href="${escapeHtml(href)}" ` +
+      `target="_blank" rel="noopener noreferrer" ` +
+      `title="Open the lecture on YouTube at this moment">${label_html}</a>`
+    );
+  }
+
+  function renderToc(view, document) {
     const items = (document.chapters || [])
       .map(
         (chapter) => `      <li>
-        <a class="toc-link" href="#${escapeHtml(chapter.chapter_id)}" onclick="seekVideo(${Number(
-          chapter.timestamp_seconds || 0
-        )})">
+        <a class="toc-link" href="#${escapeHtml(chapter.chapter_id)}"${
+          // On a page with a player the index also seeks it. On a page without one
+          // it only scrolls: the timestamps beside the notes already open YouTube,
+          // and a scroll that also opened a tab would be obnoxious.
+          view.player ? ` onclick="seekVideo(${Number(chapter.timestamp_seconds || 0)})"` : ""
+        }>
           <span class="toc-order">${escapeHtml(chapter.chapter_order)}.</span>
-          <span class="toc-title">${escapeHtml(chapter.display_title || chapter.chapter_title)}</span>
+          <span class="toc-title">${text(chapter.display_title || chapter.chapter_title)}</span>
           <span class="toc-ts">[${escapeHtml(chapter.timestamp_str)}]</span>
         </a>
       </li>`
@@ -507,7 +751,7 @@ ${items}
     </nav>`;
   }
 
-  function renderSection(section) {
+  function renderSection(view, section) {
     const seconds = Number(section.timestamp_seconds || 0);
     const theory = section.theory_block || {};
     const analogies = (theory.analogies || [])
@@ -516,7 +760,7 @@ ${items}
             <div class="analogy-icon">💡</div>
             <div class="analogy-body">
               <div class="analogy-title">Mental Model &amp; Intuition</div>
-              <div class="analogy-text">${escapeHtml(analogy)}</div>
+              <div class="analogy-text">${text(analogy)}</div>
             </div>
           </div>`
       )
@@ -526,7 +770,7 @@ ${items}
       ? `          <div class="keypoints-card">
             <h4>Key Takeaways</h4>
             <ul>
-${section.key_points.map((point) => `              <li>${escapeHtml(point)}</li>`).join("\n")}
+${section.key_points.map((point) => `              <li>${text(point)}</li>`).join("\n")}
             </ul>
           </div>`
       : "";
@@ -536,7 +780,7 @@ ${section.key_points.map((point) => `              <li>${escapeHtml(point)}</li>
       ? `          <div class="keypoints-card pitfalls-card">
             <h4>Common Mistakes</h4>
             <ul>
-${section.pitfalls.map((point) => `              <li>${escapeHtml(point)}</li>`).join("\n")}
+${section.pitfalls.map((point) => `              <li>${text(point)}</li>`).join("\n")}
             </ul>
           </div>`
       : "";
@@ -544,15 +788,15 @@ ${section.pitfalls.map((point) => `              <li>${escapeHtml(point)}</li>`)
     const examples = (section.examples || [])
       .map(
         (example) => `          <div class="example-card">
-            <span class="example-text">${escapeHtml(example.text || example)}</span>
+            <span class="example-text">${text(example.text || example)}</span>
           </div>`
       )
       .join("\n");
 
     const supplement = section.supplement_block
       ? `          <div class="supplement-card">
-            <div class="supplement-badge">${escapeHtml(section.supplement_block.external_label || "Further reading")}</div>
-            <p>${escapeHtml(section.supplement_block.content || "")}</p>
+            <div class="supplement-badge">${text(section.supplement_block.external_label || "Further reading")}</div>
+            <p>${text(section.supplement_block.content || "")}</p>
           </div>`
       : "";
 
@@ -560,17 +804,15 @@ ${section.pitfalls.map((point) => `              <li>${escapeHtml(point)}</li>`)
       section.section_title
     )}" data-timestamp-seconds="${seconds}" id="${escapeHtml(section.section_id)}">
             <div class="section-header">
-              <h3 class="section-heading">${escapeHtml(section.section_title)}${
+              <h3 class="section-heading">${text(section.section_title)}${
                 section.degraded ? `<span class="degraded-badge">Not written up</span>` : ""
               }</h3>
               <div class="section-tools">
-                <button class="ts-pill-sm" data-seconds="${seconds}" onclick="seekVideo(${seconds})">
-                  ▶ ${escapeHtml(section.time_reference)}
-                </button>
+                ${renderTimestamp(view, seconds, section.time_reference, "ts-pill-sm")}
               </div>
             </div>
             <div class="theory-block">
-              <div class="theory-content">${renderMarkdown(theory.explanation)}</div>
+              <div class="theory-content">${readableMath(renderMarkdown(theory.explanation))}</div>
 ${analogies}
             </div>
 ${keyPoints}
@@ -580,16 +822,16 @@ ${supplement}
           </section>`;
   }
 
-  function renderChapters(document) {
+  function renderChapters(view, document) {
     return (document.chapters || [])
       .map((chapter) => {
         const seconds = Number(chapter.timestamp_seconds || 0);
-        const sections = (chapter.sections || []).map(renderSection).join("\n");
+        const sections = (chapter.sections || []).map((section) => renderSection(view, section)).join("\n");
         const overview = chapter.overview
-          ? `<p class="chapter-overview">${escapeHtml(chapter.overview)}</p>`
+          ? `<p class="chapter-overview">${text(chapter.overview)}</p>`
           : "";
         const summary = chapter.chapter_summary
-          ? `<div class="chapter-summary-footer"><strong>Summary:</strong> ${escapeHtml(
+          ? `<div class="chapter-summary-footer"><strong>Summary:</strong> ${text(
               chapter.chapter_summary
             )}</div>`
           : "";
@@ -599,13 +841,11 @@ ${supplement}
           <div class="chapter-header">
             <div class="chapter-title-group">
               <span class="chapter-num">Chapter ${escapeHtml(chapter.chapter_order)}</span>
-              <h2 class="chapter-heading">${escapeHtml(
+              <h2 class="chapter-heading">${text(
                 chapter.display_title || chapter.chapter_title
               )}</h2>
             </div>
-            <button class="ts-pill" data-seconds="${seconds}" onclick="seekVideo(${seconds})">
-              ▶ ${escapeHtml(chapter.timestamp_str)}
-            </button>
+            ${renderTimestamp(view, seconds, chapter.timestamp_str, "ts-pill")}
           </div>
 ${overview}
           <div class="sections-list">
@@ -634,16 +874,33 @@ ${
     </aside>`;
   }
 
-  function renderHeader(document) {
+  function renderHeader(view, document) {
     const metadata = document.video_metadata || {};
     const title = metadata.title || "Lecture notes";
     const meta = [
-      metadata.channel ? `<span>Instructor: ${escapeHtml(metadata.channel)}</span>` : "",
-      metadata.duration_str ? `<span>Duration: ${escapeHtml(metadata.duration_str)}</span>` : "",
+      metadata.channel ? `<span>Instructor: ${text(metadata.channel)}</span>` : "",
+      metadata.duration_str ? `<span>Duration: ${text(metadata.duration_str)}</span>` : "",
       `<span>${(document.chapters || []).length} Chapters</span>`,
     ]
       .filter(Boolean)
       .join(" ");
+
+    // What sits to the right of the search box depends on what the page can do. A
+    // page with no player has no playback time to show, nothing for Auto-Sync to
+    // sync, and no sidebar to give the notes; offering those buttons would be three
+    // controls that do nothing. What it can always do is be printed, which is also
+    // how a reader gets a PDF, so that is the button it gets.
+    const actions = view.player
+      ? `            <span id="current-playback-time" class="time-pill" title="Live Video Playback Time">00:00</span>
+            <button class="btn-toggle active btn-sync-toggle" id="toggle-autofollow" onclick="toggleAutoSync()" title="Toggle Video &amp; Handbook Sync">Auto-Sync</button>
+            <button type="button" class="btn-tool-sm btn-sidebar-toggle" id="btn-toggle-sidebar" onclick="toggleSidebar()" title="Toggle Sidebar (Expand Notes to Fullscreen)">
+              <svg class="sidebar-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+              <span id="sidebar-toggle-text">Focus Mode</span>
+            </button>`
+      : `            <button type="button" class="btn-tool-sm" id="btn-print" onclick="window.print()" title="Print this page, or save it as a PDF">
+              <svg class="print-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              <span>Save as PDF</span>
+            </button>`;
 
     return `      <header class="handbook-header">
         <div class="header-top">
@@ -654,42 +911,44 @@ ${
             </span>
           </div>
         </div>
-        <h1 class="video-title">${escapeHtml(title)}</h1>
+        <h1 class="video-title">${text(title)}</h1>
         <div class="video-meta">${meta}</div>
         <div class="handbook-controls minimal-toolbar">
           <div class="search-input-wrapper" id="search-input-wrapper">
             <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input id="notes-search" oninput="handleSearchInput(this.value)" onfocus="handleSearchFocus()" placeholder="Search concepts, topics, or code..." type="text" autocomplete="off"/>
-            <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearHandbookSearch()" style="display: none;" title="Clear Search">&times;</button>
+            <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearHandbookSearch()" style="display: none;" title="Clear Search">&times;</button>${
+              view.player
+                ? `
             <div class="search-suggestions-dropdown" id="search-suggestions-dropdown" style="display: none;">
               <div class="suggestions-header">
                 <span class="suggestions-title">Jump to a topic</span>
                 <span class="suggestions-hint">Click to jump the video</span>
               </div>
               <div class="suggestions-list" id="suggestions-list"></div>
-            </div>
+            </div>`
+                : ""
+            }
           </div>
           <div class="toolbar-actions">
-            <span id="current-playback-time" class="time-pill" title="Live Video Playback Time">00:00</span>
-            <button class="btn-toggle active btn-sync-toggle" id="toggle-autofollow" onclick="toggleAutoSync()" title="Toggle Video &amp; Handbook Sync">Auto-Sync</button>
-            <button type="button" class="btn-tool-sm btn-sidebar-toggle" id="btn-toggle-sidebar" onclick="toggleSidebar()" title="Toggle Sidebar (Expand Notes to Fullscreen)">
-              <svg class="sidebar-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>
-              <span id="sidebar-toggle-text">Focus Mode</span>
-            </button>
+${actions}
           </div>
         </div>
       </header>`;
   }
 
   /** Honest, quiet provenance: what made these notes, and what is missing from them. */
-  function renderProvenance(document) {
+  function renderProvenance(view, document) {
     const metadata = document.video_metadata || {};
     const when = document.generated_at ? String(document.generated_at).replace("T", " ").slice(0, 16) : "";
     const by = [document.provider, document.model].filter(Boolean).join(" / ");
     const parts = [
       when ? `Written ${escapeHtml(when)} UTC` : "",
       by ? `by ${escapeHtml(by)}` : "",
-      metadata.title ? `from the captions of “${escapeHtml(metadata.title)}”` : "",
+      metadata.title ? `from the captions of “${text(metadata.title)}”` : "",
+      // On a page with no player, a timestamp that looks like a button but opens a
+      // tab is worth one line of explanation rather than a surprise.
+      view.player ? "" : "each timestamp opens the lecture on YouTube at that moment",
     ].filter(Boolean);
 
     const degraded = degradedSections(document);
@@ -705,7 +964,12 @@ ${
   /**
    * The whole page, as one string.
    *
-   * `options.css` exists so a test can render without the 128 KB stylesheet, and
+   * `options.player` decides whether the lecture plays beside the notes. It is off
+   * unless it is asked for, because a page with a player depends on two things that
+   * are not this file — youtube.com answering, and an address YouTube will accept —
+   * and a reader who downloaded the notes should not depend on either.
+   *
+   * `options.css` exists so a test can render without the 250 KB stylesheet, and
    * so a future page can be styled differently without touching this file.
    */
   function renderNotesHtml(document, options = {}) {
@@ -716,32 +980,12 @@ ${
     const provenance = assets.SOURCE
       ? `stylesheet from ${assets.SOURCE.template} (sha ${assets.SOURCE.css_sha256_12})`
       : "stylesheet";
+    const view = { player: Boolean(options.player), videoId: String(document.video_id || "") };
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${escapeHtml(title)} — 4 U By U</title>
-<meta name="generator" content="4 U By U notes page (${escapeHtml(provenance)})"/>
-<style id="4ubyu-workspace-stylesheet">
-${css}
-</style>
-<style id="4ubyu-page-stylesheet">
-${PAGE_STYLE}
-</style>
-</head>
-<body class="workspace-body">
-<canvas id="constellation-bg-canvas" class="constellation-bg-canvas"></canvas>
-<div class="workspace-container" id="app-workspace">
-<main class="handbook-pane" id="handbook-pane">
-${renderHeader(document)}
-${renderToc(document)}
-      <div class="handbook-chapters" id="handbook-chapters">
-${renderProvenance(document)}
-${renderChapters(document)}
-      </div>
-</main>
+    // Everything that only exists to run a player, a second pane, or a phone's tab
+    // bar. Left out of the notes-only page entirely, rather than rendered and hidden:
+    // markup nobody can see is markup nobody can break.
+    const playerOnly = `
     <div class="resizer v-resizer" id="v-resizer" title="Drag to resize Notes vs. Video">
       <div class="resizer-handle"></div>
     </div>
@@ -761,14 +1005,46 @@ ${renderVideoColumn(document)}
       <span class="tab-badge" id="mobile-time-badge">00:00</span>
     </button>
   </nav>
-</div>
-<div class="sync-toast hidden" id="sync-toast"></div>
-<script>${PAGE_PRELUDE}</script>
-<script src="https://www.youtube.com/iframe_api"></script>
+<div class="sync-toast hidden" id="sync-toast"></div>`;
+
+    const pageScripts = view.player
+      ? `<script src="https://www.youtube.com/iframe_api"></script>
 <script>${scripts.constellation || ""}</script>
 <script>${scripts.splitter || ""}</script>
 <script>${scripts.youtube || ""}</script>
-<script>${PAGE_EPILOGUE}</script>
+<script>${PAGE_EPILOGUE}</script>`
+      : `<script>${scripts.constellation || ""}</script>
+<script>${NOTES_SCRIPT}</script>`;
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${escapeHtml(title)} — 4 U By U</title>
+<meta name="generator" content="4 U By U notes page (${escapeHtml(provenance)})"/>
+<style id="4ubyu-workspace-stylesheet">
+${css}
+</style>
+<style id="4ubyu-page-stylesheet">
+${PAGE_STYLE}
+</style>
+</head>
+<body class="workspace-body">
+<canvas id="constellation-bg-canvas" class="constellation-bg-canvas"></canvas>
+<div class="workspace-container${view.player ? "" : " notes-only"}" id="app-workspace">
+<main class="handbook-pane" id="handbook-pane">
+${renderHeader(view, document)}
+${renderToc(view, document)}
+      <div class="handbook-chapters" id="handbook-chapters">
+${renderProvenance(view, document)}
+<div class="search-empty" id="search-empty" hidden>No section of these notes mentions that. The search looks at the notes themselves, not the lecture.</div>
+${renderChapters(view, document)}
+      </div>
+</main>${view.player ? playerOnly : ""}
+</div>
+<script>${PAGE_PRELUDE}</script>
+${pageScripts}
 </body>
 </html>
 `;
@@ -785,6 +1061,8 @@ ${renderVideoColumn(document)}
     renderNotesHtml,
     PAGE_PRELUDE,
     PAGE_EPILOGUE,
+    NOTES_SCRIPT,
     PAGE_STYLE,
+    readableMath,
   };
 });
