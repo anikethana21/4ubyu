@@ -567,6 +567,27 @@
       onEvent(event);
     };
 
+    // Global run timeout: if anything hangs, we fail fast instead of
+    // leaving the user staring at a blank panel forever.
+    const runTimeoutMs = options.timeoutMs || 300000; // 5 minutes default
+    const runController = typeof AbortController === "function" ? new AbortController() : null;
+    const runTimer = runController ? setTimeout(() => runController.abort(), runTimeoutMs) : null;
+    const runTimeoutPromise = new Promise((_, reject) => {
+      if (!runController) return;
+      setTimeout(() => reject(new Error(`the run took longer than ${Math.round(runTimeoutMs / 1000)} seconds`)), runTimeoutMs);
+    });
+    const runPromise = (async () => {
+      try {
+        return await _runLecture();
+      } finally {
+        if (runTimer) clearTimeout(runTimer);
+      }
+    })();
+    const result = await Promise.race([runPromise, runTimeoutPromise]);
+    return result;
+
+    async function _runLecture() {
+
     const duration = Number(video.duration) || transcriptEnd(segments) || 0;
     const windows = windowsFor(duration, settings);
     const stats = {
@@ -823,6 +844,7 @@
     stats.stopped = stopped;
     emit({ type: "done", stats, document });
     return { document, stats, failure: "" };
+    }
   }
 
   return {

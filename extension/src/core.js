@@ -327,9 +327,10 @@
 
   const COMPOSER_PROMPT =
     "You are writing a chapter section for a professional engineer-grade study handbook. " +
-    "The student who reads this must be able to understand, implement, and reason about the " +
-    "material without watching the lecture. Quality, depth, and completeness matter far more " +
-    "than brevity.\n\n" +
+    "Write directly TO the student as if YOU are teaching them. Do NOT write in third person " +
+    "about what an instructor said. Write as the teacher: 'You will learn...', 'Here is how...', " +
+    "'Notice that...', 'The key insight is...'. Never write 'The instructor explained...' or " +
+    "'The lecture covers...'. You ARE the explainer.\n\n" +
     "Write ONLY from the transcript below. Leave out anything the transcript does not cover " +
     "rather than filling the gap from general knowledge — a missing point is far better than " +
     "an invented one. If a crucial concept is absent from the transcript but essential to " +
@@ -342,12 +343,12 @@
     "Answer in exactly this shape. Write each heading on its own line, with nothing else on " +
     "that line:\n\n" +
     "EXPLANATION\n" +
-    "A thorough, detailed explanation of what the instructor taught in this section, in the " +
-    "order they taught it. Write multiple substantial paragraphs (not 2-3 sentences). " +
-    "Preserve the instructor's own terminology, variable names, function names, and examples. " +
-    "If code or algorithms are discussed, describe the logic step by step. If mathematical " +
-    "concepts appear, explain the intuition and the formula. Do not summarize — explain. " +
-    "Write MORE not less; depth is the goal.\n\n" +
+    "A thorough, detailed explanation written directly to the student. Use second person: " +
+    "'You will see...', 'Here is what happens...', 'The key point is...'. " +
+    "Write multiple substantial paragraphs. Preserve the instructor's own terminology, " +
+    "variable names, function names, and examples. If code or algorithms are discussed, " +
+    "describe the logic step by step. If mathematical concepts appear, explain the intuition " +
+    "and the formula. Do not summarize — explain. Write MORE not less; depth is the goal.\n\n" +
     "CODE\n" +
     "If the transcript contains code, algorithmic pseudocode, configuration, command-line " +
     "snippets, or concrete implementation steps, extract them here as annotated code blocks. " +

@@ -94,9 +94,18 @@
   function providerFetch(url, options = {}) {
     const plain = typeof fetch === "function" ? fetch : null;
     if (!plain) return gmFetch(url, options);
-    return Promise.resolve()
-      .then(() => plain(url, options))
-      .catch((error) => gmFetch(url, options).catch(() => Promise.reject(error)));
+    const timeoutMs = options.timeoutMs || 60000;
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    const plainPromise = plain(url, { ...options, signal: controller ? controller.signal : undefined });
+    const timeoutPromise = new Promise((resolve, reject) => {
+      if (!timer) return reject(new Error("no timer"));
+      timer.ref ? timer.ref() : null;
+      setTimeout(() => reject(new Error(`the request took longer than ${Math.round(timeoutMs / 1000)} seconds`)), timeoutMs);
+    });
+    return Promise.race([plainPromise, timeoutPromise]).catch((error) =>
+      gmFetch(url, options).catch(() => Promise.reject(error))
+    );
   }
 
   function gmFetch(url, options = {}) {

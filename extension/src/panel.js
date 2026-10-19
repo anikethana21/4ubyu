@@ -227,6 +227,10 @@
     // Reading the lecture and pricing the run
     // -----------------------------------------------------------------------
 
+    // -----------------------------------------------------------------------
+    // Reading the lecture and pricing the run
+    // -----------------------------------------------------------------------
+
     async function readLecture() {
       state.reading = true;
       state.lectureError = "";
