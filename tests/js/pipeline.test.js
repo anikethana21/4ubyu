@@ -521,3 +521,26 @@ test("a video with no captions at all fails before any call is made", async () =
   assert.equal(result.stats.calls, 0);
   assert.match(result.failure, /no captions/);
 });
+
+test("stopping a run keeps the sections it had already written", async () => {
+  const segments = lecture(30);
+  let written = 0;
+  const result = await pipeline.runLecture({
+    segments,
+    video: { video_id: "v8", title: "Lecture", duration: 1800 },
+    call: fakeProvider(),
+    options: { concurrency: 1 },
+    // Stop as soon as the second section has been written: what is already paid
+    // for is kept, and nothing is invented for the rest.
+    shouldStop: () => written >= 2,
+    onEvent: (event) => {
+      if (event.type === "section-done" && !event.cached) written += 1;
+    },
+  });
+  assert.ok(result.document, "a stopped run still produces the notes it wrote");
+  assert.equal(result.stats.sections, 2);
+  assert.ok(result.stats.abandoned > 0);
+  assert.match(result.stats.stopped, /stopped this run/);
+  assert.deepEqual(workspace.validateNotesDocument(result.document), []);
+  assert.match(result.stats.stopped, /stopped/);
+});

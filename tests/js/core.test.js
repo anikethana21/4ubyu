@@ -305,6 +305,61 @@ test("a caller needs a key, and says so by not existing", () => {
   assert.ok(ubyu.createCaller({ apiKey: "gsk_x", fetchImpl: async () => null }));
 });
 
+// ---------------------------------------------------------------------------
+// Which models this key can use
+// ---------------------------------------------------------------------------
+
+/** A fetch that answers the models endpoint, for listModels. */
+function modelsFetch(status, body) {
+  const asked = [];
+  const fetchImpl = async (url, options) => {
+    asked.push({ url, method: options.method, authorization: options.headers.Authorization });
+    return { status, text: async () => (typeof body === "string" ? body : JSON.stringify(body)) };
+  };
+  fetchImpl.asked = asked;
+  return fetchImpl;
+}
+
+test("the models offered are the ones this key has, asked of the provider", async () => {
+  const fetchImpl = modelsFetch(200, {
+    object: "list",
+    data: [
+      { id: "openai/gpt-oss-120b", active: true, context_window: 131072, max_completion_tokens: 32766 },
+      { id: "llama-3.1-8b-instant", active: true, context_window: 131072 },
+      { id: "retired-model", active: false },
+      { object: "model" },
+    ],
+  });
+  const models = await ubyu.listModels({ apiKey: "gsk_test", fetchImpl });
+  assert.deepEqual(models.map((model) => model.id), ["openai/gpt-oss-120b", "llama-3.1-8b-instant"],
+    "a retired model is not offered, and an entry with no id is not a model");
+  assert.equal(models[0].contextWindow, 131072);
+  assert.equal(models[0].maxCompletionTokens, 32766);
+  assert.equal(fetchImpl.asked.length, 1);
+  assert.match(fetchImpl.asked[0].url, /\/openai\/v1\/models$/);
+  assert.equal(fetchImpl.asked[0].method, "GET");
+  assert.equal(fetchImpl.asked[0].authorization, "Bearer gsk_test");
+});
+
+test("a rejected key is found out here, before any notes are paid for", async () => {
+  const fetchImpl = modelsFetch(401, { error: { message: "Invalid API Key" } });
+  await assert.rejects(() => ubyu.listModels({ apiKey: "gsk_bad", fetchImpl }), /rejected this API key/);
+  await assert.rejects(
+    () => ubyu.listModels({ apiKey: "gsk_bad", fetchImpl: modelsFetch(200, { data: [] }) }),
+    /no usable models/
+  );
+  await assert.rejects(() => ubyu.listModels({ apiKey: "" }), /No API key/);
+});
+
+test("a provider that cannot be reached is reported as unreachable", async () => {
+  const fetchImpl = async () => {
+    throw new Error("network down");
+  };
+  await assert.rejects(() => ubyu.listModels({ apiKey: "k", fetchImpl }), /Could not reach Groq/);
+  const nonsense = modelsFetch(200, "<html>not json</html>");
+  await assert.rejects(() => ubyu.listModels({ apiKey: "k", fetchImpl: nonsense }), /not JSON/);
+});
+
 test("an answer is taken from the response and handed back as written", async () => {
   const fetchImpl = recordingFetch(() => ({ status: 200, text: groqPayload("the notes") }));
   const caller = ubyu.createCaller({ apiKey: "k", fetchImpl });

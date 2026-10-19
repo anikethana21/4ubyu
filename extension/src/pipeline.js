@@ -555,6 +555,7 @@
     options = {},
     store = NO_CACHE,
     onEvent = () => {},
+    shouldStop = () => false,
     title,
   } = {}) {
     const settings = { ...DEFAULT_OPTIONS, ...options };
@@ -577,6 +578,7 @@
       emptyWindows: 0,
       sections: 0,
       written: 0,
+      abandoned: 0,
       degraded: [],
       fromCache: 0,
       calls: 0,
@@ -596,6 +598,10 @@
     const plans = [];
     let stopped = "";
     for (let index = 0; index < windows.length; index += 1) {
+      if (shouldStop()) {
+        stopped = stopped || "you stopped this run, so the rest of the lecture was not read";
+        break;
+      }
       const window = windows[index];
       const label = `${core.clock(window.start)}–${core.clock(window.end)}`;
       const cached = store.get(cacheKey("plan", window.start));
@@ -720,6 +726,12 @@
 
     let done = 0;
     const written = await core.mapWithLimit(flat, Math.max(1, settings.concurrency), async ({ chapter, section }) => {
+      // A stop is a person changing their mind, not a failure: the section is
+      // dropped from the notes rather than written up as a notice about itself.
+      if (shouldStop()) {
+        stopped = stopped || "you stopped this run, so the rest of the lecture was not written up";
+        return { ...section, abandoned: true };
+      }
       const key = cacheKey("section", section.start);
       const cached = store.get(key);
       if (cached && cached.notes) {
@@ -750,30 +762,44 @@
       return { ...section, ...notes };
     });
 
-    // Put the written sections back where they came from.
+    // Put the written sections back where they came from, keeping only the ones
+    // that were written: a stopped run's notes are the part of the lecture that was
+    // finished, not a page of apologies for the part that was not.
     let cursor = 0;
     for (const chapter of withTranscripts) {
-      chapter.sections = written.slice(cursor, cursor + chapter.sections.length);
-      cursor += chapter.sections.length;
+      const count = chapter.sections.length;
+      const slice = written.slice(cursor, cursor + count);
+      chapter.sections = slice.filter((section) => !section.abandoned);
+      cursor += count;
     }
-    stats.written = written.filter((section) => !section.degraded).length;
+    stats.abandoned = written.filter((section) => section.abandoned).length;
+    stats.sections = withTranscripts.reduce((total, chapter) => total + chapter.sections.length, 0);
+    stats.written = written.filter((section) => !section.degraded && !section.abandoned).length;
+
+    if (!stats.sections) {
+      stats.seconds = Math.round((Date.now() - began) / 1000);
+      stats.stopped = stopped || "the run was stopped before any section was written";
+      return { document: null, stats, failure: stats.stopped };
+    }
 
     // ---- 4. The document -----------------------------------------------------
-    const chaptersOut = withTranscripts.map((chapter) => ({
-      title: chapter.title || `Part ${chapter.chapter_order || 1}`,
-      timestamp_seconds: chapter.timestamp_seconds,
-      overview: chapter.overview || "",
-      sections: chapter.sections.map((section) => ({
-        title: section.title,
-        timestamp_seconds: section.start,
-        explanation: section.explanation,
-        analogies: section.analogy ? [section.analogy] : section.analogies || [],
-        key_points: section.key_points || [],
-        pitfalls: section.pitfalls || [],
-        examples: section.examples || [],
-        degraded: Boolean(section.degraded),
-      })),
-    }));
+    const chaptersOut = withTranscripts
+      .filter((chapter) => chapter.sections.length)
+      .map((chapter) => ({
+        title: chapter.title || `Part ${chapter.chapter_order || 1}`,
+        timestamp_seconds: chapter.timestamp_seconds,
+        overview: chapter.overview || "",
+        sections: chapter.sections.map((section) => ({
+          title: section.title,
+          timestamp_seconds: section.start,
+          explanation: section.explanation,
+          analogies: section.analogy ? [section.analogy] : section.analogies || [],
+          key_points: section.key_points || [],
+          pitfalls: section.pitfalls || [],
+          examples: section.examples || [],
+          degraded: Boolean(section.degraded),
+        })),
+      }));
 
     const document = workspace.buildNotesDocument({
       video: {

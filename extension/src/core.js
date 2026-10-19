@@ -455,6 +455,7 @@
     groq: {
       label: "Groq",
       url: "https://api.groq.com/openai/v1/chat/completions",
+      modelsUrl: "https://api.groq.com/openai/v1/models",
       defaultModel: "openai/gpt-oss-120b",
       lighterModel: "openai/gpt-oss-20b",
     },
@@ -609,6 +610,84 @@
   }
 
   // -------------------------------------------------------------------------
+  // Which models this key can actually use
+  // -------------------------------------------------------------------------
+
+  /**
+   * The models the user's own key is allowed to call, asked of the provider.
+   *
+   * The list is not written down here, and that is deliberate. A hardcoded list is
+   * a guess about someone else's service: it goes stale the week a model is
+   * retired, it cannot know what this particular key is entitled to, and it offers
+   * choices that answer 404 when picked. Asking the provider costs one request,
+   * returns exactly the models this key has, and doubles as the way to find out
+   * whether the key works at all — a rejected key fails here, before any notes are
+   * paid for.
+   *
+   * Resolves a list of `{id, contextWindow, maxCompletionTokens}` in the provider's
+   * own order, with deactivated models left out.
+   */
+  async function listModels({ apiKey, provider = "groq", fetchImpl, timeoutMs = 30000 } = {}) {
+    const send = fetchImpl || (typeof fetch === "function" ? fetch : null);
+    const key = (apiKey || "").trim();
+    const config = PROVIDERS[provider] || PROVIDERS.groq;
+    if (!key) throw new Error("No API key has been saved yet.");
+    if (!send) throw new Error("This browser cannot make the request to the provider.");
+
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    let response;
+    try {
+      response = await send(config.modelsUrl, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
+        signal: controller ? controller.signal : undefined,
+      });
+    } catch (error) {
+      const reason =
+        error && error.name === "AbortError"
+          ? `the request took longer than ${Math.round(timeoutMs / 1000)} seconds`
+          : describeThrown(error);
+      throw new Error(`Could not reach ${config.label}: ${reason}`);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+
+    const text = await response.text();
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        `${config.label} rejected this API key (${response.status}). Check the key, and that it ` +
+          `has not been rotated or revoked. ${snippet(text)}`
+      );
+    }
+    if (response.status !== 200) {
+      throw new Error(`${config.label} answered ${response.status} when asked for its models. ${snippet(text)}`);
+    }
+
+    let payload = null;
+    try {
+      payload = JSON.parse(text);
+    } catch (error) {
+      throw new Error(`${config.label} answered with something that is not JSON. ${snippet(text)}`);
+    }
+    const data = (payload && payload.data) || [];
+    const models = data
+      .filter((entry) => entry && entry.id && entry.active !== false)
+      .map((entry) => ({
+        id: String(entry.id),
+        contextWindow: Number(entry.context_window) || 0,
+        maxCompletionTokens: Number(entry.max_completion_tokens) || 0,
+      }));
+    if (!models.length) {
+      throw new Error(
+        `${config.label} answered with no usable models. The key may be valid but not entitled to ` +
+          "any model yet."
+      );
+    }
+    return models;
+  }
+
+  // -------------------------------------------------------------------------
   // Running a chapter
   // -------------------------------------------------------------------------
 
@@ -715,6 +794,7 @@
     composeSection,
     createCaller,
     answerFromResponse,
+    listModels,
     mapWithLimit,
     writeChapter,
     segmentsToText,
