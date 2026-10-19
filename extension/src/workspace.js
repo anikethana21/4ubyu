@@ -755,7 +755,11 @@ ${items}
     const seconds = Number(section.timestamp_seconds || 0);
     const theory = section.theory_block || {};
     const analogies = (theory.analogies || [])
-      .map(
+      .filter((a) => {
+        const s = String(a || "").trim().toLowerCase();
+        return s && s !== "none" && s !== "n/a" && s !== "na";
+      })
+.map(
         (analogy) => `          <div class="analogy-card">
             <div class="analogy-icon">💡</div>
             <div class="analogy-body">

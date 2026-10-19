@@ -1994,7 +1994,11 @@ ${items}
     const seconds = Number(section.timestamp_seconds || 0);
     const theory = section.theory_block || {};
     const analogies = (theory.analogies || [])
-      .map(
+      .filter((a) => {
+        const s = String(a || "").trim().toLowerCase();
+        return s && s !== "none" && s !== "n/a" && s !== "na";
+      })
+.map(
         (analogy) => `          <div class="analogy-card">
             <div class="analogy-icon">💡</div>
             <div class="analogy-body">
@@ -4777,14 +4781,57 @@ ${pageScripts}
         parseInt(match[3], 10);
       const title = match[4].replace(/\s+/g, " ").trim();
       if (!title || title.length > 120) continue;
-      found.push({ title, start_time: seconds, end_time: 0 });
+      // Field names must match usableChapters: timestamp_seconds, not start_time
+      found.push({ title, timestamp_seconds: seconds, end_time: 0 });
     }
     if (found.length < 2) return [];
-    found.sort((a, b) => a.start_time - b.start_time);
+    found.sort((a, b) => a.timestamp_seconds - b.timestamp_seconds);
     found.forEach((chapter, index) => {
-      chapter.end_time = index + 1 < found.length ? found[index + 1].start_time : 0;
+      chapter.end_time = index + 1 < found.length ? found[index + 1].timestamp_seconds : 0;
     });
     return found;
+  }
+
+  /**
+   * YouTube native chapters from the player response.
+   * These are set by the creator in YouTube Studio and are more reliable than
+   * description parsing. The player response may have them in several places.
+   */
+  function parseNativeChapters(playerResponse) {
+    const sources = [
+      // Standard location in newer player responses
+      playerResponse?.chapters,
+      // Microformat location (older)
+      playerResponse?.microformat?.playerMicroformatRenderer?.chapters,
+      // Sometimes in videoDetails
+      playerResponse?.videoDetails?.chapters,
+    ];
+
+    for (const src of sources) {
+      const arr = Array.isArray(src) ? src : (src?.chapters || []);
+      const found = [];
+      for (const chapter of arr) {
+        const title = String(chapter?.title || chapter?.chapter_title || "").trim();
+        const start = Number(
+          chapter?.timestamp_seconds ??
+          chapter?.start_time ??
+          chapter?.start ??
+          chapter?.startTime ??
+          0
+        );
+        if (title && start >= 0) {
+          found.push({ title, timestamp_seconds: start, end_time: 0 });
+        }
+      }
+      if (found.length >= 2) {
+        found.sort((a, b) => a.timestamp_seconds - b.timestamp_seconds);
+        found.forEach((chapter, index) => {
+          chapter.end_time = index + 1 < found.length ? found[index + 1].timestamp_seconds : 0;
+        });
+        return found;
+      }
+    }
+    return [];
   }
 
   // -------------------------------------------------------------------------
@@ -4828,6 +4875,11 @@ ${pageScripts}
     const duration = Math.max(stated, spoken);
     const thumbnails = (details.thumbnail && details.thumbnail.thumbnails) || [];
 
+    // Prefer YouTube native chapters (set by creator in Studio), fall back to description
+    const nativeChapters = parseNativeChapters(playerResponse);
+    const descriptionChapters = parseChaptersFromDescription(description);
+    const chapters = nativeChapters.length ? nativeChapters : descriptionChapters;
+
     return {
       segments,
       video: {
@@ -4837,7 +4889,7 @@ ${pageScripts}
         duration,
         duration_str: UBYU.clock(duration),
         thumbnail: thumbnails.length ? thumbnails[thumbnails.length - 1].url : "",
-        chapters: parseChaptersFromDescription(description),
+        chapters,
       },
     };
   }
