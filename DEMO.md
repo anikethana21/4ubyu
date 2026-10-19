@@ -65,11 +65,16 @@ You should see `Uvicorn running on http://127.0.0.1:8000`.
 
 ## Step 2 — Install the userscript
 
-**Easiest way:** drag `extension/4ubyu.user.js` from this project into your
+> **The browser version of 4 U By U does not need this server.** It is installed
+> from <https://anikethana21.github.io/4ubyu/> and writes the notes in your own
+> browser. The steps below are the frozen server prototype's flow, kept because
+> the prototype still runs.
+
+**Easiest way:** drag `4ubyu.user.js` from the root of this project into your
 browser window. Tampermonkey will open its install page → click **Install**.
 
 **Manual way:** Tampermonkey icon → **Create a new script…** → delete the
-template → paste the entire contents of `extension/4ubyu.user.js` → `Ctrl+S`.
+template → paste the entire contents of `4ubyu.user.js` → `Ctrl+S`.
 
 ---
 

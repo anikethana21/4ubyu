@@ -67,10 +67,12 @@ datacenter IPs are gated exactly like Vercel's: the player API returns *"Sign in
 to confirm you're not a bot"* and the caption endpoint returns *RequestBlocked*,
 which is why a naive deploy reports `00:00` duration and no chapters.
 
-The userscript (`extension/4ubyu.user.js`) captures the transcript **in the
-user's own browser**, on the page where the lecture is already playing, and posts
-it to `/api/ingest/transcript`. Their residential IP is not gated, and their
-cookies never leave their machine — nothing needs them there. This is why no
+The userscript (`4ubyu.user.js`) captures the transcript **in the user's own
+browser**, on the page where the lecture is already playing. It no longer posts
+anything anywhere: it writes the notes itself and hands back a page. The ingest
+endpoint described below belongs to the frozen server prototype, and still works
+for anyone who wants the server to do the writing — their residential IP is not
+gated, and their cookies never leave their machine — nothing needs them there. This is why no
 YouTube configuration is needed on the host at all.
 
 Server-side ingestion still exists and still works **on a residential machine**
