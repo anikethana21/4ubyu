@@ -140,6 +140,9 @@
 
     const state = {
       open: Boolean(openOnStart),
+      // False on a page that is not a lecture: there is nothing to make notes from
+      // on YouTube's home page, so the button is not offered there.
+      available: true,
       step: "setup",
       apiKey: String(store.get(KEY_API, "") || ""),
       provider: "groq",
@@ -565,8 +568,8 @@
     }
 
     function render() {
-      node.setAttribute("data-open", String(state.open));
-      fab.hidden = state.open;
+      node.setAttribute("data-open", String(state.open && state.available));
+      fab.hidden = state.open || !state.available;
       const views = {
         setup: setupView,
         ready: readyView,
@@ -716,6 +719,12 @@
       checkKey,
       generate,
       pageFor,
+      /** Whether this page is a lecture that notes could be made from. */
+      setAvailable(available) {
+        state.available = Boolean(available);
+        if (!state.available) state.open = false;
+        render();
+      },
     };
   }
 

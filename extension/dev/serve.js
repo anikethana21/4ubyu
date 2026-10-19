@@ -29,6 +29,20 @@ const TYPES = {
   ".webp": "image/webp",
 };
 
+/**
+ * Where a request is looked for, in order.
+ *
+ * The generated pages are at the root; `/src/` is the pipeline the harness page
+ * loads the way the userscript does; `/dev/` is the harness page itself. Every
+ * path is still resolved inside its own directory, so none of these can be used to
+ * read anything else.
+ */
+const MOUNTS = [
+  ["/src/", path.join(__dirname, "..", "src")],
+  ["/dev/", __dirname],
+  ["/", DIR],
+];
+
 function listing(res, note) {
   const pages = fs.existsSync(DIR)
     ? fs.readdirSync(DIR).filter((name) => name.endsWith(".html")).sort()
@@ -55,9 +69,12 @@ http
       return;
     }
 
-    const file = path.resolve(DIR, name);
-    // Only ever serve what is inside the directory, however the path was written.
-    if (!file.startsWith(DIR + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+    const mount = MOUNTS.find(([prefix]) => wanted.startsWith(prefix));
+    const base = mount ? mount[1] : DIR;
+    const file = path.resolve(base, name.slice(Math.max(0, mount[0].length - 1)));
+    // Only ever serve what is inside one of those directories, however the path
+    // was written.
+    if (!file.startsWith(base + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
       listing(response, `No file named ${name}.`);
       return;
     }

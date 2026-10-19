@@ -1,375 +1,134 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
-// @namespace    https://four-u-by-u-workspace.onrender.com
-// @version      1.7.1
-// @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the transcript in your own browser and hands it to your 4 U By U workspace.
+// @namespace    https://github.com/anikethana21/4ubyu
+// @version      2.0.0
+// @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
+// @license      MIT
+// @homepageURL  https://github.com/anikethana21/4ubyu
+// @supportURL   https://github.com/anikethana21/4ubyu/issues
+// @downloadURL  https://anikethana21.github.io/4ubyu/4ubyu.user.js
+// @updateURL    https://anikethana21.github.io/4ubyu/4ubyu.user.js
 // @match        https://www.youtube.com/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @run-at       document-idle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_openInTab
 // @grant        unsafeWindow
-// @connect      *
+// @connect      api.groq.com
 // ==/UserScript==
 
 /* eslint-disable no-undef */
 (function () {
   "use strict";
 
-  const DEFAULTS = {
-    serverUrl: "http://127.0.0.1:8000",
-    ingestToken: "",
+  // -------------------------------------------------------------------------
+  // This script is one file, and this file is not the whole program.
+  //
+  // The pipeline — reading the provider's answers, planning topics, writing the
+  // page — lives in extension/src/*.js, where it is tested by `npm test` with no
+  // browser involved. `node extension/build.js` folds those files in at the marker
+  // below, so the thing a user installs is exactly the thing that was tested.
+  //
+  // What stays here is the part that only makes sense inside a userscript: reading
+  // YouTube's own player data, and storing things through the script manager.
+  // -------------------------------------------------------------------------
+
+  /**
+   * Settings and finished notes, kept by the userscript manager.
+   *
+   * Values are stored as JSON text rather than as objects, because what a manager
+   * does with a stored object is its own business and differs between them; a
+   * string is a string everywhere. Nothing here is sent anywhere: the panel asks
+   * the provider, with the key the user pasted, and nothing else.
+   */
+  const store = {
+    get(key, fallback = null) {
+      try {
+        const raw = GM_getValue("ubyu:" + key, null);
+        if (raw === null || raw === undefined || raw === "") return fallback;
+        return JSON.parse(raw);
+      } catch (error) {
+        return fallback;
+      }
+    },
+    set(key, value) {
+      try {
+        GM_setValue("ubyu:" + key, JSON.stringify(value));
+      } catch (error) {
+        /* a full quota is not a reason to lose the notes already on screen */
+      }
+    },
+    remove(key) {
+      try {
+        GM_deleteValue("ubyu:" + key);
+      } catch (error) {}
+    },
   };
 
-  const state = {
-    busy: false,
-    root: null,
-    card: null,
-    button: null,
-    label: null,
-    hint: null,
-    settings: null,
-    settingsOpen: false,
-    autoOpened: false,
-  };
+  // <<<UBYU_MODULES>>>
+
+  /** The finished, tested pipeline, exactly as the tests ran it. */
+  const UBYU = globalThis.UBYU;
+  const UBYU_PIPELINE = globalThis.UBYU_PIPELINE;
+  const UBYU_WORKSPACE = globalThis.UBYU_WORKSPACE;
+  const UBYU_PANEL = globalThis.UBYU_PANEL;
+
 
   // -------------------------------------------------------------------------
-  // Settings (stored by the userscript manager, never sent anywhere else)
+  // The panel, and the one thing the page cannot do for itself
   // -------------------------------------------------------------------------
 
-  const getSetting = (key) => (GM_getValue(key, DEFAULTS[key]) || "").trim();
-  const setSetting = (key, value) => GM_setValue(key, String(value || "").trim());
-
-  const isConfigured = () => Boolean(getSetting("ingestToken"));
-
-  // -------------------------------------------------------------------------
-  // UI
-  // -------------------------------------------------------------------------
-
-  const CSS = `
-    #fubyu-root {
-      position: fixed; right: 22px; bottom: 22px; z-index: 2147483000;
-      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
-    }
-    #fubyu-root * { box-sizing: border-box; }
-    #fubyu-card {
-      min-width: 300px; max-width: 372px;
-      padding: 14px 16px; border-radius: 16px;
-      background: rgba(20, 22, 34, 0.78);
-      -webkit-backdrop-filter: blur(16px) saturate(140%);
-      backdrop-filter: blur(16px) saturate(140%);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
-      color: #eef1fb;
-      transition: opacity .18s ease, transform .18s ease;
-    }
-    #fubyu-title {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      font-size: 12px; font-weight: 700; letter-spacing: .09em;
-      text-transform: uppercase; color: #9fb0d8; margin-bottom: 7px;
-    }
-    #fubyu-gear {
-      appearance: none; background: rgba(255,255,255,.08); cursor: pointer;
-      border: 1px solid rgba(255,255,255,.16); border-radius: 8px;
-      color: #dfe6fb; font-size: 13px; line-height: 1;
-      padding: 4px 7px;
-    }
-    #fubyu-gear:hover { background: rgba(255,255,255,.16); }
-    #fubyu-hint { font-size: 12.5px; line-height: 1.5; color: #cfd8ef; }
-    #fubyu-hint.error { color: #ffb4b4; }
-    #fubyu-hint.ok { color: #a7f3c4; }
-    #fubyu-hint.warn { color: #ffd79a; }
-
-    #fubyu-settings { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.12); }
-    #fubyu-settings[hidden] { display: none; }
-    #fubyu-settings label {
-      display: block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
-      color: #93a2c7; margin: 9px 0 4px;
-    }
-    #fubyu-settings input {
-      width: 100%; padding: 8px 10px; border-radius: 9px; font-size: 12.5px;
-      background: rgba(10, 12, 20, 0.85); color: #eef1fb;
-      border: 1px solid rgba(255,255,255,.18); outline: none;
-      font-family: ui-monospace, Consolas, monospace;
-    }
-    #fubyu-settings input:focus { border-color: rgba(140,160,255,.85); }
-    #fubyu-row { display: flex; gap: 8px; margin-top: 12px; }
-    #fubyu-row button {
-      flex: 1; appearance: none; cursor: pointer; padding: 9px 10px;
-      border-radius: 9px; font-size: 12.5px; font-weight: 650; color: #fff;
-      border: 1px solid rgba(255,255,255,.18);
-      background: linear-gradient(135deg, rgba(96,120,255,.95), rgba(158,86,255,.95));
-    }
-    #fubyu-row button.secondary {
-      background: rgba(255,255,255,.09); font-weight: 600;
-    }
-    #fubyu-row button:hover { filter: brightness(1.1); }
-    #fubyu-test-result { font-size: 12px; line-height: 1.5; margin-top: 9px; color: #cfd8ef; }
-    #fubyu-test-result.ok { color: #a7f3c4; }
-    #fubyu-test-result.error { color: #ffb4b4; }
-
-    #fubyu-button {
-      appearance: none; border: 1px solid rgba(255,255,255,0.18); cursor: pointer;
-      padding: 12px 20px; border-radius: 999px; font-size: 13.5px; font-weight: 650;
-      letter-spacing: .01em; color: #fff;
-      background: linear-gradient(135deg, rgba(96,120,255,.96), rgba(158,86,255,.96));
-      box-shadow: 0 14px 34px rgba(84, 78, 255, 0.42);
-      display: inline-flex; align-items: center; gap: 9px;
-      transition: transform .15s ease, filter .15s ease, opacity .15s ease;
-    }
-    #fubyu-button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
-    #fubyu-button:disabled { opacity: .62; cursor: progress; }
-    #fubyu-spinner {
-      width: 13px; height: 13px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
-      animation: fubyu-spin .7s linear infinite; display: none;
-    }
-    #fubyu-button.busy #fubyu-spinner { display: inline-block; }
-    @keyframes fubyu-spin { to { transform: rotate(360deg); } }
-  `;
-
-  function injectStyle() {
-    if (document.getElementById("fubyu-style")) return;
-    const style = document.createElement("style");
-    style.id = "fubyu-style";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+  /**
+   * A request to the provider, made from this page.
+   *
+   * `fetch` is tried first, because Groq answers a browser request directly and
+   * that is one less moving part. If the page's own Content-Security-Policy
+   * refuses it, the same request goes out through the script manager instead,
+   * which is not subject to the page's policy. Both return the same two things the
+   * pipeline asks of a response: a status, and the body as text.
+   */
+  function providerFetch(url, options = {}) {
+    const plain = typeof fetch === "function" ? fetch : null;
+    if (!plain) return gmFetch(url, options);
+    return Promise.resolve()
+      .then(() => plain(url, options))
+      .catch((error) => gmFetch(url, options).catch(() => Promise.reject(error)));
   }
 
-  function mount() {
-    if (state.root) return;
-    injectStyle();
-
-    const root = document.createElement("div");
-    root.id = "fubyu-root";
-    root.innerHTML = `
-      <div id="fubyu-card">
-        <div id="fubyu-title">
-          <span>4 U By U</span>
-          <button id="fubyu-gear" type="button" title="Settings">⚙️ Setup</button>
-        </div>
-        <div id="fubyu-hint"></div>
-
-        <div id="fubyu-settings" hidden>
-          <label for="fubyu-server">Server URL</label>
-          <input id="fubyu-server" type="text" spellcheck="false"
-                 placeholder="http://127.0.0.1:8000">
-          <label for="fubyu-token">Ingest token</label>
-          <input id="fubyu-token" type="password" spellcheck="false"
-                 placeholder="paste your EXTENSION_INGEST_TOKEN">
-          <div id="fubyu-row">
-            <button id="fubyu-save" type="button">Save</button>
-            <button id="fubyu-test" class="secondary" type="button">Test</button>
-          </div>
-          <div id="fubyu-test-result"></div>
-        </div>
-      </div>
-      <button id="fubyu-button" type="button">
-        <span id="fubyu-spinner"></span>
-        <span id="fubyu-label">Generate Study Notes</span>
-      </button>
-    `;
-    document.body.appendChild(root);
-
-    state.root = root;
-    state.card = root.querySelector("#fubyu-card");
-    state.button = root.querySelector("#fubyu-button");
-    state.label = root.querySelector("#fubyu-label");
-    state.hint = root.querySelector("#fubyu-hint");
-    state.settings = root.querySelector("#fubyu-settings");
-
-    state.button.addEventListener("click", run);
-    root.querySelector("#fubyu-gear").addEventListener("click", toggleSettings);
-    root.querySelector("#fubyu-save").addEventListener("click", saveSettings);
-    root.querySelector("#fubyu-test").addEventListener("click", testConnection);
-
-    // Stop YouTube's own handlers from swallowing clicks inside our UI.
-    root.addEventListener("click", (event) => event.stopPropagation());
-
-    loadSettingsIntoForm();
-    renderConfigState();
-  }
-
-  function unmount() {
-    if (state.root && state.root.parentNode) state.root.parentNode.removeChild(state.root);
-    state.root = state.card = state.button = state.label = state.hint = null;
-    state.settings = null;
-    state.settingsOpen = false;
-    state.autoOpened = false;
-  }
-
-  function loadSettingsIntoForm() {
-    if (!state.root) return;
-    state.root.querySelector("#fubyu-server").value = getSetting("serverUrl");
-    state.root.querySelector("#fubyu-token").value = getSetting("ingestToken");
-  }
-
-  function toggleSettings(force) {
-    if (!state.settings) return;
-    state.settingsOpen = typeof force === "boolean" ? force : !state.settingsOpen;
-    state.settings.hidden = !state.settingsOpen;
-    if (state.settingsOpen) {
-      loadSettingsIntoForm();
-      const tokenInput = state.root.querySelector("#fubyu-token");
-      tokenInput.focus();
-      tokenInput.select();
-    }
-  }
-
-  function saveSettings() {
-    if (!state.root) return;
-    const server = state.root.querySelector("#fubyu-server").value
-      .trim().replace(/\/+$/, "") || DEFAULTS.serverUrl;
-    const token = state.root.querySelector("#fubyu-token").value.trim();
-
-    setSetting("serverUrl", server);
-    setSetting("ingestToken", token);
-
-    renderConfigState();
-    const result = state.root.querySelector("#fubyu-test-result");
-    if (token) {
-      result.className = "ok";
-      result.textContent = "Saved. Click Test to verify the server accepts this token.";
-    } else {
-      result.className = "error";
-      result.textContent = "Token is empty — the server will reject the request.";
-    }
-  }
-
-  function setResult(message, kind) {
-    if (!state.root) return;
-    const result = state.root.querySelector("#fubyu-test-result");
-    result.className = kind || "";
-    result.textContent = message;
+  function gmFetch(url, options = {}) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: options.method || "GET",
+        url,
+        headers: options.headers || {},
+        data: options.body,
+        timeout: 180000,
+        onload: (response) =>
+          resolve({
+            status: response.status,
+            text: async () => response.responseText || "",
+          }),
+        onerror: () => reject(new Error("the request could not be made")),
+        ontimeout: () => reject(new Error("the request timed out")),
+      });
+    });
   }
 
   /**
-   * Proves the whole handshake before the user wastes time on a long lecture.
-   *   /health              -> is a 4 U By U server actually listening?
-   *   POST with junk body  -> 422 means the token is GOOD, 401 means it is wrong.
-   *                           The junk body fails validation, so nothing is stored.
+   * The panel. It owns the key, the model list, the cost, the progress and the
+   * page; the only thing it asks of this file is the lecture itself.
    */
-  function testConnection() {
-    const server = (state.root.querySelector("#fubyu-server").value.trim() ||
-      DEFAULTS.serverUrl).replace(/\/+$/, "");
-    const token = state.root.querySelector("#fubyu-token").value.trim();
+  const panel = UBYU_PANEL.install({
+    capture: captureLecture,
+    store,
+    fetchImpl: providerFetch,
+  });
 
-    if (!token) {
-      setResult("Paste your ingest token first.", "error");
-      return;
-    }
-    setResult("Checking " + server + " …");
 
-    GM_xmlhttpRequest({
-      method: "GET",
-      url: server + "/health",
-      timeout: 15000,
-      onload: (res) => {
-        if (res.status < 200 || res.status >= 300) {
-          setResult("Server answered HTTP " + res.status + ". Is that the right URL?", "error");
-          return;
-        }
-        GM_xmlhttpRequest({
-          method: "POST",
-          url: server + "/api/ingest/transcript",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          data: JSON.stringify({ video_id: "invalid" }),
-          timeout: 20000,
-          onload: (authRes) => {
-            if (authRes.status === 401) {
-              setResult("Server reached, but the token was REJECTED. It must match the server's EXTENSION_INGEST_TOKEN exactly.", "error");
-            } else if (authRes.status === 422) {
-              setResult("All good — server reachable and the token is accepted. ✅", "ok");
-            } else if (authRes.status === 503) {
-              setResult("Server reachable, but its database is unconfigured. That is fine for local use.", "warn");
-            } else {
-              setResult("Unexpected response: HTTP " + authRes.status + ".", "error");
-            }
-          },
-          onerror: () => setResult("Reached /health but the ingest endpoint refused the connection.", "error"),
-          ontimeout: () => setResult("The ingest endpoint timed out.", "error"),
-        });
-      },
-      onerror: () => setResult("Cannot reach " + server + ". Is the server running?", "error"),
-      ontimeout: () => setResult("Timed out reaching " + server + ".", "error"),
-    });
-  }
-
-  /** Keeps the headline status honest about whether setup is complete. */
-  function renderConfigState() {
-    if (!state.hint) return;
-    if (!isConfigured()) {
-      state.hint.className = "warn";
-      state.hint.textContent = "Setup needed: paste your ingest token below, then Save.";
-      // Open the panel once, so the fix is impossible to miss — but don't yank
-      // focus back every time the SPA fires a navigation event.
-      if (!state.autoOpened) {
-        state.autoOpened = true;
-        toggleSettings(true);
-      }
-      return;
-    }
-    state.hint.className = "";
-    state.hint.textContent =
-      "Ready. Captions are read locally in your browser; cookies never leave it.";
-  }
-
-  function showHint(message, kind) {
-    if (!state.hint) return;
-    state.hint.textContent = message;
-    state.hint.className = kind || "";
-  }
-
-  function toast(message, kind) {
-    showHint(message, kind);
-    if (kind !== "error") {
-      setTimeout(() => {
-        if (isConfigured()) renderConfigState();
-      }, 6000);
-    }
-  }
-
-  function setBusy(busy, label) {
-    state.busy = busy;
-    if (!state.button) return;
-    state.button.disabled = busy;
-    state.button.classList.toggle("busy", busy);
-    state.label.textContent = label || (busy ? "Working…" : "Generate Study Notes");
-  }
-
-  // -------------------------------------------------------------------------
-  // Menu commands — now they just open the panel instead of using prompt(),
-  // which some Chromium builds silently block inside a userscript sandbox.
-  // -------------------------------------------------------------------------
-
-  function registerMenu() {
-    GM_registerMenuCommand("⚙️ 4 U By U settings", () => {
-      mount();
-      if (state.root) state.root.querySelector("#fubyu-card").scrollIntoView({ block: "nearest" });
-      toggleSettings(true);
-    });
-
-    GM_registerMenuCommand("🔌 Test 4 U By U connection", () => {
-      mount();
-      toggleSettings(true);
-      testConnection();
-    });
-
-    GM_registerMenuCommand("▶️ Grab this lecture's transcript", () => {
-      if (location.pathname !== "/watch") {
-        alert("Open a YouTube video first.");
-        return;
-      }
-      run();
-    });
-  }
-
-  // -------------------------------------------------------------------------
   // Reading the page: player response + caption track
   // -------------------------------------------------------------------------
 
@@ -1194,177 +953,87 @@
     return found;
   }
 
-  function postToServer(payload) {
-    const serverUrl = getSetting("serverUrl");
-    const token = getSetting("ingestToken");
-    if (!token) {
-      return Promise.reject(
-        new Error("No ingest token set. Click ⚙️ Setup and paste your token.")
-      );
-    }
-    return new Promise((resolve, reject) => {
-      GM_xmlhttpRequest({
-        method: "POST",
-        url: serverUrl + "/api/ingest/transcript",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-        data: JSON.stringify(payload),
-        timeout: 180000,
-        onload: (res) => {
-          let body = null;
-          try { body = JSON.parse(res.responseText || "{}"); } catch (err) { body = null; }
-          if (res.status === 201 && body && body.ingest_id) {
-            resolve({ body, serverUrl });
-            return;
-          }
-          if (res.status === 401) {
-            reject(new Error("Your ingest token was rejected. Open ⚙️ Setup and press Test."));
-            return;
-          }
-          if (res.status === 413) {
-            reject(new Error("This transcript is too large for the server to accept."));
-            return;
-          }
-          if (res.status === 429) {
-            reject(new Error((body && body.detail) || "The server is at capacity. Try again shortly."));
-            return;
-          }
-          const detail = (body && body.detail) || res.responseText || "";
-          reject(new Error("Ingest failed (HTTP " + res.status + "). " + String(detail).slice(0, 300)));
-        },
-        onerror: () => reject(new Error("Could not reach " + serverUrl + ". Check ⚙️ Setup.")),
-        ontimeout: () => reject(new Error("The server took too long to accept the transcript.")),
-      });
-    });
-  }
+  // -------------------------------------------------------------------------
+  // Reading this lecture
+  // -------------------------------------------------------------------------
 
   /**
-   * Opens the workspace tab.
+   * The lecture playing in this tab, in the shape the pipeline wants.
    *
-   * window.open() is called after several awaits, so the page no longer has a
-   * user gesture — many browsers silently block it. GM_openInTab is not subject
-   * to that, so it is tried first, and the caller is told whether anything
-   * actually opened rather than assuming success.
+   * This is the part that cannot be tested outside a browser and cannot be worked
+   * out from the URL: YouTube's player data is a JavaScript object buried in the
+   * page, the caption track may be behind a signed URL, and the transcript panel
+   * may only exist once something has opened it. `fetchTranscript` tries four
+   * routes, in order of how little each disturbs the page.
    */
-  function openWorkspace(url) {
-    try {
-      if (typeof GM_openInTab === "function") {
-        GM_openInTab(url, { active: true, insert: true, setParent: true });
-        return true;
-      }
-    } catch (err) { /* fall through to window.open */ }
-
-    try {
-      const handle = window.open(url, "_blank");
-      return Boolean(handle);
-    } catch (err) {
-      return false;
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Main flow
-  // -------------------------------------------------------------------------
-
-  async function run() {
-    if (state.busy) return;
+  async function captureLecture() {
     const videoId = currentVideoId();
-    if (!videoId) {
-      showHint("Open a YouTube video first.", "error");
-      return;
-    }
-    if (!isConfigured()) {
-      showHint("Setup needed: paste your ingest token first.", "warn");
-      toggleSettings(true);
-      return;
+    if (!videoId) throw new Error("Open a YouTube video first.");
+
+    const playerResponse = getPlayerResponse(videoId);
+    if (!playerResponse) {
+      throw new Error("Could not read this page's video data. Reload the page and try again.");
     }
 
-    setBusy(true, "Reading captions…");
-    showHint("Finding this lecture's caption track…");
-
-    try {
-      const playerResponse = getPlayerResponse(videoId);
-      if (!playerResponse) {
-        throw new Error("Could not read this page's video data. Reload the page and try again.");
-      }
-
-      // A missing caption track is no longer fatal: the InnerTube transcript
-      // panel can still have one, so fall through and let fetchTranscript try.
-      const track = pickCaptionTrack(playerResponse) || { url: "", language: "" };
-
-      showHint(
-        "Reading the transcript" + (track.language ? " (" + track.language + ")" : "") +
-          "… YouTube may briefly open its own transcript panel."
+    // A missing caption track on the player response is not fatal: the transcript
+    // panel can still have one, so this falls through with an empty track.
+    const track = pickCaptionTrack(playerResponse) || { url: "", language: "" };
+    const segments = await fetchTranscript(track, videoId);
+    if (segments.length < 5) {
+      throw new Error(
+        "Only " + segments.length + " caption line" + (segments.length === 1 ? "" : "s") +
+          " could be found. Open the video's transcript panel once, then try again."
       );
-      const segments = await fetchTranscript(track, videoId);
-      if (segments.length < 5) {
-        throw new Error(
-          "Only " + segments.length + " caption lines were found, which is too few to build notes from."
-        );
-      }
+    }
 
-      const details = playerResponse.videoDetails || {};
-      const description = details.shortDescription || "";
-      const payload = {
+    const details = playerResponse.videoDetails || {};
+    const description = details.shortDescription || "";
+    const stated = parseInt(details.lengthSeconds || "0", 10) || 0;
+    const last = segments[segments.length - 1] || {};
+    const spoken = Math.ceil((last.start || 0) + (last.duration || 0));
+    const duration = Math.max(stated, spoken);
+    const thumbnails = (details.thumbnail && details.thumbnail.thumbnails) || [];
+
+    return {
+      segments,
+      video: {
         video_id: videoId,
         title: details.title || document.title.replace(/ - YouTube$/, ""),
         channel: details.author || "",
-        description,
-        duration: parseInt(details.lengthSeconds || "0", 10) || 0,
-        youtube_url: "https://www.youtube.com/watch?v=" + videoId,
+        duration,
+        duration_str: UBYU.clock(duration),
+        thumbnail: thumbnails.length ? thumbnails[thumbnails.length - 1].url : "",
         chapters: parseChaptersFromDescription(description),
-        transcript: segments,
-        source: "userscript",
-      };
-
-      showHint("Sending " + segments.length + " caption lines to your workspace…");
-      setBusy(true, "Sending…");
-      const { body, serverUrl } = await postToServer(payload);
-
-      setBusy(false);
-      const workspaceUrl = serverUrl + "/?ingest=" + body.ingest_id;
-      const opened = openWorkspace(workspaceUrl);
-      showHint(
-        "Done — " + body.segments + " lines (" + Math.round(body.transcript_chars / 1000) +
-          "k chars) accepted. " +
-          (opened
-            ? "Opening your workspace…"
-            : "Your browser blocked the new tab — open this link to continue: " + workspaceUrl),
-        opened ? "ok" : "warn"
-      );
-    } catch (err) {
-      setBusy(false);
-      showHint(err.message || String(err), "error");
-    }
+      },
+    };
   }
 
+
   // -------------------------------------------------------------------------
-  // YouTube is a single-page app: mount/unmount as the user navigates
+  // Where it lives, and how it survives YouTube's navigation
   // -------------------------------------------------------------------------
 
-  function syncVisibility() {
-    const onWatchPage = /^\/watch/.test(location.pathname);
-    if (onWatchPage) {
-      mount();
-      renderConfigState();
-    } else if (state.root) {
-      unmount();
-    }
+  /**
+   * YouTube is a single-page app: the URL changes without the document being
+   * reloaded, so a button added once to the page would be left behind on the next
+   * video. `yt-navigate-finish` is the event that says a video has arrived;
+   * the two others are there for the times it does not fire.
+   */
+  function refresh() {
+    panel.setAvailable(/^\/watch/.test(location.pathname));
   }
 
-  registerMenu();
-  syncVisibility();
+  GM_registerMenuCommand("✦ Turn this lecture into notes", () => panel.open());
+  GM_registerMenuCommand("📚 Notes I have already made", () => panel.open("library"));
 
-  document.addEventListener("yt-navigate-finish", syncVisibility);
-  window.addEventListener("popstate", syncVisibility);
-  // Belt and braces for when neither event fires.
+  refresh();
+  document.addEventListener("yt-navigate-finish", refresh);
+  window.addEventListener("popstate", refresh);
   let lastPath = location.pathname;
   setInterval(() => {
     if (location.pathname !== lastPath) {
       lastPath = location.pathname;
-      syncVisibility();
+      refresh();
     }
   }, 1200);
 })();

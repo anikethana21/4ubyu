@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>4 U By U — the panel, on a stand-in lecture</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0; min-height: 100vh; background: #12161c; color: #e2e8f0;
+        font: 15px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { max-width: 760px; margin: 0 auto; padding: 40px 24px 120px; }
+      h1 { font-size: 1.35rem; letter-spacing: -0.01em; }
+      h2 { font-size: 1rem; margin-top: 2rem; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; color: #fde68a; }
+      a { color: #7dd3fc; }
+      .card { border: 1px solid #263041; border-radius: 12px; padding: 16px 18px; background: #171c24; margin: 0 0 14px; }
+      .row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed #263041; padding: 5px 0; }
+      .row:last-child { border-bottom: 0; }
+      .muted { color: #94a3b8; }
+      button {
+        font: 600 13px/1 system-ui, sans-serif; padding: 8px 12px; border-radius: 9px;
+        border: 1px solid #2c3746; background: #1d232c; color: #e2e8f0; cursor: pointer; margin-right: 8px;
+      }
+      button:hover { border-color: #facc15; }
+      pre { background: #0f1318; border: 1px solid #212a36; border-radius: 10px; padding: 12px; overflow: auto; max-height: 260px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>4 U By U — the panel, on a stand-in lecture</h1>
+      <p class="muted">
+        This page loads the same files the userscript does (<code>/src/*.js</code>) and gives the
+        panel a stand-in: a made-up 45-minute lecture, a stand-in API key, and a stand-in provider
+        that answers in the shape Groq does. Nothing here reaches the network, and no key is needed —
+        so the whole thing can be driven, watched and repeated at no cost.
+      </p>
+
+      <h2>Drive it</h2>
+      <div class="card">
+        <p>
+          The panel is installed exactly as the userscript installs it, with its button in the
+          bottom-right corner. Open it, paste any text as the key, and press
+          <em>Check the key and list models</em>.
+        </p>
+        <div>
+          <button id="open">Open the panel</button>
+          <button id="reset">Forget the saved key and notes</button>
+        </div>
+      </div>
+
+      <h2>What has happened so far</h2>
+      <div class="card" id="status"></div>
+
+      <h2>The last page written</h2>
+      <div class="card">
+        <div class="row">
+          <span class="muted">Downloaded files</span>
+          <span id="downloads">none</span>
+        </div>
+        <div class="row">
+          <span class="muted">Model calls made</span>
+          <span id="calls">0</span>
+        </div>
+        <p class="muted" style="margin: 10px 0 6px">
+          The page is not downloaded in this harness — it is kept here so it can be looked at.
+        </p>
+        <pre id="page">nothing yet</pre>
+      </div>
+
+      <h2>The stand-in provider</h2>
+      <div class="card">
+        <p class="muted">
+          Two switches, for the two failures that matter: a provider that starts refusing partway
+          through a run, and a model whose day's allowance is already spent.
+        </p>
+        <div>
+          <button id="fail">Fail every call after the fifth</button>
+          <button id="spend">Spend the day's allowance (429)</button>
+          <button id="normal">Back to a healthy provider</button>
+        </div>
+      </div>
+    </main>
+
+    <script src="/src/core.js"></script>
+    <script src="/src/markdown.js"></script>
+    <script src="/src/assets.js"></script>
+    <script src="/src/workspace.js"></script>
+    <script src="/src/pipeline.js"></script>
+    <script src="/src/panel.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        const core = window.UBYU;
+        const workspace = window.UBYU_WORKSPACE;
+        const pipeline = window.UBYU_PIPELINE;
+
+        // ---------------------------------------------------------------------
+        // A lecture to stand in for a real one
+        // ---------------------------------------------------------------------
+
+        const TOPICS = [
+          {
+            at: 0,
+            title: "Why the loss is a surface",
+            gist: "the loss drawn as a landscape in parameter space",
+            lines: [
+              "Everything we are going to do for the next hour is a way of walking downhill, so let us first be clear about what the hill is.",
+              "A model has parameters, and for any setting of those parameters the loss is one number, which means the loss is a surface over the space of parameters.",
+              "The loss is not something the model produces, it is something we choose, and the choice decides what the model is trying to be good at.",
+              "If you pick mean squared error you are asking for the conditional mean, and if you pick cross entropy you are asking for the whole distribution.",
+              "That distinction will come back when we talk about why a classifier trained with cross entropy behaves differently near the decision boundary.",
+            ],
+          },
+          {
+            at: 240,
+            title: "Following the gradient downhill",
+            gist: "the gradient as the direction of steepest ascent",
+            lines: [
+              "The gradient points uphill, so the first thing we do is turn around and walk against it.",
+              "Notice that this is a local statement: it says which way is down from where you are standing, and nothing at all about where the bottom is.",
+              "The step size is not part of the gradient, it is ours, and we will spend a good part of this lecture on what happens when we get it wrong.",
+              "When you write the update rule, keep the order right: you compute every gradient with the current weights and only then apply all of them together.",
+              "Otherwise you are not doing gradient descent, you are doing something else that happens to look like it on the whiteboard.",
+            ],
+          },
+          {
+            at: 520,
+            title: "Choosing a learning rate",
+            gist: "what a step too large or too small does",
+            lines: [
+              "Too large and the steps oscillate across the valley instead of going down it, and the loss starts jumping around or becomes not a number.",
+              "Too small and it looks like it is working, which is worse, because you will spend the evening watching a number move very slowly.",
+              "The rule of thumb I use is to start with something like one over the square root of the number of input features and then move by factors of ten.",
+              "A learning rate is not a constant of nature, and the value that works on one dataset will not work on another.",
+              "This is why schedulers exist: you often want a large step while the weights are still meaningless and a small one once they mean something.",
+            ],
+          },
+          {
+            at: 780,
+            title: "Choosing a learning rate: warmup and decay",
+            gist: "why the step is scheduled rather than fixed",
+            lines: [
+              "Warmup exists because the first few gradients are computed from nearly random weights, and taking large steps on them is not useful.",
+              "Decay exists because near a minimum a large step means you keep stepping over the thing you are looking for.",
+              "Cosine decay and step decay are doing the same job and the choice between them is usually much less important than people think.",
+              "What is important is that the schedule is something you can look at on a chart next to the loss, because the two together tell you what happened.",
+            ],
+          },
+          {
+            at: 1040,
+            title: "Stochastic mini-batches",
+            gist: "why one sample is not enough and the whole dataset is too much",
+            lines: [
+              "A single sample gives you a very noisy estimate of the gradient, and the whole dataset gives you an accurate one you cannot afford to compute.",
+              "A mini-batch is the compromise, and the noise it introduces is not purely a nuisance, it is also a kind of regularisation.",
+              "There is a real effect where a batch that is too small makes training unstable, and a batch that is too large makes it converge to a worse place.",
+              "The other thing the batch size changes is the number of updates, so when you change the batch size you should usually change the learning rate too.",
+            ],
+          },
+          {
+            at: 1320,
+            title: "Momentum as a heavy ball",
+            gist: "accumulating velocity so the walk does not zigzag",
+            lines: [
+              "The picture I want you to have is a ball rolling down the same surface, because a ball carries velocity and a point does not.",
+              "That velocity is what lets momentum push through a small dip and through a long flat region where the gradient is nearly zero.",
+              "The momentum coefficient is usually around nine tenths, and it is one of the few hyperparameters people really do set from habit.",
+              "Nesterov momentum is a small change: you compute the gradient at the point the velocity is about to take you to, not where you are now.",
+            ],
+          },
+          {
+            at: 1600,
+            title: "Adaptive steps with Adam",
+            gist: "per-parameter step sizes from running averages",
+            lines: [
+              "Adam keeps two running averages for every single parameter, one of the gradients and one of their squares.",
+              "Dividing by the square root of the second average is what makes the step adaptive, because a parameter with consistently large gradients gets a smaller step.",
+              "The bias correction at the start is there because both averages begin at zero, and without it the first steps are enormous.",
+              "Adam is a good default, and the honest reason to use it is that it is robust to a badly chosen learning rate, not that it is always better.",
+            ],
+          },
+          {
+            at: 1900,
+            title: "Overfitting and regularisation",
+            gist: "the gap between training and validation loss",
+            lines: [
+              "Overfitting is when the training loss keeps falling and the validation loss stops falling and turns around.",
+              "The gap between those two curves is the thing to watch, and it is the reason we hold data back in the first place.",
+              "L2 regularisation is a penalty on the size of the weights, and it is the same thing as a prior belief that the weights should be small.",
+              "You can think of the penalty as trading a little bias for a lot of variance, and the strength of the trade is the thing you tune.",
+            ],
+          },
+          {
+            at: 2200,
+            title: "Dropout and early stopping",
+            gist: "noise as a regulariser, and stopping before the turn",
+            lines: [
+              "Dropout turns off a random subset of units on every pass, which stops units from relying on each other too much.",
+              "The scale of the activations changes at test time, which is why the two are usually kept consistent by dividing during training or multiplying at test time.",
+              "Early stopping is the cheapest regulariser there is, and it is also the one people forget to use.",
+              "Keep the weights from the best validation epoch, not the last epoch, and you will often gain more than a change of architecture would give you.",
+            ],
+          },
+          {
+            at: 2450,
+            title: "What to check when training diverges",
+            gist: "the order to check things in when the loss goes to not a number",
+            lines: [
+              "When the loss becomes not a number, do not start changing the architecture, because nine times out of ten it is the learning rate.",
+              "Then check the order of your normalisation and your gradient accumulation, in that order, because both turn a small mistake into a large one.",
+              "Then check for a single bad example: one unlabelled or corrupted record is enough to send the loss somewhere strange.",
+              "Finally, if it is a sequence model, check the lengths, because padding is where a mask gets forgotten and a mask is where a not a number comes from.",
+            ],
+          },
+        ];
+
+        const SPOKEN = 5; // seconds per caption line
+        const lecture = buildLecture(TOPICS, SPOKEN);
+        const LAST = lecture[lecture.length - 1];
+        const duration = LAST.start + LAST.duration;
+
+        /** Caption lines, five seconds apart, in the words of the topic playing. */
+        function buildLecture(topics, seconds) {
+          const segments = [];
+          for (let index = 0; index < topics.length; index += 1) {
+            const topic = topics[index];
+            const ends = index + 1 < topics.length ? topics[index + 1].at : topic.at + 240;
+            // Fifteen words every five seconds: an ordinary speaking rate, so the
+            // transcript is the size a real lecture's captions are.
+            const words = topic.lines.join(" ").split(/\s+/);
+            let cursor = 0;
+            for (let at = topic.at; at < ends; at += seconds) {
+              const line = [];
+              while (line.length < 15) {
+                line.push(words[cursor % words.length]);
+                cursor += 1;
+              }
+              segments.push({ start: at, duration: seconds, text: line.join(" ") });
+            }
+          }
+          return segments;
+        }
+
+        // ---------------------------------------------------------------------
+        // A provider that answers in the shape Groq does
+        // ---------------------------------------------------------------------
+
+        const HARNESS = {
+          calls: [],
+          downloads: [],
+          mode: "healthy",
+          failAfter: 5,
+          delay: 60,
+        };
+        window.HARNESS = HARNESS;
+
+        const MODELS = [
+          { id: "openai/gpt-oss-120b", active: true, context_window: 131072, max_completion_tokens: 32768 },
+          { id: "llama-3.3-70b-versatile", active: true, context_window: 131072, max_completion_tokens: 32768 },
+          { id: "acme/experimental-small", active: true, context_window: 32768, max_completion_tokens: 8192 },
+        ];
+
+        const reply = (status, body) => ({
+          status,
+          text: async () => (typeof body === "string" ? body : JSON.stringify(body)),
+        });
+
+        const completion = (content) =>
+          reply(200, { choices: [{ message: { content }, finish_reason: "stop" }], usage: { completion_tokens: 600 } });
+
+        function planAnswer(prompt) {
+          const stretch = prompt.match(/Stretch:\s*(\d+:\d+)\s+to\s+(\d+:\d+)/);
+          const from = stretch ? pipeline.parseClock(stretch[1]) : 0;
+          const to = stretch ? pipeline.parseClock(stretch[2]) : duration;
+          const inside = TOPICS.filter((topic) => topic.at >= from && topic.at < to);
+          const chosen = inside.length ? inside : [{ at: from, title: "The lecture continues", gist: "the same thread" }];
+          const first = chosen[0];
+          return (
+            "TITLE\n" +
+            first.title +
+            "\n\nSECTIONS\n" +
+            chosen
+              .map((topic) => `${core.clock(topic.at)} | ${topic.title} | ${topic.gist}`)
+              .join("\n") +
+            "\n"
+          );
+        }
+
+        function writtenUp(prompt) {
+          const topic = TOPICS.find((candidate) => prompt.includes(candidate.title)) || TOPICS[0];
+          return (
+            "EXPLANATION\n" +
+            `The lecture takes up ${topic.title.toLowerCase()} and stays with it: ${topic.gist}. ` +
+            "The instructor works through it in the order the ideas depend on each other, " +
+            "and keeps coming back to the same point, that the choice being made here is ours " +
+            "rather than the model's, and that it decides what the rest of the training run can do.\n\n" +
+            "ANALOGY\n" +
+            "A ball rolling down a hill, carrying its own velocity.\n\n" +
+            "KEY POINTS\n" +
+            `- ${topic.gist}\n` +
+            "- the choice is ours, and the model cannot make it for us\n" +
+            "- the effect shows up in the loss curve before anywhere else\n\n" +
+            "PITFALLS\n" +
+            "- assuming the gradient says where the bottom is -> it only says which way is down from here\n" +
+            "- changing three things at once -> you will not know which one moved the loss\n\n" +
+            "EXAMPLE\n" +
+            "- the same surface, walked twice with two different step sizes\n"
+          );
+        }
+
+        async function fakeFetch(url, options) {
+          const request = options || {};
+          await new Promise((resolve) => setTimeout(resolve, HARNESS.delay));
+
+          if (String(url).endsWith("/models")) {
+            return reply(200, { object: "list", data: MODELS });
+          }
+
+          const prompt = ((JSON.parse(request.body || "{}").messages || [])[0] || {}).content || "";
+          const kind = /Stretch:/.test(prompt) ? "plan" : "write";
+          HARNESS.calls.push({ kind, at: Date.now() });
+
+          if (HARNESS.mode === "spent") {
+            return reply(429, {
+              error: {
+                message:
+                  "Rate limit reached for openai/gpt-oss-120b on tokens per day (TPD): Limit 200000, Used 200000, Requested 3400.",
+                code: "rate_limit_exceeded",
+              },
+            });
+          }
+          if (HARNESS.mode === "broken" && HARNESS.calls.length > HARNESS.failAfter) {
+            return reply(500, { error: { message: "Internal Server Error" } });
+          }
+          return completion(kind === "plan" ? planAnswer(prompt) : writtenUp(prompt));
+        }
+
+        // ---------------------------------------------------------------------
+        // Somewhere to keep things, and somewhere to put the page
+        // ---------------------------------------------------------------------
+
+        const store = {
+          get(key, fallback = null) {
+            const raw = window.localStorage.getItem("harness:" + key);
+            if (raw === null || raw === "") return fallback;
+            try {
+              return JSON.parse(raw);
+            } catch (error) {
+              return fallback;
+            }
+          },
+          set(key, value) {
+            window.localStorage.setItem("harness:" + key, JSON.stringify(value));
+          },
+          remove(key) {
+            window.localStorage.removeItem("harness:" + key);
+          },
+        };
+
+        function download(name, text, mime) {
+          HARNESS.downloads.push({ name, mime, text });
+          document.getElementById("page").textContent = String(text).slice(0, 4000);
+          show();
+        }
+
+        // ---------------------------------------------------------------------
+        // Install, drive, and report
+        // ---------------------------------------------------------------------
+
+        const panel = window.UBYU_PANEL.install({
+          capture: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 120));
+            return {
+              segments: lecture,
+              video: {
+                video_id: "harness-lecture",
+                title: "A made-up lecture on training neural networks",
+                channel: "Stand-in Lecture Theatre",
+                duration,
+                duration_str: core.clock(duration),
+                thumbnail: "",
+                chapters: [],
+              },
+            };
+          },
+          store,
+          download,
+          fetchImpl: fakeFetch,
+        });
+        window.PANEL = panel;
+        // Opened the way the userscript opens it — from the button — so the path
+        // that reads the lecture is the same one a person would take.
+        panel.open();
+
+        function show() {
+          const state = panel.state;
+          const rows = [
+            ["Panel open", String(state.open)],
+            ["Step", state.step],
+            ["Lecture read", state.lecture ? state.lecture.segments.length + " caption lines" : state.lectureError || "not yet"],
+            ["Models from the key", state.models.length ? state.models.map((model) => model.id).join(", ") : state.modelsError || "none yet"],
+            ["Model in use", state.model || "none"],
+            ["Estimate", state.estimate ? `${state.estimate.calls} calls, ~${Math.round(state.estimate.tokens / 1000)}k tokens` : "not yet"],
+            ["Fits in a free day", state.fit ? `${state.fit.lectures} lecture(s) this size` : "unknown"],
+            ["Progress", state.percent + "%"],
+            ["Sections in the page", state.document ? String(workspace.degradedSections(state.document).length) + " degraded, " + state.document.chapters.reduce((n, c) => n + c.sections.length, 0) + " sections" : "no page yet"],
+            ["Stopped", state.stopped || "no"],
+            ["Problem", state.runError || "none"],
+          ];
+          document.getElementById("status").innerHTML = rows
+            .map(
+              (row) =>
+                `<div class="row"><span class="muted">${row[0]}</span><span>${String(row[1])
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")}</span></div>`
+            )
+            .join("");
+          document.getElementById("calls").textContent =
+            HARNESS.calls.length + " (" + HARNESS.calls.filter((call) => call.kind === "plan").length + " planning)";
+          document.getElementById("downloads").textContent = HARNESS.downloads.map((file) => file.name).join(", ") || "none";
+        }
+
+        // The panel redraws itself; this page's summary follows it around twice a
+        // second rather than on every event, so the log stays readable.
+        setInterval(show, 400);
+        show();
+
+        document.getElementById("open").addEventListener("click", () => panel.open());
+        document.getElementById("reset").addEventListener("click", () => {
+          ["apiKey", "model", "player", "library"].forEach((key) => store.remove(key));
+          Object.keys(window.localStorage)
+            .filter((key) => key.startsWith("harness:note:"))
+            .forEach((key) => window.localStorage.removeItem(key));
+          window.location.reload();
+        });
+        document.getElementById("fail").addEventListener("click", () => {
+          HARNESS.mode = "broken";
+          HARNESS.failAfter = HARNESS.calls.length + 5;
+        });
+        document.getElementById("spend").addEventListener("click", () => {
+          HARNESS.mode = "spent";
+        });
+        document.getElementById("normal").addEventListener("click", () => {
+          HARNESS.mode = "healthy";
+        });
+      })();
+    </script>
+  </body>
+</html>

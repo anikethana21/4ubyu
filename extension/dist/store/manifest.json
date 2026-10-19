@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "4 U By U — Lecture to Study Notes",
+  "version": "2.0.0",
+  "description": "Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, wri",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://api.groq.com/*"
+  ],
+  "minimum_chrome_version": "110",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>4 U By U — a lecture becomes notes you can keep</title>
+    <meta
+      name="description"
+      content="Turn the YouTube lecture you are already watching into chapterised, topic-based study notes — in your own browser, with your own API key, saved as one HTML page that never needs a server."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --gold: #facc15;
+        --amber: #f59e0b;
+        --ink: #0c0f14;
+        --panel: #151a21;
+        --line: #263041;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: radial-gradient(1200px 600px at 50% -10%, #1b2330 0%, var(--ink) 55%);
+        color: var(--text); font: 16px/1.7 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { max-width: 760px; margin: 0 auto; padding: 72px 24px 96px; }
+      .brand { font: 800 13px/1 system-ui, sans-serif; letter-spacing: 0.22em; color: var(--gold); }
+      .brand small { display: block; margin-top: 6px; font-weight: 500; letter-spacing: 0.34em; color: var(--muted); font-size: 9px; }
+      h1 { font-size: clamp(1.7rem, 4.4vw, 2.5rem); line-height: 1.22; letter-spacing: -0.02em; margin: 26px 0 10px; }
+      h1 em { font-style: normal; background: linear-gradient(135deg, var(--gold), var(--amber)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      h2 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 46px 0 14px; }
+      p { margin: 0 0 14px; }
+      a { color: #7dd3fc; }
+      .lede { font-size: 1.06rem; color: #cbd5e1; }
+      .install {
+        display: inline-flex; align-items: center; gap: 10px; margin: 6px 0 4px;
+        padding: 14px 22px; border-radius: 12px; text-decoration: none; font-weight: 700;
+        background: linear-gradient(135deg, var(--gold), var(--amber)); color: #1f2937;
+        box-shadow: 0 14px 34px rgba(250, 204, 21, 0.16);
+      }
+      .install:hover { filter: brightness(1.05); }
+      ol, ul { padding-left: 22px; margin: 0 0 14px; }
+      li { margin: 6px 0; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; color: #fde68a; }
+      .card { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 18px 20px; margin: 0 0 16px; }
+      .card.ask { border-left: 3px solid var(--gold); }
+      .muted { color: var(--muted); }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } main { padding-top: 48px; } }
+      .step { display: flex; gap: 14px; align-items: baseline; }
+      .step b { color: var(--gold); font-variant-numeric: tabular-nums; }
+      footer { margin-top: 54px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.86rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">4 U BY U<small>FOR YOU BY YOU</small></div>
+      <h1>A lecture becomes <em>notes you can keep</em>.</h1>
+      <p class="lede">
+        Open the YouTube lecture you are already watching, press one button, and get a chapterised study
+        handbook — chapters by topic, timestamps that jump to the right minute, one self-contained HTML page
+        you can keep, print, or save as a PDF. No account, no server, no upload. The notes are written by
+        your own API key, and the page opens from your own disk for as long as you have it.
+      </p>
+
+      <a class="install" href="4ubyu.user.js">＋ Install 4 U By U</a>
+      <p class="muted" style="font-size: 0.9rem">
+        A userscript: install <a href="https://www.tampermonkey.net/">Tampermonkey</a> or
+        <a href="https://violentmonkey.github.io/">Violentmonkey</a> first, then click the button — the manager
+        opens its own install confirmation. It updates itself from this page as the script changes, so there is
+        nothing to reinstall.
+      </p>
+
+      <h2>Three minutes to your first lecture</h2>
+      <div class="card">
+        <div class="step"><b>1</b><span>Open a lecture on YouTube. A <span class="muted">✦ Make notes</span> button appears in the corner.</span></div>
+        <div class="step"><b>2</b><span>Paste an API key. Get a free one from <a href="https://console.groq.com/keys">console.groq.com/keys</a> — it stays in your browser, and the model list is asked of the provider with your key, so you always see the models you actually have.</span></div>
+        <div class="step"><b>3</b><span>The cost is shown before it is spent: how many calls, roughly how many tokens, and how many lectures of this size the model's free day holds.</span></div>
+        <div class="step"><b>4</b><span>Press <em>Generate</em>. When it finishes, open the page or download it. One click in the page turns it into a PDF, using your browser's own printer.</span></div>
+      </div>
+
+      <h2>What it will not do</h2>
+      <div class="card">
+        <p>
+          It will not invent a chapter it could not read. If a part of the lecture cannot be written up, that
+          part says so on the page, in words, with the provider's own reason and with the lecture's own words
+          for that stretch underneath — a heading that looks real but was made up would be worse than a gap.
+        </p>
+        <p class="muted" style="margin-bottom: 0">
+          Free tiers meter tokens per minute, so a long lecture waits between calls instead of failing; a
+          finished part is kept, so a closed tab, a rate limit or a dead battery costs you the wait and not the
+          work.
+        </p>
+      </div>
+
+      <h2>Your key, your machine</h2>
+      <div class="grid">
+        <div class="card">
+          <p style="margin-bottom: 0"><b>Nothing is uploaded.</b> The captions are read in your browser from the page you are already on. The only request that leaves your machine goes to the provider you picked, with your key, for the notes you asked for.</p>
+        </div>
+        <div class="card">
+          <p style="margin-bottom: 0"><b>Your key stays yours.</b> It is stored by your script manager, in your browser. There is no server of ours to send it to — there is no server at all.</p>
+        </div>
+      </div>
+      <p class="muted" style="font-size: 0.9rem">
+        It is not "unhackable" and no software is. What is true: no account, no analytics, no third-party
+        script, no CDN, and no address in the notes page that could call home later. Read the source — the whole
+        program is one file, and the parts that decide what the notes say are tested without a browser.
+      </p>
+
+      <h2>Also available as an extension</h2>
+      <div class="card">
+        <p style="margin-bottom: 0">
+          The same program is built as a Chrome extension (<code>extension/dist/store/</code>, and
+          <code>npm run package</code> to zip it for the store). It is the userscript with three
+          script-manager functions swapped for browser ones; the notes are written by the code the tests ran.
+        </p>
+      </div>
+
+      <footer>
+        4 U By U — MIT licensed. Source, tests and the design notes:
+        <a href="https://github.com/anikethana21/4ubyu">github.com/anikethana21/4ubyu</a>.
+      </footer>
+    </main>
+  </body>
+</html>

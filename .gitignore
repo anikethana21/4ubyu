@@ -43,6 +43,9 @@ storage/ingest/
 # Reproducible from a saved document with `npm run render`, so it is scratch.
 extension/dev/out/
 
+# The store upload zip: reproducible from extension/dist/store/ with `npm run package`.
+extension/dist/*.zip
+
 # ML chapter-classifier artifacts (train locally, don't commit)
 models/
 data/chapter_classification/
