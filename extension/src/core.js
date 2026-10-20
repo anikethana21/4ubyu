@@ -37,7 +37,7 @@
 
   // How much of the lecture a section is written from, and how much it is
   // shortened to when the provider says the request was too big for its meter.
-  const EXCERPT_STEPS = [6000, 3000, 1500];
+  const EXCERPT_STEPS = [3000, 1500, 750];
 
   // How much of the lecture a degraded section quotes back to the reader.
   const NOTICE_EXCERPT_CHARS = 2400;

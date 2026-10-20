@@ -143,7 +143,7 @@
 
   // How much of the lecture a section is written from, and how much it is
   // shortened to when the provider says the request was too big for its meter.
-  const EXCERPT_STEPS = [6000, 3000, 1500];
+  const EXCERPT_STEPS = [3000, 1500, 750];
 
   // How much of the lecture a degraded section quotes back to the reader.
   const NOTICE_EXCERPT_CHARS = 2400;
@@ -3065,13 +3065,13 @@ ${chaptersHtml}
     windowSeconds: 720,
     leadInSeconds: 45,
     outlineStepSeconds: 12,
-    // Below this, two topics are the same topic said twice. It is deliberately
-    // short: a boundary the planner found is a topic the lecture really had, and
-    // dropping one to tidy up the list would lose a heading the reader could use.
-    minSectionSeconds: 30,
+    // Raised from 30s: a 30-second "section" is usually just the tail of the
+    // previous topic. 180s (3 minutes) forces real topical boundaries and halves
+    // the section count for a typical lecture.
+    minSectionSeconds: 180,
     maxSectionSeconds: 780,
     minWindowChars: 200,
-    sectionsPerWindow: 3,
+    sectionsPerWindow: 2,
     concurrency: 2,
   };
 
@@ -3862,8 +3862,8 @@ ${chaptersHtml}
         from: core.clock(window.start),
         to: core.clock(window.end),
         outline,
-        min_sections: 2,
-        max_sections: Math.max(3, Math.min(8, Math.round((window.end - window.start) / 120))),
+        min_sections: 1,
+        max_sections: Math.max(2, Math.min(4, Math.round((window.end - window.start) / 180))),
       });
       let answer = "";
       let failure = "";
