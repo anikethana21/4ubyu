@@ -35,7 +35,6 @@
   /** Everything the panel remembers between visits lives under one prefix. */
   const KEY_API = "apiKey";
   const KEY_MODEL = "model";
-  const KEY_PLAYER = "player";
   const KEY_LIBRARY = "library";
   const noteKey = (id) => `note:${id}`;
 
@@ -466,7 +465,6 @@
       apiKey: String(store.get(KEY_API, "") || ""),
       provider: "groq",
       model: String(store.get(KEY_MODEL, "") || ""),
-      player: Boolean(store.get(KEY_PLAYER, false)),
       models: [],
       modelsError: "",
       lecture: null,
@@ -605,7 +603,11 @@
     // -----------------------------------------------------------------------
 
     function pageFor(document) {
-      return workspace.renderNotesHtml(document, { player: state.player });
+      // Always the notes-only page. The player layout is a different, older
+      // shell: it does not print, it needs a server to hold the video, and the
+      // file this button hands you is the artifact — the video is one click
+      // away through every timestamp.
+      return workspace.renderNotesHtml(document);
     }
 
     function fileName(type, id) {
@@ -1038,10 +1040,6 @@
           <label for="ubyu-model">Model to write with</label>
           <select class="ubyu-select" id="ubyu-model" data-model>${modelOptions()}</select>
         </div>
-        <label class="ubyu-check">
-          <input type="checkbox" data-player${state.player ? " checked" : ""}/>
-          Put the video beside the notes (needs a page served over the web, not a file)
-        </label>
         ${state.runError ? `<div class="ubyu-note bad">${escapeHtml(state.runError)}</div>` : ""}
         ${
           state.stopped && state.stopped !== state.runError
@@ -1200,10 +1198,6 @@
         store.set(KEY_MODEL, state.model);
         price();
         render();
-      }
-      if (target.matches("[data-player]")) {
-        state.player = Boolean(target.checked);
-        store.set(KEY_PLAYER, state.player);
       }
     });
 

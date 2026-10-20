@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.2.3
+// @version      2.2.4
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT

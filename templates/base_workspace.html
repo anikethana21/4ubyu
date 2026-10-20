@@ -1782,14 +1782,10 @@ article.chapter-card {
 </style>
 
 <style id="theme-slate-teal-master">
-@font-face {
-  font-family: 'Gagalin';
-  src: url('/static/fonts/gagalin-regular.woff2') format('woff2'),
-       url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+/* No @font-face here. The old display face (Gagalin) was decorative: eroded
+   outlines that read as noise on a long, all-caps lecture title, and it cost
+   126 KB of base64 in every downloaded page. Headings use the same face as the
+   body, heavier — see the heading rule below. */
 
 :root, [data-theme="dark_academic"] {
   --theme-bg: #1e242c !important;
@@ -1813,7 +1809,7 @@ body, html, .workspace-body {
   padding: 0 !important;
 }
 
-/* Headings with Gagalin */
+/* Headings: the body face, heavier. */
 h1, h2, h3, h4, 
 .video-title, 
 .chapter-heading, 
@@ -1822,8 +1818,9 @@ h1, h2, h3, h4,
 .handbook-badge, 
 .header-top .handbook-badge,
 .pane-title {
-  font-family: 'Gagalin', 'Gagalin-Regular', -apple-system, sans-serif !important;
-  letter-spacing: 0.5px !important;
+  font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.2px !important;
 }
 
 /* ========================================================================= */

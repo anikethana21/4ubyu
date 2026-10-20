@@ -348,7 +348,7 @@
           <h3>Contents</h3>
         </div>
         <div class="toc-header-right">
-          <span class="toc-count">${(document.chapters || []).length} Chapters</span>
+          <span class="toc-count">${chapterLabel((document.chapters || []).length)}</span>
           <span class="toc-fold-hint" id="toc-fold-hint">(Click to fold)</span>
         </div>
       </div>
@@ -536,13 +536,18 @@ ${videoId
     </aside>`;
   }
 
+  /** "1 chapter" reads; "1 chapters" does not. */
+  function chapterLabel(count) {
+    return `${count} Chapter${count === 1 ? "" : "s"}`;
+  }
+
   function renderHeader(view, document) {
     const metadata = document.video_metadata || {};
     const title = metadata.title || "Lecture notes";
     const meta = [
       metadata.channel ? `<span>Instructor: ${text(metadata.channel)}</span>` : "",
       metadata.duration_str ? `<span>Duration: ${text(metadata.duration_str)}</span>` : "",
-      `<span>${(document.chapters || []).length} Chapters</span>`,
+      `<span>${chapterLabel((document.chapters || []).length)}</span>`,
     ]
       .filter(Boolean)
       .join(" · ");
@@ -1193,6 +1198,109 @@ ${videoId
 
   /* --- print: paper, not chrome ------------------------------------------ */
   @media print {
+    /* Why this first rule exists: every card in this page carries a large-blur
+       box-shadow, and the print rasteriser re-renders those shadows at paper
+       resolution, for every element, on every page. That is what made "Save as
+       PDF" sit on a blank dialog for minutes — the document is ~11,000 px tall,
+       so it is a dozen pages of shadows. Dropping them (and the blur layers)
+       turns the same print into a couple of seconds. Paper does not have
+       shadows anyway. */
+    *,
+    *::before,
+    *::after {
+      box-shadow: none !important;
+      text-shadow: none !important;
+      filter: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      animation: none !important;
+      transition: none !important;
+      will-change: auto !important;
+    }
+
+    html, body { background: #fff !important; }
+    #app-workspace.notes-only,
+    #app-workspace.notes-only .handbook-main,
+    #app-workspace.notes-only .handbook-pane { background: #fff !important; }
+
+    /* The button that opened the dialog has no place on the paper it produced. */
+    #btn-print, .toolbar-actions { display: none !important; }
+
+    /* Keep small blocks whole and headings with their text; let long chapters
+       break wherever they need to, so a chapter never lands alone on a page.
+       Do NOT use break-inside: avoid on li or .theory-block — long list items
+       and theory blocks will span pages, and forcing them to stay together
+       makes the paginator loop. */
+    .callout-box, blockquote, pre, table, .key-takeaway {
+      break-inside: avoid;
+    }
+    h1, h2, h3, h4 { break-after: avoid; }
+    .chapter-card, .section-block, .theory-block, li { break-inside: auto; }
+
+    /* Flex column containers do not paginate; the layout engine will spin
+       trying to measure an infinite column. Switch to block flow for print. */
+    #app-workspace.notes-only .chapters-container {
+      display: block !important;
+      flex-direction: initial !important;
+      gap: 0 !important;
+    }
+
+    /* Chapter cards: kill every expensive visual effect and let them break.
+       The screen styles use backdrop-filter, box-shadow, border-radius, and
+       a gradient background — at print DPI those turn pagination into a loop. */
+    #app-workspace.notes-only .chapter-card {
+      background: #fff !important;
+      box-shadow: none !important;
+      border: 1px solid #d8dee8 !important;
+      border-radius: 0 !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      break-inside: auto !important;
+      page-break-inside: auto !important;
+    }
+
+    /* Force the entire notes column into simple block flow for print.
+       Flex/grid containers with tall children confuse the pagination engine
+       into an infinite reflow loop. contain:none stops the engine from
+       treating subtrees as independent layout roots. */
+    #app-workspace.notes-only .handbook-main,
+    #app-workspace.notes-only .handbook-pane,
+    #app-workspace.notes-only #handbook-pane,
+    #app-workspace.notes-only .chapters-container,
+    #app-workspace.notes-only .chapter-card,
+    #app-workspace.notes-only .section-block,
+    #app-workspace.notes-only .theory-block,
+    #app-workspace.notes-only .section-header,
+    #app-workspace.notes-only .chapter-header {
+      display: block !important;
+      flex-direction: initial !important;
+      gap: 0 !important;
+      contain: none !important;
+      overflow: visible !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      filter: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    /* Each chapter card may span multiple pages; force a clean break so the
+       pagination engine doesn't try to balance content across chapter
+       boundaries, which causes an infinite loop on long documents. */
+    #app-workspace.notes-only .chapter-card + .chapter-card {
+      break-before: page !important;
+      page-break-before: always !important;
+    }
+
     #app-workspace.notes-only {
       display: block !important;
       height: auto !important;
@@ -1211,7 +1319,8 @@ ${videoId
       color: #000 !important;
     }
     #app-workspace.notes-only .handbook-header .video-title,
-    #app-workspace.notes-only .handbook-header .brand-title { color: #000 !important; }
+    #app-workspace.notes-only .handbook-header .brand-title,
+    #app-workspace.notes-only .handbook-header .video-meta { color: #000 !important; }
     #app-workspace.notes-only #handbook-pane,
     #app-workspace.notes-only .handbook-pane {
       height: auto !important;
@@ -1225,6 +1334,23 @@ ${videoId
       border: 1px solid #d8dee8 !important;
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
+    }
+
+    /* On screen the provenance is deliberately quiet over a dark pane; on paper
+       that same grey is invisible. Paper keeps it quiet but readable. */
+    #app-workspace.notes-only .provenance,
+    #app-workspace.notes-only .notes-provenance {
+      color: #5b6472 !important;
+    }
+
+    /* Ink on a timestamp pill is wasted; a hairline reads the same. The id lifts
+       this over the chapter-header rules without another !important cascade. */
+    #app-workspace .ts-pill,
+    #app-workspace .ts-pill-sm,
+    #app-workspace .timestamp-pill {
+      background: #fff !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #1e293b !important;
     }
   }
   `;
@@ -1436,13 +1562,6 @@ ${chaptersHtml}
           target.scrollIntoView({ behavior: 'smooth', block: 'start' });
           history.pushState(null, '', this.getAttribute('href'));
         }
-      });
-    });
-
-    // Print handling
-    window.addEventListener('beforeprint', () => {
-      document.querySelectorAll('.section-block, .chapter-card').forEach(el => {
-        el.style.breakInside = 'avoid';
       });
     });
 
