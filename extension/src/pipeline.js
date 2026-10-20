@@ -213,7 +213,44 @@
 
   const TITLE_HEADING = /^\s*TITLE\s*:?\s*$/i;
   const SECTIONS_HEADING = /^\s*SECTIONS?\s*:?\s*$/i;
-  const PLAN_LINE = /^\s*(?:[-*\u2022]\s*)?(\d{1,2}:\d{2}(?::\d{2})?)\s*[|:\u2013-]\s*([^|]+?)\s*(?:\|\s*(.+?))?\s*$/;
+  /**
+   * One line of the planner's answer, taken apart.
+   *
+   * The prompt asks for `mm:ss | title | gist`, and a good model writes exactly
+   * that. A small one writes something close: a bold timestamp, an em dash where
+   * the pipe should be, brackets, a numbered list, the gist attached with a dash.
+   * Those are the same answer, and refusing them is not a small loss — a plan that
+   * cannot be read leaves nothing to hang the sections on, so the whole run
+   * produces no notes. So the timestamp is peeled off first, and the rest is split
+   * on a pipe or on a dash that has spaces around it (a dash inside a word is part
+   * of the word).
+   */
+  const PLAN_TIME = /^(?:\[|\()?(\d{1,2}:\d{2}(?::\d{2})?)(?:\]|\))?\s*[|:\u2013\u2014-]?\s*(.*)$/;
+
+  function splitPlanLine(line) {
+    const match = line.match(PLAN_TIME);
+    if (!match) return null;
+    const at = parseClock(match[1]);
+    if (at === null) return null;
+
+    let rest = match[2] || "";
+    let gist = "";
+    const pipe = rest.indexOf("|");
+    if (pipe >= 0) {
+      gist = rest.slice(pipe + 1).trim();
+      rest = rest.slice(0, pipe);
+    } else {
+      const dash = rest.match(/\s+[\u2013\u2014-]\s+/);
+      if (dash) {
+        gist = rest.slice(dash.index + dash[0].length).trim();
+        rest = rest.slice(0, dash.index);
+      }
+    }
+
+    const name = rest.trim().replace(/^["'`*]+|["'`*]+$/g, "");
+    if (!name) return null;
+    return { at, name, gist };
+  }
 
   /**
    * What the planner answered, as sections with real times.
@@ -236,7 +273,11 @@
     let inSections = false;
 
     for (const line of lines) {
-      const trimmed = line.trim();
+      const trimmed = line
+        .trim()
+        .replace(/\*\*|__|`/g, "")
+        .replace(/^\s*\d+[.)]\s+/, "")
+        .trim();
       if (!trimmed) continue;
       if (TITLE_HEADING.test(trimmed)) {
         inSections = false;
@@ -250,14 +291,10 @@
         title = trimmed.replace(/^["'`*]+|["'`*]+$/g, "").replace(/^#+\s*/, "").trim();
         continue;
       }
-      const match = trimmed.match(PLAN_LINE);
+      const match = splitPlanLine(trimmed);
       if (!match) continue;
-      const at = parseClock(match[1]);
-      if (at === null) continue;
-      const name = String(match[2] || "").trim().replace(/^["'`*]+|["'`*]+$/g, "");
-      if (!name) continue;
-      if (at < window.start || at >= window.end) continue;
-      kept.push({ title: name, start: at, gist: String(match[3] || "").trim() });
+      if (match.at < window.start || match.at >= window.end) continue;
+      kept.push({ title: match.name, start: match.at, gist: match.gist });
     }
 
     kept.sort((left, right) => left.start - right.start);
@@ -820,24 +857,18 @@
 
       emit({ type: "plan", index: index + 1, total: windows.length, window, label });
       const outline = buildOutline(segments, window.contextStart, window.end, settings.outlineStepSeconds);
+      const prompt = core.fillTemplate(PLANNER_PROMPT, {
+        from: core.clock(window.start),
+        to: core.clock(window.end),
+        outline,
+        min_sections: 2,
+        max_sections: Math.max(3, Math.min(8, Math.round((window.end - window.start) / 120))),
+      });
       let answer = "";
       let failure = "";
       try {
         stats.calls += 1;
-        answer = await call({
-          messages: [
-            {
-              role: "user",
-              content: core.fillTemplate(PLANNER_PROMPT, {
-                from: core.clock(window.start),
-                to: core.clock(window.end),
-                outline,
-                min_sections: 2,
-                max_sections: Math.max(3, Math.min(8, Math.round((window.end - window.start) / 120))),
-              }),
-            },
-          ],
-        });
+        answer = await call({ messages: [{ role: "user", content: prompt }] });
       } catch (error) {
         failure = core.describeThrown(error);
       }
@@ -845,9 +876,39 @@
       if (!answer || !String(answer).trim()) {
         failure = failure || "the model answered with nothing";
       }
-      const plan = failure
+      let plan = failure
         ? { window, title: "", sections: [], planned: false, failure }
         : { window, ...parsePlan(answer, window, settings) };
+
+      // A plan nobody can read is not a gap in the notes, it is no notes at all:
+      // sections are hung on topics, and without topics there is nothing to
+      // write. That is worth one more call, with the shape spelled out and
+      // nothing else repeated. A planning call is a few hundred tokens; a
+      // lecture that produces nothing is the whole day's allowance.
+      if (!plan.planned && !failure) {
+        stats.calls += 1;
+        try {
+          const again = await call({
+            messages: [
+              {
+                role: "user",
+                content:
+                  prompt +
+                  "\n\nYour previous answer could not be read. Reply again with only the TITLE block " +
+                  "and the SECTIONS block, exactly in the shape of the example: TITLE, the topic on the " +
+                  "next line, SECTIONS, then one line per topic as mm:ss | title | one sentence. " +
+                  "No JSON, no code fence, no commentary.",
+              },
+            ],
+          });
+          if (again && String(again).trim()) {
+            const retried = parsePlan(again, window, settings);
+            if (retried.planned) plan = { window, ...retried };
+          }
+        } catch (error) {
+          /* keep the first answer's plan; the failure below explains it */
+        }
+      }
 
       if (!plan.planned && !failure) {
         plan.failure =
@@ -901,12 +962,16 @@
       stats.seconds = Math.round((Date.now() - began) / 1000);
       // Three different things look the same from here — no words at all, words
       // nobody could read, and a model whose answers could not be read — and they
-      // are not the same thing to the person who asked for notes.
+      // are not the same thing to the person who asked for notes. So the reason
+      // the plans gave is carried into the sentence rather than left in the log.
+      const reasons = [...new Set(plans.map((plan) => plan.failure).filter(Boolean))];
       stats.stopped =
         stopped ||
         (stats.emptyWindows === windows.length
           ? "there are no captions in this range of the video, so there is nothing to write notes from"
-          : "no topics could be read from this lecture's captions, so there is nothing to write notes about");
+          : `no topics could be read from this lecture's captions, so there is nothing to write notes about${
+              reasons.length ? ` — ${reasons[0]}` : ""
+            }`);
       return { document: null, stats, failure: stats.stopped };
     }
 

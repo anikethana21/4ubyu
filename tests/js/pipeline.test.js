@@ -208,6 +208,24 @@ test("a model that answered with only a heading still names the chapter", () => 
   assert.equal(plan.planned, false);
 });
 
+test("the same topics written in a looser shape are still read", () => {
+  const window = { start: 720, end: 1440, contextStart: 675 };
+  const answer =
+    "TITLE\ngates\n\nSECTIONS\n" +
+    "**12:00** — Forget gate — what leaves the cell state\n" +
+    "2. 12:34 – Input gate – what is written in\n" +
+    "[14:10] LSTM cell | the three gates together\n" +
+    "18:00 Backpropagation through time\n";
+  const plan = pipeline.parsePlan(answer, window);
+  assert.equal(plan.planned, true);
+  assert.deepEqual(
+    plan.sections.map((section) => section.title),
+    ["Forget gate", "Input gate", "LSTM cell", "Backpropagation through time"]
+  );
+  assert.equal(plan.sections[0].gist, "what leaves the cell state");
+  assert.equal(plan.sections[1].gist, "what is written in");
+});
+
 // ---------------------------------------------------------------------------
 // Chapters
 // ---------------------------------------------------------------------------

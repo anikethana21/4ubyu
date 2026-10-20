@@ -1043,7 +1043,11 @@
           Put the video beside the notes (needs a page served over the web, not a file)
         </label>
         ${state.runError ? `<div class="ubyu-note bad">${escapeHtml(state.runError)}</div>` : ""}
-        ${state.stopped ? `<div class="ubyu-note warn">${escapeHtml(state.stopped)}</div>` : ""}
+        ${
+          state.stopped && state.stopped !== state.runError
+            ? `<div class="ubyu-note warn">${escapeHtml(state.stopped)}</div>`
+            : ""
+        }
         <div class="ubyu-actions">
           <button type="button" class="ubyu-btn primary" data-act="generate"${
             state.reading || !state.lecture || (state.allowance && !state.allowance.fits)
