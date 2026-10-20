@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "4 U By U — Lecture to Study Notes",
-  "version": "2.1.8",
+  "version": "2.2.1",
   "description": "Turn the YouTube lecture you are watching into topic-wise study notes. Your own API key, one HTML file. No account, no server.",
   "icons": {
     "16": "icons/icon16.png",

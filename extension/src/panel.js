@@ -407,6 +407,33 @@
 
 
   /**
+   * Markup that the page will accept.
+   *
+   * YouTube requires Trusted Types for script sinks, so `element.innerHTML = "…"`
+   * with a plain string is refused there — by the page's own policy, in every
+   * world. A `trustedTypes` policy is the sanctioned way to say "this markup came
+   * from the program, not from the page"; where Trusted Types is not enforced the
+   * policy is simply absent and the string goes through as it always did.
+   *
+   * The policy is made once, at load, because creating a second one with the same
+   * name throws. A page that forbids new policies leaves it null, and the panel
+   * still works there — it only has to be a page that does not require them.
+   */
+  const markupPolicy = (() => {
+    try {
+      if (typeof trustedTypes !== "undefined" && trustedTypes && trustedTypes.createPolicy) {
+        return trustedTypes.createPolicy("ubyu", { createHTML: (markup) => markup });
+      }
+    } catch (err) {
+      /* the page's policy list does not include us; nothing to do about it */
+    }
+    return null;
+  })();
+
+  /** The same markup, in the form this page's `innerHTML` will take. */
+  const trusted = (markup) => (markupPolicy ? markupPolicy.createHTML(markup) : markup);
+
+  /**
    * Install the panel and return its handle.
    *
    * Everything it needs from its surroundings is passed in, so the panel can be
@@ -468,7 +495,7 @@
     const node = doc.createElement("div");
     node.className = "ubyu-panel";
     node.setAttribute("data-open", "false");
-    node.innerHTML = `<div class="ubyu-head">
+    node.innerHTML = trusted(`<div class="ubyu-head">
       <span class="ubyu-brand">4 U By U<small>FOR YOU BY YOU</small></span>
       <span class="ubyu-step" data-step-chip></span>
       <button type="button" class="ubyu-min" title="Minimize" aria-expanded="true" data-act="minimize">
@@ -476,19 +503,21 @@
       </button>
       <button type="button" class="ubyu-close" title="Close" data-act="close">&times;</button>
     </div>
-    <div class="ubyu-body" data-body></div>`;
+    <div class="ubyu-body" data-body></div>`);
 
     const fab = doc.createElement("button");
     fab.type = "button";
     fab.className = "ubyu-fab";
     fab.title = "Turn this lecture into study notes";
-    fab.innerHTML = `<span class="ubyu-mark" aria-hidden="true">4</span><span>Make notes</span>`;
+    fab.innerHTML = trusted(`<span class="ubyu-mark" aria-hidden="true">4</span><span>Make notes</span>`);
 
     if (!doc.getElementById("ubyu-panel-style")) {
       const style = doc.createElement("style");
       style.id = "ubyu-panel-style";
       style.textContent = CSS;
-      doc.head.appendChild(style);
+      // At `document_idle` the head exists; a script that arrives earlier (a
+      // harness, or a page that has not finished parsing) still gets its styles.
+      (doc.head || doc.documentElement).appendChild(style);
     }
     doc.body.appendChild(fab);
     doc.body.appendChild(node);
@@ -952,8 +981,8 @@
            </div>
            ${costBlock()}`
         : "";
-      return `<p>Paste your own API key. It is kept in this browser by your userscript manager and
-        never leaves it except to the provider you chose.</p>
+      return `<p>Paste your own API key. It is kept in this browser and never leaves it except to
+        the provider you chose.</p>
         <div class="ubyu-field">
           <label for="ubyu-key">Groq API key</label>
           <input class="ubyu-input" id="ubyu-key" data-key type="password" placeholder="gsk_…"
@@ -1078,7 +1107,7 @@
         library: libraryView,
       };
       const view = views[state.step] || setupView;
-      body.innerHTML = view();
+      body.innerHTML = trusted(view());
       const chip = node.querySelector("[data-step-chip]");
       if (chip) {
         const labels = {

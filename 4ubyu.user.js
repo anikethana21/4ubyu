@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.1.8
+// @version      2.2.1
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -4320,6 +4320,33 @@ ${chaptersHtml}
 
 
   /**
+   * Markup that the page will accept.
+   *
+   * YouTube requires Trusted Types for script sinks, so `element.innerHTML = "…"`
+   * with a plain string is refused there — by the page's own policy, in every
+   * world. A `trustedTypes` policy is the sanctioned way to say "this markup came
+   * from the program, not from the page"; where Trusted Types is not enforced the
+   * policy is simply absent and the string goes through as it always did.
+   *
+   * The policy is made once, at load, because creating a second one with the same
+   * name throws. A page that forbids new policies leaves it null, and the panel
+   * still works there — it only has to be a page that does not require them.
+   */
+  const markupPolicy = (() => {
+    try {
+      if (typeof trustedTypes !== "undefined" && trustedTypes && trustedTypes.createPolicy) {
+        return trustedTypes.createPolicy("ubyu", { createHTML: (markup) => markup });
+      }
+    } catch (err) {
+      /* the page's policy list does not include us; nothing to do about it */
+    }
+    return null;
+  })();
+
+  /** The same markup, in the form this page's `innerHTML` will take. */
+  const trusted = (markup) => (markupPolicy ? markupPolicy.createHTML(markup) : markup);
+
+  /**
    * Install the panel and return its handle.
    *
    * Everything it needs from its surroundings is passed in, so the panel can be
@@ -4381,7 +4408,7 @@ ${chaptersHtml}
     const node = doc.createElement("div");
     node.className = "ubyu-panel";
     node.setAttribute("data-open", "false");
-    node.innerHTML = `<div class="ubyu-head">
+    node.innerHTML = trusted(`<div class="ubyu-head">
       <span class="ubyu-brand">4 U By U<small>FOR YOU BY YOU</small></span>
       <span class="ubyu-step" data-step-chip></span>
       <button type="button" class="ubyu-min" title="Minimize" aria-expanded="true" data-act="minimize">
@@ -4389,19 +4416,21 @@ ${chaptersHtml}
       </button>
       <button type="button" class="ubyu-close" title="Close" data-act="close">&times;</button>
     </div>
-    <div class="ubyu-body" data-body></div>`;
+    <div class="ubyu-body" data-body></div>`);
 
     const fab = doc.createElement("button");
     fab.type = "button";
     fab.className = "ubyu-fab";
     fab.title = "Turn this lecture into study notes";
-    fab.innerHTML = `<span class="ubyu-mark" aria-hidden="true">4</span><span>Make notes</span>`;
+    fab.innerHTML = trusted(`<span class="ubyu-mark" aria-hidden="true">4</span><span>Make notes</span>`);
 
     if (!doc.getElementById("ubyu-panel-style")) {
       const style = doc.createElement("style");
       style.id = "ubyu-panel-style";
       style.textContent = CSS;
-      doc.head.appendChild(style);
+      // At `document_idle` the head exists; a script that arrives earlier (a
+      // harness, or a page that has not finished parsing) still gets its styles.
+      (doc.head || doc.documentElement).appendChild(style);
     }
     doc.body.appendChild(fab);
     doc.body.appendChild(node);
@@ -4865,8 +4894,8 @@ ${chaptersHtml}
            </div>
            ${costBlock()}`
         : "";
-      return `<p>Paste your own API key. It is kept in this browser by your userscript manager and
-        never leaves it except to the provider you chose.</p>
+      return `<p>Paste your own API key. It is kept in this browser and never leaves it except to
+        the provider you chose.</p>
         <div class="ubyu-field">
           <label for="ubyu-key">Groq API key</label>
           <input class="ubyu-input" id="ubyu-key" data-key type="password" placeholder="gsk_…"
@@ -4991,7 +5020,7 @@ ${chaptersHtml}
         library: libraryView,
       };
       const view = views[state.step] || setupView;
-      body.innerHTML = view();
+      body.innerHTML = trusted(view());
       const chip = node.querySelector("[data-step-chip]");
       if (chip) {
         const labels = {
@@ -5388,14 +5417,14 @@ ${chaptersHtml}
   let pageConfig = null;
 
   /**
-   * Asks the page's world for the live player response.
+   * Asks the page's world a question and waits for its answer.
    *
    * Only strings cross that boundary, so the reply is parsed here. It is asked
    * with a deadline and it is allowed to come back empty: on the first page load
    * the HTML already has everything, and the bridge is for the navigation after
    * that.
    */
-  function askPageWorld(videoId) {
+  function askPage(request, reply, timeout = 1500) {
     return new Promise((resolve) => {
       const id = "ubyu-" + Math.random().toString(36).slice(2);
       let settled = false;
@@ -5403,7 +5432,7 @@ ${chaptersHtml}
       const finish = (message) => {
         if (settled) return;
         settled = true;
-        document.removeEventListener("ubyu:player-response", onReply);
+        document.removeEventListener(reply, onReply);
         resolve(message || null);
       };
 
@@ -5417,14 +5446,14 @@ ${chaptersHtml}
         if (message && message.id === id) finish(message);
       };
 
-      document.addEventListener("ubyu:player-response", onReply);
+      document.addEventListener(reply, onReply);
       try {
-        document.dispatchEvent(new CustomEvent("ubyu:want-player", { detail: id }));
+        document.dispatchEvent(new CustomEvent(request, { detail: id }));
       } catch (err) {
         finish(null);
         return;
       }
-      setTimeout(() => finish(null), 1500);
+      setTimeout(() => finish(null), timeout);
     });
   }
 
@@ -5432,7 +5461,7 @@ ${chaptersHtml}
   async function livePlayerResponse(videoId) {
     if (hasPageWorld) return getPlayerResponse(videoId);
 
-    const message = await askPageWorld(videoId);
+    const message = await askPage("ubyu:want-player", "ubyu:player-response");
     if (message && message.config) pageConfig = message.config;
     if (message && message.player && message.player.videoDetails) return message.player;
 
@@ -6044,7 +6073,14 @@ ${chaptersHtml}
   }
 
   /** Makes the player fetch captions, so its signed URL lands on the timeline. */
-  function nudgePlayerCaptions() {
+  async function nudgePlayerCaptions() {
+    // The extension cannot call the player's methods; the page bridge does it and
+    // says which way it worked. A userscript asks the player directly.
+    if (!hasPageWorld) {
+      const reply = await askPage("ubyu:want-captions", "ubyu:captions-response", 2500);
+      if (reply && reply.method) return reply.method;
+    }
+
     const player = document.getElementById("movie_player");
     try {
       if (player && player.getOption) {
@@ -6074,7 +6110,7 @@ ${chaptersHtml}
   async function fetchViaPlayerUrl(videoId, track) {
     let url = findPlayerCaptionUrl(videoId);
     if (!url) {
-      const nudged = nudgePlayerCaptions();
+      const nudged = await nudgePlayerCaptions();
       const deadline = Date.now() + 8000;
       while (!url && Date.now() < deadline) {
         await wait(250);

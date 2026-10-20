@@ -71,6 +71,56 @@
     }
   }
 
+  /**
+   * Turn captions on in the player.
+   *
+   * This is the one action that makes YouTube fetch its own signed caption URL:
+   * the player adds a proof-of-origin token, the request lands in the page's
+   * resource timings, and the content script can reuse that exact URL. A
+   * content script cannot call the player's methods — they are page functions —
+   * so the nudge has to happen here.
+   */
+  function nudgeCaptions() {
+    let player = null;
+    try {
+      player = document.getElementById("movie_player");
+    } catch (error) {
+      player = null;
+    }
+    if (!player) return "no player element on the page";
+
+    let tracks = [];
+    try {
+      tracks = (typeof player.getOption === "function" && player.getOption("captions", "tracklist")) || [];
+    } catch (error) {
+      tracks = [];
+    }
+    if (!tracks.length && typeof player.toggleSubtitles === "function") {
+      try {
+        player.toggleSubtitles();
+        tracks = player.getOption("captions", "tracklist") || [];
+      } catch (error) {
+        tracks = [];
+      }
+    }
+    if (!tracks.length) return "the player has no caption track";
+
+    // A human-written track first, then the auto-generated one: the notes are
+    // better from real captions, but the automatic ones are enough to start.
+    const track = tracks.find((t) => t.kind !== "asr") || tracks.find((t) => t.kind === "asr") || tracks[0];
+    try {
+      player.setOption("captions", "track", track);
+      return "the player's caption API";
+    } catch (error) {
+      return "the player refused the caption track";
+    }
+  }
+
+  /** One reply shape for every question, so each answer carries its own id. */
+  function answer(type, id, payload) {
+    document.dispatchEvent(new CustomEvent(type, { detail: JSON.stringify(Object.assign({ id }, payload)) }));
+  }
+
   document.addEventListener("ubyu:want-player", (event) => {
     const id = String((event && event.detail) || "");
     if (!id) return;
@@ -88,10 +138,18 @@
       cfg = null;
     }
 
-    document.dispatchEvent(
-      new CustomEvent("ubyu:player-response", {
-        detail: JSON.stringify({ id, player, config: cfg }),
-      })
-    );
+    answer("ubyu:player-response", id, { player, config: cfg });
+  });
+
+  document.addEventListener("ubyu:want-captions", (event) => {
+    const id = String((event && event.detail) || "");
+    if (!id) return;
+    let method = "";
+    try {
+      method = nudgeCaptions();
+    } catch (error) {
+      method = "";
+    }
+    answer("ubyu:captions-response", id, { method });
   });
 })();

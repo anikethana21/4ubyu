@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.1.8
+// @version      2.2.1
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -220,14 +220,14 @@
   let pageConfig = null;
 
   /**
-   * Asks the page's world for the live player response.
+   * Asks the page's world a question and waits for its answer.
    *
    * Only strings cross that boundary, so the reply is parsed here. It is asked
    * with a deadline and it is allowed to come back empty: on the first page load
    * the HTML already has everything, and the bridge is for the navigation after
    * that.
    */
-  function askPageWorld(videoId) {
+  function askPage(request, reply, timeout = 1500) {
     return new Promise((resolve) => {
       const id = "ubyu-" + Math.random().toString(36).slice(2);
       let settled = false;
@@ -235,7 +235,7 @@
       const finish = (message) => {
         if (settled) return;
         settled = true;
-        document.removeEventListener("ubyu:player-response", onReply);
+        document.removeEventListener(reply, onReply);
         resolve(message || null);
       };
 
@@ -249,14 +249,14 @@
         if (message && message.id === id) finish(message);
       };
 
-      document.addEventListener("ubyu:player-response", onReply);
+      document.addEventListener(reply, onReply);
       try {
-        document.dispatchEvent(new CustomEvent("ubyu:want-player", { detail: id }));
+        document.dispatchEvent(new CustomEvent(request, { detail: id }));
       } catch (err) {
         finish(null);
         return;
       }
-      setTimeout(() => finish(null), 1500);
+      setTimeout(() => finish(null), timeout);
     });
   }
 
@@ -264,7 +264,7 @@
   async function livePlayerResponse(videoId) {
     if (hasPageWorld) return getPlayerResponse(videoId);
 
-    const message = await askPageWorld(videoId);
+    const message = await askPage("ubyu:want-player", "ubyu:player-response");
     if (message && message.config) pageConfig = message.config;
     if (message && message.player && message.player.videoDetails) return message.player;
 
@@ -876,7 +876,14 @@
   }
 
   /** Makes the player fetch captions, so its signed URL lands on the timeline. */
-  function nudgePlayerCaptions() {
+  async function nudgePlayerCaptions() {
+    // The extension cannot call the player's methods; the page bridge does it and
+    // says which way it worked. A userscript asks the player directly.
+    if (!hasPageWorld) {
+      const reply = await askPage("ubyu:want-captions", "ubyu:captions-response", 2500);
+      if (reply && reply.method) return reply.method;
+    }
+
     const player = document.getElementById("movie_player");
     try {
       if (player && player.getOption) {
@@ -906,7 +913,7 @@
   async function fetchViaPlayerUrl(videoId, track) {
     let url = findPlayerCaptionUrl(videoId);
     if (!url) {
-      const nudged = nudgePlayerCaptions();
+      const nudged = await nudgePlayerCaptions();
       const deadline = Date.now() + 8000;
       while (!url && Date.now() < deadline) {
         await wait(250);
