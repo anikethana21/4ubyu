@@ -341,6 +341,46 @@ test("the models offered are the ones this key has, asked of the provider", asyn
   assert.equal(fetchImpl.asked[0].authorization, "Bearer gsk_test");
 });
 
+test("models are ordered best first, and the tools that cannot write are left out", () => {
+  const models = ubyu.sortModels([
+    { id: "llama-3.1-8b-instant" },
+    { id: "whisper-large-v3-turbo" },
+    { id: "openai/gpt-oss-120b" },
+    { id: "acme/some-70b-chat" },
+    { id: "llama-guard-3-8b" },
+    { id: "openai/gpt-oss-safeguard-20b" },
+    { id: "acme/tiny-8b" },
+  ]);
+
+  assert.deepEqual(models.map((model) => model.id), [
+    "openai/gpt-oss-120b",
+    "llama-3.1-8b-instant",
+    "openai/gpt-oss-safeguard-20b",
+    // Unknown to this build, so the parameter count in the id decides.
+    "acme/some-70b-chat",
+    "acme/tiny-8b",
+  ]);
+});
+
+test("the provider's alphabetical list is reordered before a reader sees it", async () => {
+  const fetchImpl = modelsFetch(200, {
+    data: [
+      { id: "whisper-large-v3" },
+      { id: "openai/gpt-oss-20b" },
+      { id: "llama-3.3-70b-versatile" },
+      { id: "openai/gpt-oss-120b" },
+    ],
+  });
+
+  const models = await ubyu.listModels({ apiKey: "k", fetchImpl });
+
+  assert.deepEqual(
+    models.map((model) => model.id),
+    ["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b"],
+    "the model most likely to write the chapter is first, and a transcription endpoint is not offered"
+  );
+});
+
 test("a rejected key is found out here, before any notes are paid for", async () => {
   const fetchImpl = modelsFetch(401, { error: { message: "Invalid API Key" } });
   await assert.rejects(() => ubyu.listModels({ apiKey: "gsk_bad", fetchImpl }), /rejected this API key/);

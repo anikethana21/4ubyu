@@ -130,6 +130,11 @@ groq.com is invisible to it. It is there to warn *before* spending, and the prov
 final word. A run that stops at the daily limit keeps every section already written, so it continues from
 there tomorrow rather than starting again.
 
+The model list is ordered **best first** — the models that reliably write a long, structured chapter at the
+top, marked *best for notes* — rather than in the alphabetical order the provider returns. Transcription and
+embedding endpoints, which cannot write a chapter at all, are not offered. A model this build has not seen is
+placed by the parameter count in its id.
+
 ## The decisions that mattered
 
 1. **Chapters come from topics, not from the clock.** Splitting a lecture every ten minutes produces headings

@@ -678,6 +678,58 @@
    * Resolves a list of `{id, contextWindow, maxCompletionTokens}` in the provider's
    * own order, with deactivated models left out.
    */
+  /**
+   * Which model deserves the top of the list.
+   *
+   * The provider returns its models alphabetically, which is no order at all for
+   * a reader deciding what should write their notes. This is a quality order: the
+   * models that reliably write a long, structured chapter come first, then the
+   * smaller ones, and the safety-tuned one last, because it tends to decline.
+   * A model this list has never heard of is placed by the parameter count in its
+   * id, so a new release lands in roughly the right place without a change here.
+   */
+  const MODEL_ORDER = [
+    "openai/gpt-oss-120b",
+    "moonshotai/kimi-k2-instruct",
+    "llama-3.3-70b-versatile",
+    "qwen/qwen3-32b",
+    "openai/gpt-oss-20b",
+    "llama-3.1-8b-instant",
+    "openai/gpt-oss-safeguard-20b",
+  ];
+
+  // Endpoints that cannot write a chapter at all, whatever order they are in.
+  const NOT_A_WRITER = /\b(whisper|tts|text-to-speech|embed|moderation)\b|llama-guard/i;
+
+  /** Billions of parameters from an id like `llama-3.3-70b`, or 0 when it says nothing. */
+  function parameterSize(id) {
+    const match = String(id || "").match(/(\d+(?:\.\d+)?)\s*b(?![a-z0-9])/i);
+    return match ? Number(match[1]) : 0;
+  }
+
+  /** Lower is better. Models this build knows are ordered by hand. */
+  function modelRank(id) {
+    const known = MODEL_ORDER.indexOf(String(id));
+    return known === -1 ? MODEL_ORDER.length : known;
+  }
+
+  /**
+   * Best first: known quality order, then the largest unknown model, then the
+   * rest alphabetically. Tools that cannot write are dropped before this runs.
+   */
+  function sortModels(models) {
+    return (models || [])
+      .filter((model) => model && model.id && !NOT_A_WRITER.test(String(model.id)))
+      .slice()
+      .sort((left, right) => {
+        const byRank = modelRank(left.id) - modelRank(right.id);
+        if (byRank !== 0) return byRank;
+        const bySize = parameterSize(right.id) - parameterSize(left.id);
+        if (bySize !== 0) return bySize;
+        return String(left.id).localeCompare(String(right.id));
+      });
+  }
+
   async function listModels({ apiKey, provider = "groq", fetchImpl, timeoutMs = 30000 } = {}) {
     const send = fetchImpl || (typeof fetch === "function" ? fetch : null);
     const key = (apiKey || "").trim();
@@ -722,13 +774,15 @@
       throw new Error(`${config.label} answered with something that is not JSON. ${snippet(text)}`);
     }
     const data = (payload && payload.data) || [];
-    const models = data
-      .filter((entry) => entry && entry.id && entry.active !== false)
-      .map((entry) => ({
-        id: String(entry.id),
-        contextWindow: Number(entry.context_window) || 0,
-        maxCompletionTokens: Number(entry.max_completion_tokens) || 0,
-      }));
+    const models = sortModels(
+      data
+        .filter((entry) => entry && entry.id && entry.active !== false)
+        .map((entry) => ({
+          id: String(entry.id),
+          contextWindow: Number(entry.context_window) || 0,
+          maxCompletionTokens: Number(entry.max_completion_tokens) || 0,
+        }))
+    );
     if (!models.length) {
       throw new Error(
         `${config.label} answered with no usable models. The key may be valid but not entitled to ` +
@@ -846,6 +900,10 @@
     createCaller,
     answerFromResponse,
     listModels,
+    MODEL_ORDER,
+    sortModels,
+    modelRank,
+    parameterSize,
     mapWithLimit,
     writeChapter,
     segmentsToText,

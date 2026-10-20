@@ -458,17 +458,26 @@
     // -----------------------------------------------------------------------
 
     function modelOptions() {
-      const models = state.models.length
-        ? state.models
-        : state.model
-          ? [{ id: state.model }]
-          : [];
+      if (!state.models.length) {
+        return state.model
+          ? `<option value="${escapeHtml(state.model)}" selected>${escapeHtml(state.model)}</option>`
+          : "";
+      }
+      // Best first. A model already chosen is kept even if it is not one this
+      // build would have ranked first, because choosing it was a decision.
+      const sorted = core.sortModels(state.models);
+      const ids = sorted.map((model) => model.id);
+      const models =
+        state.model && !ids.includes(state.model) ? [{ id: state.model }, ...sorted] : sorted;
       return models
-        .map(
-          (model) =>
+        .map((model, index) => {
+          const label =
+            index === 0 && models.length > 1 ? `${model.id} — best for notes` : model.id;
+          return (
             `<option value="${escapeHtml(model.id)}"${model.id === state.model ? " selected" : ""}>` +
-            `${escapeHtml(model.id)}</option>`
-        )
+            `${escapeHtml(label)}</option>`
+          );
+        })
         .join("");
     }
 
