@@ -394,6 +394,47 @@
         // that reads the lecture is the same one a person would take.
         panel.open();
 
+        // `?demo=1` drives the panel to its ready screen without a human: it
+        // types a stand-in key into the real field and presses the real button,
+        // so a headless screenshot shows the same screen a person would see.
+        if (location.search.includes("demo")) {
+          const field = document.querySelector("[data-key]");
+          if (field) {
+            field.value = "gsk_harness_preview_only";
+            field.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+          const check = document.querySelector("[data-act='check-key']");
+          if (check) check.click();
+          // `?run=1` presses Generate too, for a screenshot of the running
+          // screen rather than the ready one.
+          if (location.search.includes("run")) {
+            setTimeout(() => {
+              const go = document.querySelector("[data-act='generate']");
+              if (go) go.click();
+            }, 1200);
+          }
+        }
+
+        // `?wallpaper=1` puts a bright, busy scene behind the panel. Glass is
+        // easy over a dark page and hard over a video frame, so this is the
+        // honest test: can the words still be read?
+        if (location.search.includes("wallpaper")) {
+          document.body.style.background =
+            "radial-gradient(60% 50% at 15% 15%, #fde68a, transparent 60%)," +
+            "radial-gradient(50% 60% at 85% 20%, #7dd3fc, transparent 60%)," +
+            "radial-gradient(70% 60% at 70% 90%, #f9a8d4, transparent 60%)," +
+            "linear-gradient(160deg, #f8fafc, #cbd5e1)";
+          document.body.style.color = "#0f172a";
+          document.querySelectorAll("main .card, main .row").forEach((el) => {
+            el.style.borderColor = "rgba(15, 23, 42, 0.2)";
+          });
+          // `?wallpaper=bare` hides the page's own dark cards: the panel then
+          // sits over nothing but bright colour, which is the worst case.
+          if (location.search.includes("bare")) {
+            document.querySelector("main").style.visibility = "hidden";
+          }
+        }
+
         function show() {
           const state = panel.state;
           const rows = [

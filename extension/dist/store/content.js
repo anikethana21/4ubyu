@@ -3910,15 +3910,17 @@ ${chaptersHtml}
   position: fixed; right: 18px; bottom: 18px; z-index: 2147483000;
   display: flex; align-items: center; gap: 9px;
   padding: 10px 16px 10px 10px; border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.20);
   background:
-    radial-gradient(120% 130% at 0% 0%, rgba(250, 204, 21, 0.16), transparent 58%),
-    linear-gradient(160deg, #242832, #12151b);
+    radial-gradient(120% 130% at 0% 0%, rgba(250, 204, 21, 0.18), transparent 58%),
+    linear-gradient(155deg, rgba(40, 45, 57, 0.62), rgba(12, 15, 21, 0.72));
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
   color: #f8fafc; font: 600 12.5px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
   letter-spacing: 0.01em; cursor: pointer;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    0 12px 32px rgba(2, 6, 23, 0.5);
+    inset 0 1px 0 rgba(255, 255, 255, 0.20),
+    0 12px 32px rgba(0, 0, 0, 0.45);
   transition: transform 140ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
 .ubyu-fab:hover {
@@ -3947,16 +3949,27 @@ ${chaptersHtml}
   position: fixed; right: 18px; bottom: 18px; z-index: 2147483001;
   width: 384px; max-width: calc(100vw - 24px); max-height: min(80vh, 760px);
   display: flex; flex-direction: column; overflow: hidden;
-  border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.17);
+  /* Liquid glass: a thin tinted layer over a heavy blur, exactly as iOS does
+     it. The blur is what keeps the words readable - a translucent white without
+     it is just a foggy rectangle. Where backdrop-filter is unavailable the
+     @supports block below raises the tint until it passes contrast again. */
   background:
-    radial-gradient(120% 80% at 100% 0%, rgba(56, 189, 248, 0.10), transparent 62%),
-    radial-gradient(90% 70% at 0% 100%, rgba(250, 204, 21, 0.055), transparent 60%),
-    linear-gradient(160deg, #1c2029 0%, #12161d 62%, #0d1016 100%);
-  color: #e2e8f0; font: 13px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    radial-gradient(260px 260px at var(--mx, 100%) var(--my, 0%),
+      rgba(255, 255, 255, 0.10), transparent 72%),
+    radial-gradient(120% 80% at 100% 0%, rgba(56, 189, 248, 0.18), transparent 58%),
+    radial-gradient(90% 70% at 0% 100%, rgba(250, 204, 21, 0.12), transparent 58%),
+    linear-gradient(155deg, rgba(30, 36, 48, 0.50), rgba(8, 11, 17, 0.62));
+  backdrop-filter: blur(36px) saturate(185%);
+  -webkit-backdrop-filter: blur(36px) saturate(185%);
+  color: #eef3f9; font: 13px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.32);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px rgba(2, 6, 23, 0.45),
-    0 28px 70px rgba(2, 6, 23, 0.6);
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 70px rgba(0, 0, 0, 0.32),
+    0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 30px 80px rgba(0, 0, 0, 0.5);
   animation: ubyu-in 220ms cubic-bezier(0.22, 0.8, 0.28, 1);
 }
 /* One lit edge along the top: the single detail that makes a flat rectangle
@@ -3974,25 +3987,24 @@ ${chaptersHtml}
 
 .ubyu-head {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 12px 13px 12px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
+  padding: 12px 13px 12px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  background: linear-gradient(180deg, rgba(10, 14, 20, 0.26), rgba(10, 14, 20, 0.05));
 }
 .ubyu-brand {
-  display: flex; align-items: center; gap: 9px;
-  font-weight: 700; letter-spacing: 0.10em; font-size: 11.5px; color: #f6f8fb;
+  font-weight: 700; letter-spacing: 0.01em; font-size: 14px; color: #f7f9fc;
 }
 .ubyu-brand small {
   display: block; margin-top: 2px;
-  font-weight: 600; letter-spacing: 0.20em; color: #7e8da3; font-size: 7.5px;
+  font-weight: 600; letter-spacing: 0.19em; color: #b6c3d3; font-size: 7.5px;
 }
 .ubyu-step {
   margin-left: auto; margin-right: 4px;
   padding: 3px 8px; border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
   font: 700 8.5px/1 system-ui, sans-serif; letter-spacing: 0.16em;
-  color: #7e8da3;
+  color: #a8b5c7;
 }
 .ubyu-step[data-state="running"] {
   color: #a5e3ff; border-color: rgba(56, 189, 248, 0.3);
@@ -4012,7 +4024,7 @@ ${chaptersHtml}
 .ubyu-close:focus-visible { outline: 2px solid #38bdf8; outline-offset: 1px; }
 
 .ubyu-body { padding: 14px 15px 16px; overflow-y: auto; }
-.ubyu-body p { margin: 0 0 11px; color: #cfd9e6; }
+.ubyu-body p { margin: 0 0 11px; color: #dde5ef; }
 .ubyu-body::-webkit-scrollbar { width: 10px; }
 .ubyu-body::-webkit-scrollbar-track { background: transparent; }
 .ubyu-body::-webkit-scrollbar-thumb {
@@ -4021,15 +4033,17 @@ ${chaptersHtml}
 }
 .ubyu-body::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.38); background-clip: padding-box; }
 
-.ubyu-muted { color: #8b98ab; font-size: 11.5px; line-height: 1.5; }
+.ubyu-muted { color: #c3cfdd; font-size: 11.5px; line-height: 1.5; }
 
 .ubyu-note {
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  border-left: 2px solid #38bdf8;
-  border-radius: 12px; padding: 10px 12px; margin: 0 0 12px;
-  font-size: 12px; line-height: 1.55; color: #c9d4e2;
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.09), rgba(148, 163, 184, 0.035));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 2px solid rgba(56, 189, 248, 0.85);
+  border-radius: 14px; padding: 10px 12px; margin: 0 0 12px;
+  font-size: 12px; line-height: 1.55; color: #d6e0ec;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 1px 2px rgba(0, 0, 0, 0.12);
 }
 .ubyu-note b { color: #f4f7fb; font-weight: 650; }
 .ubyu-note.warn { border-left-color: #f59e0b; }
@@ -4039,20 +4053,21 @@ ${chaptersHtml}
 .ubyu-field { margin: 0 0 12px; }
 .ubyu-field label {
   display: block; margin-bottom: 6px; font-weight: 600;
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #8b98ab;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #cdd8e5;
 }
 .ubyu-input, .ubyu-select {
-  width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  background: rgba(6, 9, 14, 0.55);
-  color: #e8edf5; font: 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f2f6fb; font: 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
-.ubyu-input::placeholder { color: #5f6c80; }
+.ubyu-input::placeholder { color: #93a1b5; }
 .ubyu-input:focus, .ubyu-select:focus {
-  outline: none; border-color: rgba(56, 189, 248, 0.75);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.16), inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  outline: none; border-color: rgba(120, 210, 255, 0.8);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18), inset 0 1px 2px rgba(0, 0, 0, 0.22);
 }
 .ubyu-select {
   font-family: system-ui, sans-serif; appearance: none; padding-right: 34px;
@@ -4069,20 +4084,21 @@ ${chaptersHtml}
 
 .ubyu-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .ubyu-btn {
-  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 9px 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-  color: #e8edf5; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.17); border-radius: 12px; padding: 9px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.055));
+  color: #f2f6fb; cursor: pointer;
   font: 600 12px/1 system-ui, sans-serif; letter-spacing: 0.01em;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 1px 2px rgba(2, 6, 23, 0.4);
-  transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 .ubyu-btn:hover {
-  border-color: rgba(56, 189, 248, 0.45);
+  border-color: rgba(120, 210, 255, 0.55);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.19), rgba(255, 255, 255, 0.08));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 3px rgba(56, 189, 248, 0.10);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 3px rgba(56, 189, 248, 0.12);
 }
 .ubyu-btn:active { transform: translateY(1px); }
 .ubyu-btn:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
@@ -4112,8 +4128,8 @@ ${chaptersHtml}
 
 .ubyu-bar {
   height: 8px; margin: 10px 0 4px; border-radius: 999px;
-  background: rgba(8, 11, 16, 0.7); overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.10); overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 .ubyu-bar span {
   position: relative; display: block; height: 100%; width: 0; overflow: hidden;
@@ -4135,7 +4151,7 @@ ${chaptersHtml}
 .ubyu-log {
   margin: 12px 0 0; padding: 2px 0 2px 12px; list-style: none;
   border-left: 1px solid rgba(56, 189, 248, 0.28);
-  font: 11px/1.75 ui-monospace, SFMono-Regular, Menlo, monospace; color: #8b98ab;
+  font: 11px/1.75 ui-monospace, SFMono-Regular, Menlo, monospace; color: #b9c6d6;
 }
 .ubyu-log li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ubyu-log li:first-child { color: #cbd5e1; }
@@ -4143,18 +4159,21 @@ ${chaptersHtml}
 .ubyu-quote {
   height: 48px; margin: 0 0 12px; padding: 6px 12px;
   display: flex; align-items: center; justify-content: center; text-align: center;
-  overflow: hidden; border-radius: 12px;
-  border: 1px solid rgba(56, 189, 248, 0.16);
-  background: linear-gradient(180deg, rgba(56, 189, 248, 0.075), rgba(148, 163, 184, 0.035));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  color: #c8d6e6; font: italic 12px/1.5 Georgia, "Times New Roman", serif;
+  overflow: hidden; border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+  color: #dbe6f2; font: italic 12px/1.5 Georgia, "Times New Roman", serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 .ubyu-quote span { opacity: 0; transform: translateY(2px); transition: opacity 420ms ease, transform 420ms ease; }
 .ubyu-quote[data-visible="1"] span { opacity: 1; transform: none; }
 
 .ubyu-row {
   display: flex; justify-content: space-between; gap: 12px;
-  padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .ubyu-row:first-child { border-top: 0; padding-top: 0; }
 .ubyu-row:last-child { padding-bottom: 0; }
@@ -4182,6 +4201,22 @@ ${chaptersHtml}
   border-width: 0 1.8px 1.8px 0; transform: rotate(42deg);
 }
 .ubyu-check input[type="checkbox"]:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+
+/* Without backdrop-filter the tint alone is not enough to hold contrast, so the
+   card falls back to the opaque version rather than becoming unreadable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ubyu-panel {
+    background:
+      radial-gradient(120% 80% at 100% 0%, rgba(56, 189, 248, 0.10), transparent 60%),
+      radial-gradient(90% 70% at 0% 100%, rgba(250, 204, 21, 0.06), transparent 60%),
+      linear-gradient(155deg, rgba(28, 33, 43, 0.98), rgba(11, 14, 20, 0.99));
+  }
+  .ubyu-fab {
+    background:
+      radial-gradient(120% 130% at 0% 0%, rgba(250, 204, 21, 0.14), transparent 58%),
+      linear-gradient(155deg, #242832, #12151b);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .ubyu-panel { animation: none; }
@@ -4252,7 +4287,7 @@ ${chaptersHtml}
     node.className = "ubyu-panel";
     node.setAttribute("data-open", "false");
     node.innerHTML = `<div class="ubyu-head">
-      <span class="ubyu-brand"><span class="ubyu-mark" aria-hidden="true">4</span><span>U BY U<small>FOR YOU BY YOU</small></span></span>
+      <span class="ubyu-brand">4 U By U<small>FOR YOU BY YOU</small></span>
       <span class="ubyu-step" data-step-chip></span>
       <button type="button" class="ubyu-close" title="Close" data-act="close">&times;</button>
     </div>
@@ -4274,6 +4309,15 @@ ${chaptersHtml}
     doc.body.appendChild(node);
 
     const body = node.querySelector("[data-body]");
+
+    // The highlight follows the pointer across the card, the way light moves on
+    // a real pane of glass. One listener on the panel itself: the body is
+    // redrawn constantly, the card is not.
+    node.addEventListener("pointermove", (event) => {
+      const rect = node.getBoundingClientRect();
+      node.style.setProperty("--mx", `${Math.round(event.clientX - rect.left)}px`);
+      node.style.setProperty("--my", `${Math.round(event.clientY - rect.top)}px`);
+    }, { passive: true });
 
     // -----------------------------------------------------------------------
     // The waiting line
