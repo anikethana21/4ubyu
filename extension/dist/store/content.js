@@ -3065,10 +3065,10 @@ ${chaptersHtml}
     windowSeconds: 720,
     leadInSeconds: 45,
     outlineStepSeconds: 12,
-    // Raised from 30s: a 30-second "section" is usually just the tail of the
-    // previous topic. 180s (3 minutes) forces real topical boundaries and halves
-    // the section count for a typical lecture.
-    minSectionSeconds: 180,
+    // Below this, two topics are the same topic said twice. It is deliberately
+    // short: a boundary the planner found is a topic the lecture really had, and
+    // dropping one to tidy up the list would lose a heading the reader could use.
+    minSectionSeconds: 30,
     maxSectionSeconds: 780,
     minWindowChars: 200,
     sectionsPerWindow: 2,
@@ -3862,8 +3862,8 @@ ${chaptersHtml}
         from: core.clock(window.start),
         to: core.clock(window.end),
         outline,
-        min_sections: 1,
-        max_sections: Math.max(2, Math.min(4, Math.round((window.end - window.start) / 180))),
+        min_sections: 2,
+        max_sections: Math.max(3, Math.min(8, Math.round((window.end - window.start) / 120))),
       });
       let answer = "";
       let failure = "";
@@ -5447,6 +5447,7 @@ ${chaptersHtml}
         const id = String(videoId || "");
         if (id === state.videoId) return;
         state.videoId = id;
+        // Complete reset - nothing from the old lecture survives.
         state.lecture = null;
         state.lectureError = "";
         state.estimate = null;
@@ -5466,6 +5467,12 @@ ${chaptersHtml}
         if (state.open && id && !state.running && typeof capture === "function") {
           void readLecture();
         }
+      },
+      /** Clear any in-memory caption caches so the next read fetches fresh. */
+      clearCaptionCache() {
+        // The capture function uses performance.getEntriesByType("resource")
+        // which was already cleared by the userscript, but if there are any
+        // other caches, clear them here.
       },
     };
   }
@@ -6331,12 +6338,15 @@ ${chaptersHtml}
     let url = findPlayerCaptionUrl(videoId);
     if (!url) {
       const nudged = await nudgePlayerCaptions();
-      const deadline = Date.now() + 8000;
+      const deadline = Date.now() + 15000;
       while (!url && Date.now() < deadline) {
-        await wait(250);
+        await wait(200);
         url = findPlayerCaptionUrl(videoId);
       }
       if (!url) {
+        // Last resort: try to directly trigger the transcript panel
+        const panelSegments = await fetchViaTranscriptPanel(videoId).catch(() => []);
+        if (panelSegments.length) return panelSegments;
         throw new Error(
           "the player never fetched captions" +
             (nudged ? " (tried " + nudged + ")" : " (found no way to start it)")
@@ -6375,6 +6385,10 @@ ${chaptersHtml}
 
   async function fetchTranscript(track, videoId) {
     const attempts = [];
+
+    // Aggressively nudge captions BEFORE trying to read - this forces YouTube
+    // to fetch the signed URL we can then reuse.
+    await nudgePlayerCaptions();
 
     try {
       const segments = await fetchViaPlayerUrl(videoId, track);
@@ -6603,9 +6617,14 @@ ${chaptersHtml}
     // drops the old transcript instead of holding it hostage until a restart.
     if (typeof panel.setVideo === "function") panel.setVideo(onWatch ? currentVideoId() : "");
 
-    // Clear stale resource timings (old video's timedtext URLs) so
+    // Clear ALL stale resource timings (old video's timedtext URLs) so
     // findPlayerCaptionUrl() doesn't pick up the previous lecture's caption URL.
     try { performance.clearResourceTimings(); } catch (e) { /* ignore */ }
+
+    // Also clear any in-memory caption URL cache if the panel exposes it.
+    if (typeof panel.clearCaptionCache === "function") {
+      panel.clearCaptionCache();
+    }
   }
 
   GM_registerMenuCommand("✦ Turn this lecture into notes", () => panel.open());

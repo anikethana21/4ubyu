@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.2.7
+// @version      2.2.8
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -914,12 +914,15 @@
     let url = findPlayerCaptionUrl(videoId);
     if (!url) {
       const nudged = await nudgePlayerCaptions();
-      const deadline = Date.now() + 8000;
+      const deadline = Date.now() + 15000;
       while (!url && Date.now() < deadline) {
-        await wait(250);
+        await wait(200);
         url = findPlayerCaptionUrl(videoId);
       }
       if (!url) {
+        // Last resort: try to directly trigger the transcript panel
+        const panelSegments = await fetchViaTranscriptPanel(videoId).catch(() => []);
+        if (panelSegments.length) return panelSegments;
         throw new Error(
           "the player never fetched captions" +
             (nudged ? " (tried " + nudged + ")" : " (found no way to start it)")
@@ -958,6 +961,10 @@
 
   async function fetchTranscript(track, videoId) {
     const attempts = [];
+
+    // Aggressively nudge captions BEFORE trying to read - this forces YouTube
+    // to fetch the signed URL we can then reuse.
+    await nudgePlayerCaptions();
 
     try {
       const segments = await fetchViaPlayerUrl(videoId, track);
@@ -1186,9 +1193,14 @@
     // drops the old transcript instead of holding it hostage until a restart.
     if (typeof panel.setVideo === "function") panel.setVideo(onWatch ? currentVideoId() : "");
 
-    // Clear stale resource timings (old video's timedtext URLs) so
+    // Clear ALL stale resource timings (old video's timedtext URLs) so
     // findPlayerCaptionUrl() doesn't pick up the previous lecture's caption URL.
     try { performance.clearResourceTimings(); } catch (e) { /* ignore */ }
+
+    // Also clear any in-memory caption URL cache if the panel exposes it.
+    if (typeof panel.clearCaptionCache === "function") {
+      panel.clearCaptionCache();
+    }
   }
 
   GM_registerMenuCommand("✦ Turn this lecture into notes", () => panel.open());

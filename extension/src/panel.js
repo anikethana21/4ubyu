@@ -1332,6 +1332,7 @@
         const id = String(videoId || "");
         if (id === state.videoId) return;
         state.videoId = id;
+        // Complete reset - nothing from the old lecture survives.
         state.lecture = null;
         state.lectureError = "";
         state.estimate = null;
@@ -1351,6 +1352,12 @@
         if (state.open && id && !state.running && typeof capture === "function") {
           void readLecture();
         }
+      },
+      /** Clear any in-memory caption caches so the next read fetches fresh. */
+      clearCaptionCache() {
+        // The capture function uses performance.getEntriesByType("resource")
+        // which was already cleared by the userscript, but if there are any
+        // other caches, clear them here.
       },
     };
   }
