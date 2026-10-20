@@ -226,6 +226,22 @@ test("apostrophes and ampersands are escaped once, and a paragraph is not put in
   );
 });
 
+test("the page is set in the panel's Latin face, so a 4 has no gap before the U", () => {
+  const style = workspace.PAGE_STYLE;
+  const arabic = style.indexOf("Noto Naskh Arabic");
+  const latin = style.indexOf('--font-body: "Segoe UI"');
+  assert.ok(arabic > -1, "the template's stack is still in the sheet");
+  assert.ok(
+    latin > arabic,
+    "the Latin stack is declared after it, so it is the one that resolves"
+  );
+  assert.doesNotMatch(
+    style.slice(latin),
+    /Noto Naskh Arabic/,
+    "and nothing later quietly puts the Arabic face back"
+  );
+});
+
 test("printing, and saving a PDF, is the browser's job rather than a library's", () => {
   const html = renderWithoutStylesheet(sampleDocument());
   assert.match(html, /onclick="window\.print\(\)"/, "the page offers the button");

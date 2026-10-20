@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.1.5
+// @version      2.1.6
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -1984,6 +1984,16 @@ ${videoId
   /* ==========================================================================
      4U BY U — notes page shell: one floating glass index, one reading column
      ========================================================================== */
+
+  /* The template's body face was "Noto Naskh Arabic" with "serif" behind it,
+     and that font is not shipped with the page. So every note in the file was
+     being drawn by the generic serif fallback — Times on Windows — which is
+     why the wordmark's 4 opened a visible gap before the U, and why the
+     reading column had a different voice from the headings. The page is
+     English-only, so the body is the panel's Latin stack. */
+  :root {
+    --font-body: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
 
   #app-workspace.notes-only {
     --glass-face: linear-gradient(158deg, rgb(30 34 43 / 0.86), rgb(14 16 21 / 0.92));
