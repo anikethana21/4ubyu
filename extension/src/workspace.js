@@ -82,11 +82,6 @@
     return escapeHtml(prepareMath(value));
   }
 
-  /** Text with inline math delimiters stripped for readable display. */
-  function textPlain(value) {
-    return escapeHtml(stripInlineMath(value));
-  }
-
   /**
    * Mermaid is not loaded into the page. Shipping the renderer would add a
    * large script and a second thing that can fail to load, and the notes are
@@ -382,7 +377,7 @@ ${items}
             <div class="analogy-icon">💡</div>
             <div class="analogy-body">
               <div class="analogy-title">Mental Model & Intuition</div>
-              <div class="analogy-text">${renderMarkdown(text(analogy))}</div>
+              <div class="analogy-text">${renderMarkdown(analogy)}</div>
             </div>
           </div>`
       )
@@ -393,7 +388,7 @@ ${items}
       ? `          <div class="keypoints-card glass-card">
             <h4>Key Takeaways</h4>
             <ul>
-${section.key_points.map((point) => `              <li>${renderMarkdown(text(point))}</li>`).join("\n")}
+${section.key_points.map((point) => `              <li>${renderMarkdown(point)}</li>`).join("\n")}
             </ul>
           </div>`
       : "";
@@ -403,7 +398,7 @@ ${section.key_points.map((point) => `              <li>${renderMarkdown(text(poi
       ? `          <div class="keypoints-card pitfalls-card glass-card">
             <h4>Common Mistakes</h4>
             <ul>
-${(theory.pitfalls || theory.common_mistakes || []).map((point) => `              <li>${renderMarkdown(text(point))}</li>`).join("\n")}
+${(theory.pitfalls || theory.common_mistakes || []).map((point) => `              <li>${renderMarkdown(point)}</li>`).join("\n")}
             </ul>
           </div>`
       : "";
@@ -412,7 +407,7 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
     const concreteExamples = (theory.examples || theory.concrete_examples || [])
       .map(
         (example) => `          <div class="example-card glass-card">
-            <span class="example-text">${renderMarkdown(text(example.text || example))}</span>
+            <div class="example-text">${renderMarkdown(example.text || example)}</div>
           </div>`
       )
       .join("\n");
@@ -421,7 +416,7 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
     const codeBlocks = (theory.code || [])
       .map(
         (block) => `          <div class="code-block-card glass-card">
-            ${block.preamble ? `<p class="code-preamble">${renderMarkdown(text(block.preamble))}</p>` : ""}
+            ${block.preamble ? `<div class="code-preamble">${renderMarkdown(block.preamble)}</div>` : ""}
             <pre><code class="language-${block.language || "text"}">${escapeHtml(block.code)}</code></pre>
           </div>`
       )
@@ -442,14 +437,14 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
     const supplement = section.supplement_block
       ? `          <div class="supplement-card glass-card">
             <div class="supplement-badge">${text(section.supplement_block.external_label || "Further reading")}</div>
-            <p>${renderMarkdown(text(section.supplement_block.content || ""))}</p>
+            <div class="supplement-text">${renderMarkdown(section.supplement_block.content || "")}</div>
           </div>`
       : "";
 
     // Explanation, with any diagram fences lifted out of the prose and shown as
     // labelled source underneath it.
     const explainedDiagram = mermaidBlocks(theory.explanation || "");
-    const explanationHtml = renderMarkdown(textPlain(explainedDiagram.text || ""));
+    const explanationHtml = renderMarkdown(stripInlineMath(explainedDiagram.text || ""));
     const explanationCards = explainedDiagram.blocks.map(mermaidCard).join("\n");
 
     return `          <section class="section-block glass-card" data-chapter-title="${escapeHtml(
@@ -482,10 +477,10 @@ ${supplement}
         const seconds = Number(chapter.timestamp_seconds || 0);
         const sections = (chapter.sections || []).map((section) => renderSection(view, section)).join("\n");
         const overview = chapter.overview
-          ? `<p class="chapter-overview">${renderMarkdown(text(chapter.overview))}</p>`
+          ? `<div class="chapter-overview">${renderMarkdown(chapter.overview)}</div>`
           : "";
         const summary = chapter.chapter_summary
-          ? `<div class="chapter-summary-footer"><strong>Summary:</strong> ${renderMarkdown(text(chapter.chapter_summary))}</div>`
+          ? `<div class="chapter-summary-footer"><strong>Summary:</strong> ${renderMarkdown(chapter.chapter_summary)}</div>`
           : "";
         return `        <article class="chapter-card glass-card" data-chapter-title="${escapeHtml(
           chapter.chapter_title
@@ -543,29 +538,32 @@ ${videoId
               <span class="brand-subtitle">FOR YOU BY YOU</span>
             </a>
           </div>
+          <div class="handbook-controls minimal-toolbar">
+            <div class="toolbar-actions">
+              ${view.player ? `
+              <div class="tab-bar" role="tablist" aria-label="View modes">
+                <button type="button" class="tab-btn" id="tab-btn-notes" role="tab" aria-selected="true" onclick="setMobileView('notes')" title="Notes">Notes</button>
+                <button type="button" class="tab-btn" id="tab-btn-video" role="tab" aria-selected="false" onclick="setMobileView('video')" title="Video">Video</button>
+                <button type="button" class="tab-btn" id="tab-btn-chat" role="tab" aria-selected="false" onclick="setMobileView('chat')" title="Chat">Chat</button>
+              </div>` : ''}
+              <button type="button" class="btn-tool-sm" id="btn-print" onclick="window.print()" title="Print this page, or save it as a PDF">
+                <svg class="print-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>Save as PDF</span>
+              </button>
+            </div>
+          </div>
         </div>
         <h1 class="video-title">${text(title)}</h1>
         <div class="video-meta">${meta}</div>
-        <div class="handbook-controls minimal-toolbar">
-          <div class="search-input-wrapper" id="search-input-wrapper">
-            <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input id="notes-search" oninput="handleSearchInput(this.value)" onfocus="handleSearchFocus()" placeholder="Search concepts, topics, or code..." type="text" autocomplete="off"/>
-            <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearHandbookSearch()" style="display: none;" title="Clear Search">&times;</button>
-          </div>
-          <div class="toolbar-actions">
-            ${view.player ? `
-            <div class="tab-bar" role="tablist" aria-label="View modes">
-              <button type="button" class="tab-btn" id="tab-btn-notes" role="tab" aria-selected="true" onclick="setMobileView('notes')" title="Notes">Notes</button>
-              <button type="button" class="tab-btn" id="tab-btn-video" role="tab" aria-selected="false" onclick="setMobileView('video')" title="Video">Video</button>
-              <button type="button" class="tab-btn" id="tab-btn-chat" role="tab" aria-selected="false" onclick="setMobileView('chat')" title="Chat">Chat</button>
-            </div>` : ''}
-            <button type="button" class="btn-tool-sm" id="btn-print" onclick="window.print()" title="Print this page, or save it as a PDF">
-              <svg class="print-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              <span>Save as PDF</span>
-            </button>
-          </div>
+      </header>
+      <div class="handbook-searchbar" id="handbook-searchbar">
+        <div class="search-input-wrapper" id="search-input-wrapper">
+          <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input id="notes-search" oninput="handleSearchInput(this.value)" onfocus="handleSearchFocus()" placeholder="Search concepts, topics, or code..." type="text" autocomplete="off"/>
+          <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearHandbookSearch()" style="display: none;" title="Clear Search">&times;</button>
         </div>
-      </header>`;
+        <div class="search-hint" aria-hidden="true"><kbd>/</kbd><span>to search</span></div>
+      </div>`;
   }
 
   function renderProvenance(view, document) {
@@ -859,6 +857,11 @@ ${videoId
     font-size: 0.8rem !important;
   }
 
+  /* The player workspace is the legacy three-pane shell: it has no page gutter of
+     its own, so the bar brings one, and the shortcut hint stays on the notes page. */
+  #app-workspace:not(.notes-only) .handbook-searchbar { padding: 0 14px !important; }
+  #app-workspace:not(.notes-only) .handbook-searchbar .search-hint { display: none !important; }
+
   /* --- header ------------------------------------------------------------ */
   #app-workspace.notes-only .handbook-header {
     position: relative !important;
@@ -914,7 +917,7 @@ ${videoId
   }
 
   #app-workspace.notes-only .handbook-header .video-meta {
-    margin: 0 0 10px 0 !important;
+    margin: 0 !important;
     color: rgb(203 213 225 / 0.6) !important;
     font-size: 0.74rem !important;
     line-height: 1.4 !important;
@@ -946,24 +949,44 @@ ${videoId
     margin: 0 !important;
   }
 
-  #app-workspace.notes-only .handbook-header .search-input-wrapper {
-    flex: 1 1 auto !important;
+  /* --- the search bar, on its own row under the header -------------------- */
+  .handbook-searchbar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    flex: 0 0 auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .handbook-searchbar .search-input-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 0 1 560px !important;
     min-width: 0 !important;
-    max-width: 520px !important;
-    height: 34px !important;
-    padding: 0 10px !important;
-    border: 1px solid rgb(255 255 255 / 0.1) !important;
-    border-radius: 10px !important;
-    background: rgb(255 255 255 / 0.05) !important;
+    height: 40px !important;
+    padding: 0 14px !important;
+    border: 1px solid rgb(255 255 255 / 0.12) !important;
+    border-radius: 999px !important;
+    background: rgb(255 255 255 / 0.055) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+    backdrop-filter: blur(18px) saturate(150%) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.10), 0 8px 24px -18px rgb(0 0 0 / 0.9) !important;
     transition: border-color 150ms ease, background 150ms ease !important;
   }
 
-  #app-workspace.notes-only .handbook-header .search-input-wrapper:focus-within {
-    border-color: rgb(255 255 255 / 0.28) !important;
-    background: rgb(255 255 255 / 0.08) !important;
+  .handbook-searchbar .search-input-wrapper:focus-within {
+    border-color: rgb(255 255 255 / 0.30) !important;
+    background: rgb(255 255 255 / 0.09) !important;
   }
 
-  #app-workspace.notes-only .handbook-header #notes-search {
+  .handbook-searchbar .search-icon {
+    flex: 0 0 auto !important;
+    color: rgb(203 213 225 / 0.55) !important;
+  }
+
+  .handbook-searchbar #notes-search {
     width: 100% !important;
     height: 100% !important;
     border: 0 !important;
@@ -971,11 +994,35 @@ ${videoId
     background: transparent !important;
     color: #e9eef7 !important;
     font-family: 'Roboto', system-ui, sans-serif !important;
-    font-size: 0.8rem !important;
+    font-size: 0.82rem !important;
   }
 
-  #app-workspace.notes-only .handbook-header #notes-search::placeholder {
+  .handbook-searchbar #notes-search::placeholder {
     color: rgb(203 213 225 / 0.42) !important;
+  }
+
+  .handbook-searchbar .search-hint {
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    color: rgb(203 213 225 / 0.36) !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+  }
+
+  .handbook-searchbar .search-hint kbd {
+    display: inline-grid !important;
+    place-items: center !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    padding: 0 5px !important;
+    border: 1px solid rgb(255 255 255 / 0.14) !important;
+    border-radius: 6px !important;
+    background: rgb(255 255 255 / 0.05) !important;
+    color: rgb(226 235 247 / 0.62) !important;
+    font: 600 0.66rem/1 ui-monospace, SFMono-Regular, Menlo, monospace !important;
   }
 
   #app-workspace.notes-only .handbook-header .toolbar-actions {
@@ -1081,6 +1128,18 @@ ${videoId
       height: auto !important;
     }
 
+    .handbook-searchbar {
+      margin: 10px 2px 0 !important;
+      padding: 0 !important;
+    }
+
+    .handbook-searchbar .search-input-wrapper {
+      flex: 1 1 auto !important;
+      max-width: none !important;
+    }
+
+    .handbook-searchbar .search-hint { display: none !important; }
+
     #app-workspace.notes-only .handbook-main {
       display: block !important;
       margin-top: 12px !important;
@@ -1116,6 +1175,7 @@ ${videoId
 
     #app-workspace.notes-only .handbook-main { display: block !important; }
     #app-workspace.notes-only .handbook-sidebar { display: none !important; }
+    .handbook-searchbar { display: none !important; }
     #app-workspace.notes-only .handbook-header {
       position: static !important;
       box-shadow: none !important;

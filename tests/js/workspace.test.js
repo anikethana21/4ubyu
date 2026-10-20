@@ -207,6 +207,25 @@ test("the page shows the notes, the timestamps and the takeaways", () => {
   assert.match(html, /▶ 1:58:00/);
 });
 
+test("apostrophes and ampersands are escaped once, and a paragraph is not put inside a paragraph", () => {
+  const document = sampleDocument();
+  document.chapters[0].overview = "The clock's ticks; Tom & Jerry is a cartoon.";
+  document.chapters[0].sections[0].theory_block.key_points.push("the learner's own words");
+  const html = renderWithoutStylesheet(document);
+  assert.match(html, /The clock&#39;s ticks; Tom &amp; Jerry is a cartoon\./);
+  assert.match(html, /the learner&#39;s own words/);
+  assert.doesNotMatch(
+    html,
+    /&amp;#39;|&amp;amp;/,
+    "text is escaped by the renderer exactly once, so the reader sees a quote and not &#39;"
+  );
+  assert.doesNotMatch(
+    html,
+    /<p class="chapter-overview">\s*<p>/,
+    "markdown already opens a paragraph, so the wrapper must not open another"
+  );
+});
+
 test("printing, and saving a PDF, is the browser's job rather than a library's", () => {
   const html = renderWithoutStylesheet(sampleDocument());
   assert.match(html, /onclick="window\.print\(\)"/, "the page offers the button");

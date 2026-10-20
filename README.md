@@ -212,7 +212,7 @@ userscript is the same program.
 
 ```bash
 npm install                 # nothing to install, but this is the habit
-npm test                    # 126 JS tests: core, page, pipeline, built artifacts
+npm test                    # 127 JS tests: core, page, pipeline, built artifacts
 npm run assets              # regenerate src/assets.js from templates/base_workspace.html
 npm run assets:check        # fail if the page's stylesheet has drifted (or gained a remote URL)
 npm run build               # write 4ubyu.user.js and extension/dist/store/
