@@ -64,9 +64,18 @@
   width: 372px; max-width: calc(100vw - 24px); max-height: min(78vh, 720px);
   display: flex; flex-direction: column; overflow: hidden;
   border-radius: 16px; border: 1px solid rgba(226, 232, 240, 0.16);
-  background: linear-gradient(160deg, rgba(24, 27, 34, 0.985), rgba(14, 17, 23, 0.985));
+  /* Opaque on purpose: the panel floats over whatever page you are on, and a
+     see-through body is unreadable over a white lecture slide. The glass read
+     comes from the rim light and the corner glow, not from transparency. */
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(56, 189, 248, 0.1), transparent 62%),
+    radial-gradient(90% 70% at 0% 100%, rgba(250, 204, 21, 0.06), transparent 60%),
+    linear-gradient(160deg, #1b1f27 0%, #12161d 62%, #0e1218 100%);
   color: #e2e8f0; font: 13px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
-  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 0 1px rgba(2, 6, 23, 0.35),
+    0 24px 60px rgba(2, 6, 23, 0.55);
 }
 .ubyu-panel[data-open="false"] { display: none; }
 .ubyu-head {
@@ -113,17 +122,17 @@
 .ubyu-log { margin: 10px 0 0; padding: 0; list-style: none; font: 11px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: #94a3b8; }
 .ubyu-log li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ubyu-quote {
-  min-height: 36px; margin: 0 0 10px; padding: 8px 12px;
+  height: 46px; margin: 0 0 10px; padding: 6px 12px;
   display: flex; align-items: center; justify-content: center; text-align: center;
+  overflow: hidden;
   border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.14);
   background: rgba(148, 163, 184, 0.06);
-  color: #cbd5e1; font: italic 12px/1.5 Georgia, "Times New Roman", serif;
-  opacity: 0; transform: translateY(3px);
-  transition: opacity 420ms ease, transform 420ms ease;
+  color: #cbd5e1; font: italic 11.5px/1.45 Georgia, "Times New Roman", serif;
 }
-.ubyu-quote[data-visible="1"] { opacity: 1; transform: none; }
+.ubyu-quote span { opacity: 0; transform: translateY(2px); transition: opacity 420ms ease, transform 420ms ease; }
+.ubyu-quote[data-visible="1"] span { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
-  .ubyu-quote { transition: opacity 120ms linear; transform: none; }
+  .ubyu-quote span { transition: opacity 120ms linear; transform: none; }
 }
 .ubyu-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed rgba(148, 163, 184, 0.16); }
 .ubyu-row:last-child { border-bottom: 0; }
@@ -246,7 +255,8 @@
     function paintQuote() {
       const element = body.querySelector("#ubyu-quote");
       if (!element) return;
-      element.textContent = state.quoteText;
+      const text = element.firstElementChild;
+      if (text) text.textContent = state.quoteText;
       element.setAttribute("data-visible", state.quoteVisible ? "1" : "0");
     }
 
@@ -723,7 +733,7 @@
     }
 
     function runningView() {
-      return `<div class="ubyu-quote" id="ubyu-quote" data-visible="${state.quoteVisible ? "1" : "0"}">${escapeHtml(state.quoteText)}</div>
+      return `<div class="ubyu-quote" id="ubyu-quote" data-visible="${state.quoteVisible ? "1" : "0"}"><span>${escapeHtml(state.quoteText)}</span></div>
         <p><b>Writing your notes.</b> Nothing is invented: anything the model cannot write up is
         marked as a notice, with the lecture's own words underneath.</p>
         <div class="ubyu-bar"><span style="width: ${state.percent}%"></span></div>
