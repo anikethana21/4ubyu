@@ -375,6 +375,43 @@ test("an answer is taken from the response and handed back as written", async ()
   );
 });
 
+test("what the provider billed is reported as it arrives", async () => {
+  const seen = [];
+  const fetchImpl = recordingFetch(() => ({
+    status: 200,
+    text: groqPayload("the notes", { usage: { prompt_tokens: 900, completion_tokens: 120 } }),
+  }));
+  const caller = ubyu.createCaller({
+    apiKey: "k",
+    fetchImpl,
+    onUsage: (entry) => seen.push(entry),
+  });
+
+  await caller.call({ messages: [{ role: "user", content: "hello" }] });
+
+  assert.equal(seen.length, 1, "one answer, one billing report");
+  assert.equal(seen[0].model, "openai/gpt-oss-120b");
+  assert.equal(seen[0].usage.prompt_tokens, 900);
+  assert.equal(seen[0].usage.completion_tokens, 120);
+});
+
+test("a meter that throws does not turn a good answer into a failure", async () => {
+  const fetchImpl = recordingFetch(() => ({ status: 200, text: groqPayload("the notes") }));
+  const caller = ubyu.createCaller({
+    apiKey: "k",
+    fetchImpl,
+    onUsage: () => {
+      throw new Error("the ledger is full");
+    },
+  });
+
+  assert.equal(
+    await caller.call({ messages: [{ role: "user", content: "hello" }] }),
+    "the notes",
+    "bookkeeping is not allowed to break a call"
+  );
+});
+
 test("an empty 200 is a refusal that names the budget, not a silent empty answer", () => {
   assert.throws(
     () =>

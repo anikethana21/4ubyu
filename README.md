@@ -92,6 +92,44 @@ allowance refills, a daily one does not — and the advice differs accordingly.
 Numbers are never invented: they come from the same function the panel displays (`estimateRun`, `fitsInDay`),
 so the estimate and the run cannot disagree about what a lecture costs.
 
+### The limits, stated plainly
+
+There is no cap on video length in the app. The real limit is the model's **daily token allowance**. Measured
+with the shipped estimator (`estimateRun`) against captions at ~150 words per minute:
+
+| Lecture | Parts | Calls | Tokens | Wall clock at 8k/min | Fits in one day |
+|---|---|---|---|---|---|
+| 15 min | 2 | 8 | 13k | ~7 min | 15 |
+| 30 min | 3 | 12 | 23k | ~11 min | 8 |
+| 1 hour | 5 | 20 | 42k | ~18 min | 4 |
+| 2 hours | 10 | 40 | 85k | ~35 min | 2 |
+| 4 hours | 20 | 80 | 170k | ~70 min | 1, with little headroom |
+| 6 hours | 30 | 90 | 255k | ~104 min | 0 — over 200k/day |
+
+On Groq's free tier, per model: **8,000 tokens/minute**, **1,000 requests/day**, **200,000 tokens/day**
+(`gpt-oss` models and `openai/gpt-oss-safeguard-20b`) — except `llama-3.1-8b-instant` and `qwen/qwen3-32b`,
+which allow **500,000 tokens/day** at 6,000/minute. So a six-hour lecture fits on one of those, not on the
+default model.
+
+Context is not a limit: the transcript is read in twelve-minute parts, so no single request ever holds the
+whole lecture. Requests are not a limit either — four hours is 80 calls against a thousand.
+
+### It stops before it spends, not after
+
+The day's use is written down as it happens, from the provider's own `usage` figures on every answer, in
+`usage-v1` next to your notes. Before a run starts, the panel compares that ledger with the estimate:
+
+- if the lecture fits, it runs;
+- if it does not, **Generate is disabled** and the panel says how much is left, how much the lecture needs,
+  and which other models still have room — with a one-click switch to one of them;
+- if the provider has already refused a model for the day, that is remembered, so the next click does not
+  spend a call to hear the same refusal.
+
+The ledger is not a mirror of your provider account: anything spent in another tab, another tool, or on
+groq.com is invisible to it. It is there to warn *before* spending, and the provider's own 429 remains the
+final word. A run that stops at the daily limit keeps every section already written, so it continues from
+there tomorrow rather than starting again.
+
 ## The decisions that mattered
 
 1. **Chapters come from topics, not from the clock.** Splitting a lecture every ten minutes produces headings

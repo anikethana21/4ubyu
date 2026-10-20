@@ -94,6 +94,27 @@
         </p>
       </div>
 
+      <h2>How long a lecture can be</h2>
+      <div class="card">
+        <p>
+          There is no length limit in the app. The limit is the model's daily allowance. On Groq's free tier,
+          with captions at a normal speaking pace:
+        </p>
+        <ul style="margin: 0 0 12px 18px; padding: 0">
+          <li><b>15–30 minutes</b> — several lectures a day.</li>
+          <li><b>1 hour</b> — about 42k tokens; four a day.</li>
+          <li><b>2 hours</b> — about 85k tokens; two a day.</li>
+          <li><b>4 hours</b> — about 170k tokens; one a day, with little to spare.</li>
+          <li><b>6 hours and beyond</b> — needs a 500k/day model (<code>llama-3.1-8b-instant</code>,
+            <code>qwen/qwen3-32b</code>).</li>
+        </ul>
+        <p class="muted" style="margin-bottom: 0">
+          Before it spends anything, the panel subtracts what your day has already used. If the lecture will not
+          fit, Generate is disabled and it names the models that still have room. The provider's own limit stays
+          the final word; a run that stops there keeps every part already written and continues tomorrow.
+        </p>
+      </div>
+
       <h2>Your key, your machine</h2>
       <div class="grid">
         <div class="card">

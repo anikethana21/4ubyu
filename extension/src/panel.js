@@ -159,6 +159,8 @@
       reading: false,
       estimate: null,
       fit: null,
+      allowance: null,
+      elsewhere: [],
       percent: 0,
       log: [],
       document: null,
@@ -256,15 +258,23 @@
       }
     }
 
-    /** What this lecture will cost, and how much of the model's day that is. */
+    /** What this lecture will cost, what is left today, and where else it fits. */
     function price() {
       if (!state.lecture || !(state.lecture.segments || []).length) {
         state.estimate = null;
         state.fit = null;
+        state.allowance = null;
+        state.elsewhere = [];
         return;
       }
       state.estimate = pipeline.estimateRun({ segments: state.lecture.segments });
       state.fit = state.model ? pipeline.fitsInDay(state.estimate, state.model) : null;
+      state.allowance = state.model
+        ? pipeline.allowanceFor({ estimate: state.estimate, model: state.model, store })
+        : null;
+      state.elsewhere = state.model
+        ? pipeline.modelsThatFit({ estimate: state.estimate, store, exclude: state.model })
+        : [];
     }
 
     async function checkKey() {
@@ -316,11 +326,31 @@
 
     async function generate() {
       if (state.running || !state.lecture) return;
+      // The stop happens here, before a single token is spent: a run that cannot
+      // finish today is refused with what is left and what would fit instead.
+      if (state.allowance && !state.allowance.fits) {
+        state.runError =
+          `This lecture needs about ${Math.round(state.allowance.needTokens / 1000)}k tokens, and ` +
+          `this model has ${Math.round(state.allowance.tokensLeft / 1000)}k left today. ` +
+          (state.elsewhere.length
+            ? `Switch to ${state.elsewhere[0].model}, which has ${Math.round(
+                state.elsewhere[0].tokensLeft / 1000
+              )}k left.`
+            : "Nothing already written is lost; the rest can be finished tomorrow.");
+        render();
+        return;
+      }
       const caller = core.createCaller({
         apiKey: state.apiKey,
         provider: state.provider,
         model: state.model,
         fetchImpl,
+        // The provider reports what it billed; that is what goes in the ledger.
+        onUsage: ({ model, usage }) => {
+          const tokens =
+            (Number(usage.prompt_tokens) || 0) + (Number(usage.completion_tokens) || 0);
+          pipeline.recordUsage(store, model || state.model, { tokens, calls: 1 });
+        },
       });
       if (!caller) {
         state.runError = "No API key is saved, so there is nothing to call. Add one first.";
@@ -397,6 +427,10 @@
         state.stats = result.stats;
         state.stopped = result.stats.stopped || "";
         state.runError = result.failure || "";
+        if (core.isDailyLimit(`${result.failure || ""} ${result.stats.stopped || ""}`)) {
+          // Remember the refusal, so the next click does not spend a call to hear it.
+          pipeline.recordUsage(store, state.model, { exhausted: true });
+        }
         if (result.document) {
           const entry = saveToLibrary(result.document, result.stats);
           state.step = "done";
@@ -405,10 +439,16 @@
           state.step = "ready";
         }
       } catch (error) {
-        state.runError = error && error.message ? error.message : String(error);
+        const message = error && error.message ? error.message : String(error);
+        state.runError = message;
+        if (core.isDailyLimit(message)) {
+          pipeline.recordUsage(store, state.model, { exhausted: true });
+        }
         state.step = "ready";
       } finally {
         state.running = false;
+        // The ledger has just grown; the next estimate must see the new total.
+        price();
         render();
       }
     }
@@ -447,11 +487,52 @@
             "model, or a shorter stretch of the lecture."
         : "This model's allowance is not one this build knows, so it will not be paced — the " +
           "provider's own limit message will say if it is reached.";
+
+      const allowance = state.allowance;
+      const left = allowance
+        ? allowance.exhausted
+          ? "Today's allowance for this model is already spent; it refills after midnight."
+          : `Today: <b>${Math.round(allowance.tokensLeft / 1000)}k</b> of ` +
+            `${Math.round(allowance.limits.tokensPerDay / 1000)}k tokens left on this model` +
+            (allowance.used.tokens
+              ? ` (${Math.round(allowance.used.tokens / 1000)}k already used).`
+              : ".")
+        : "";
+
+      // The stop that the reader is owed before spending anything: a lecture that
+      // cannot finish today is said now, with what would fit instead.
+      let blocked = "";
+      if (allowance && !allowance.fits) {
+        const alternatives = state.elsewhere
+          .slice(0, 3)
+          .map(
+            (option) => `<button type="button" class="ubyu-btn link" data-act="use-model"
+              data-id="${escapeHtml(option.model)}">Use ${escapeHtml(option.model)}
+              (${Math.round(option.tokensLeft / 1000)}k left)</button>`
+          )
+          .join(" · ");
+        blocked = `<div class="ubyu-note bad">
+          <b>This lecture cannot be written today on this model.</b><br/>
+          It needs about <b>${Math.round(allowance.needTokens / 1000)}k tokens</b>; this model has
+          <b>${Math.round(allowance.tokensLeft / 1000)}k</b> left${
+            allowance.shortBy ? ` — short by ${Math.round(allowance.shortBy / 1000)}k` : ""
+          }.${
+            allowance.exhausted ? " The provider has already refused this model for today." : ""
+          }<br/>
+          ${
+            state.elsewhere.length
+              ? `Another model still has room for the whole lecture: ${alternatives}`
+              : "No model this build knows still has room for the whole lecture. Anything already written is kept, so the rest can be finished tomorrow."
+          }
+        </div>`;
+      }
+
       return `<div class="ubyu-note">
         <b>${minutes} min of lecture</b> · ${estimate.windows} part${estimate.windows === 1 ? "" : "s"} ·
         about ${estimate.calls} calls · roughly ${Math.round(estimate.tokens / 1000)}k tokens<br/>
-        ${fitLine}
-      </div>`;
+        ${fitLine}${left ? `<br/>${left}` : ""}
+      </div>
+      ${blocked}`;
     }
 
     function libraryBlock() {
@@ -539,7 +620,9 @@
         ${state.stopped ? `<div class="ubyu-note warn">${escapeHtml(state.stopped)}</div>` : ""}
         <div class="ubyu-actions">
           <button type="button" class="ubyu-btn primary" data-act="generate"${
-            state.reading || !state.lecture ? " disabled" : ""
+            state.reading || !state.lecture || (state.allowance && !state.allowance.fits)
+              ? " disabled"
+              : ""
           }>Generate notes</button>
           <button type="button" class="ubyu-btn link" data-act="recheck">Change key or model</button>
           <button type="button" class="ubyu-btn link" data-act="library">My notes</button>
@@ -670,6 +753,13 @@
       if (act === "recheck-lecture") {
         if (!state.reading && typeof capture === "function") void readLecture();
         return undefined;
+      }
+      if (act === "use-model") {
+        state.model = id;
+        store.set(KEY_MODEL, state.model);
+        state.log = [];
+        price();
+        return render();
       }
       if (act === "stop") {
         state.cancel = true;

@@ -530,6 +530,119 @@
   }
 
   // ---------------------------------------------------------------------------
+  // What has already been spent today
+  // ---------------------------------------------------------------------------
+
+  /**
+   * A local ledger of the day's metered use, kept beside the notes.
+   *
+   * The provider's own numbers arrive with every answer (`usage.prompt_tokens`
+   * and `usage.completion_tokens`), so what is recorded here is what was billed,
+   * not a guess. It is not a mirror of the provider's account — anything spent in
+   * another tab or another tool is invisible — so it is used to *warn before*
+   * spending, and the provider's 429 remains the final word.
+   */
+  const USAGE_KEY = "usage-v1";
+
+  /** The day the provider would bill this against: the reader's own day. */
+  function dayKey(now = new Date()) {
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function readLedger(store) {
+    if (!store || typeof store.get !== "function") return {};
+    const raw = store.get(USAGE_KEY, null);
+    if (raw && typeof raw === "object") return raw;
+    if (typeof raw === "string" && raw.trim()) {
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (error) {
+        return {};
+      }
+    }
+    return {};
+  }
+
+  /** Tokens and calls recorded against `model` today. */
+  function usageToday(store, model, now = new Date()) {
+    const day = readLedger(store)[dayKey(now)] || {};
+    const entry = day[model] || {};
+    return {
+      tokens: Number(entry.tokens) || 0,
+      calls: Number(entry.calls) || 0,
+      // A daily-limit answer from the provider is remembered, so tomorrow's first
+      // click does not have to spend a call to be told the same thing today.
+      exhausted: Boolean(entry.exhausted),
+    };
+  }
+
+  /**
+   * Add to today's total. Called with the provider's real usage after each answer.
+   * Kept to two days: a ledger is only useful while it can say "that was today".
+   */
+  function recordUsage(store, model, { tokens = 0, calls = 0, exhausted = false } = {}, now = new Date()) {
+    if (!store || typeof store.set !== "function" || !model) return;
+    const ledger = readLedger(store);
+    const key = dayKey(now);
+    ledger[key] = ledger[key] || {};
+    const entry = ledger[key][model] || { tokens: 0, calls: 0, exhausted: false };
+    entry.tokens = (Number(entry.tokens) || 0) + Math.max(0, Number(tokens) || 0);
+    entry.calls = (Number(entry.calls) || 0) + Math.max(0, Number(calls) || 0);
+    if (exhausted) entry.exhausted = true;
+    entry.at = now.toISOString();
+    ledger[key][model] = entry;
+    const kept = {};
+    for (const day of Object.keys(ledger).sort().slice(-2)) kept[day] = ledger[day];
+    store.set(USAGE_KEY, kept);
+  }
+
+  /**
+   * Whether this lecture can be written today on this model, and what is left.
+   *
+   * `null` when the model's allowance is not known to this build: an unknown model
+   * is not called unlimited, it is simply not gated here — the provider still is.
+   */
+  function allowanceFor({ estimate, model, store, now = new Date() } = {}) {
+    const limits = MODEL_LIMITS[model];
+    if (!limits || !estimate) return null;
+    const used = usageToday(store, model, now);
+    const tokensLeft = Math.max(0, limits.tokensPerDay - used.tokens);
+    const callsLeft = Math.max(0, limits.requestsPerDay - used.calls);
+    const needTokens = Math.max(1, Math.round(estimate.tokens));
+    const needCalls = Math.max(1, Math.round(estimate.calls));
+    return {
+      model,
+      limits,
+      used,
+      tokensLeft,
+      callsLeft,
+      needTokens,
+      needCalls,
+      fits: !used.exhausted && tokensLeft >= needTokens && callsLeft >= needCalls,
+      exhausted: used.exhausted,
+      shortBy: Math.max(0, needTokens - tokensLeft),
+      minutes: Math.ceil(needTokens / Math.max(1, limits.tokensPerMinute)),
+    };
+  }
+
+  /** The models whose own daily allowance still holds this lecture, roomiest first. */
+  function modelsThatFit({ estimate, store, exclude = "", now = new Date() } = {}) {
+    const out = [];
+    for (const model of Object.keys(MODEL_LIMITS)) {
+      if (model === exclude) continue;
+      const allowance = allowanceFor({ estimate, model, store, now });
+      if (allowance && allowance.fits) {
+        out.push({ model, tokensLeft: allowance.tokensLeft, minutes: allowance.minutes });
+      }
+    }
+    return out.sort((left, right) => right.tokensLeft - left.tokensLeft);
+  }
+
+  // ---------------------------------------------------------------------------
   // The run
   // ---------------------------------------------------------------------------
 
@@ -891,6 +1004,11 @@
     createPacer,
     estimateRun,
     fitsInDay,
+    USAGE_KEY,
+    usageToday,
+    recordUsage,
+    allowanceFor,
+    modelsThatFit,
     runLecture,
   };
 });

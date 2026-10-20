@@ -586,3 +586,96 @@ test("a run that keeps making progress is not cut off by a fixed wall-clock cap"
   assert.ok(Date.now() - began > 150, "and it really did outlast the stall window");
 });
 
+/** A store with no browser behind it, shaped like the one the panel passes in. */
+function memoryStore() {
+  const memory = new Map();
+  return {
+    get: (key, fallback) => (memory.has(key) ? memory.get(key) : fallback),
+    set: (key, value) => memory.set(key, value),
+    memory,
+  };
+}
+
+test("the day's ledger adds up per model, and starts again on the next day", () => {
+  const store = memoryStore();
+  const monday = new Date(2026, 9, 20, 10, 0, 0);
+  const tuesday = new Date(2026, 9, 21, 10, 0, 0);
+
+  pipeline.recordUsage(store, "openai/gpt-oss-120b", { tokens: 50000, calls: 12 }, monday);
+  pipeline.recordUsage(store, "openai/gpt-oss-120b", { tokens: 20000, calls: 4 }, monday);
+
+  assert.deepEqual(
+    {
+      tokens: pipeline.usageToday(store, "openai/gpt-oss-120b", monday).tokens,
+      calls: pipeline.usageToday(store, "openai/gpt-oss-120b", monday).calls,
+    },
+    { tokens: 70000, calls: 16 },
+    "two answers are added, not replaced"
+  );
+  assert.equal(
+    pipeline.usageToday(store, "llama-3.1-8b-instant", monday).tokens,
+    0,
+    "each model has its own meter"
+  );
+  assert.equal(
+    pipeline.usageToday(store, "openai/gpt-oss-120b", tuesday).tokens,
+    0,
+    "a new day starts from zero"
+  );
+});
+
+test("a lecture that cannot finish today is refused before anything is spent", () => {
+  const store = memoryStore();
+  const now = new Date(2026, 9, 20, 10, 0, 0);
+  const estimate = pipeline.estimateRun({ segments: lecture(240) });
+
+  // Almost a full day already gone, so a four-hour lecture no longer fits.
+  pipeline.recordUsage(store, "openai/gpt-oss-120b", { tokens: 160000, calls: 60 }, now);
+  const allowance = pipeline.allowanceFor({
+    estimate,
+    model: "openai/gpt-oss-120b",
+    store,
+    now,
+  });
+
+  assert.equal(allowance.fits, false, "the run is refused");
+  assert.ok(allowance.shortBy > 0, "and the shortfall is a number, not a shrug");
+  assert.equal(allowance.tokensLeft, 40000);
+
+  const elsewhere = pipeline.modelsThatFit({ estimate, store, exclude: "openai/gpt-oss-120b", now });
+  assert.ok(elsewhere.length > 0, "a roomier model is offered instead");
+  assert.ok(
+    elsewhere.every((option) => option.tokensLeft >= allowance.needTokens),
+    "and every one of them really can hold the lecture"
+  );
+});
+
+test("a model the provider has already refused today is not tried again", () => {
+  const store = memoryStore();
+  const now = new Date(2026, 9, 20, 10, 0, 0);
+  const estimate = pipeline.estimateRun({ segments: lecture(15) });
+
+  pipeline.recordUsage(store, "openai/gpt-oss-120b", { exhausted: true }, now);
+  const allowance = pipeline.allowanceFor({
+    estimate,
+    model: "openai/gpt-oss-120b",
+    store,
+    now,
+  });
+
+  assert.equal(allowance.fits, false, "even a tiny lecture is refused");
+  assert.equal(allowance.exhausted, true);
+  assert.ok(allowance.tokensLeft > 0, "although its token counter still has room");
+});
+
+test("an unknown model is not gated on a guessed limit", () => {
+  const store = memoryStore();
+  const estimate = pipeline.estimateRun({ segments: lecture(15) });
+  assert.equal(
+    pipeline.allowanceFor({ estimate, model: "some/new-model", store }),
+    null,
+    "no limit is invented for it"
+  );
+});
+
+

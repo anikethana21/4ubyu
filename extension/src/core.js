@@ -548,7 +548,7 @@
    * notes are a rate-limit message, or a chapter named after one, is worse than a
    * section that says it could not be written.
    */
-  function createCaller({ apiKey, provider = "groq", model, fetchImpl, timeoutMs = 90000, sleepImpl = sleep } = {}) {
+  function createCaller({ apiKey, provider = "groq", model, fetchImpl, timeoutMs = 90000, sleepImpl = sleep, onUsage = null } = {}) {
     const send = fetchImpl || (typeof fetch === "function" ? fetch : null);
     const key = (apiKey || "").trim();
     if (!key || !send) return null;
@@ -575,6 +575,15 @@
         } catch (error) {
           // A refusal is sometimes plain text; the status code still stands.
           payload = null;
+        }
+        // What was actually billed, reported before the answer is returned. A
+        // meter that throws must never turn a good answer into a failure.
+        if (response.status === 200 && payload && payload.usage && typeof onUsage === "function") {
+          try {
+            onUsage({ model: body.model, usage: payload.usage });
+          } catch (error) {
+            /* metering is bookkeeping, not part of the call */
+          }
         }
         return { status: response.status, text, payload };
       } catch (error) {
