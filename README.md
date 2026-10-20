@@ -43,6 +43,7 @@ no backend of ours to go down, no ingest token to leak, and no service that can 
 | **Timestamps that work** | Every chapter and section timestamp is a real link to `youtube.com/watch?v=…&t=…`, opening in a new tab. When you render the page with the player, they scroll the video instead. |
 | **One file you own** | The notes are a plain document; the page is a rendering of it. The page carries its own stylesheet, font and scripts — **zero external requests** — so it still works in ten years, offline, on a laptop with no network. |
 | **PDF in one click** | *Save as PDF* in the page uses the browser's own printer with a `@media print` stylesheet. No PDF library, no file-size inflation, no second program. |
+| **A floating index, a reading column** | The contents are a glass panel pinned to the left of the page — one floating column, not a strip above the text. It tracks where you are as you scroll, and the notes read in their own column beside it. On a narrow screen the index moves above the notes and the page becomes one column. |
 | **A library that costs nothing to reopen** | Every finished lecture is kept in your script manager's storage. Drawing the page again — next week, on another machine, in a different shape — costs **zero** model calls. |
 | **Free-tier honest** | More than 8,000 tokens a minute cannot be sent to a free tier, so a run is paced rather than refused, and the panel tells you how many lectures of this size the model's day holds *before* you spend anything. |
 
@@ -113,6 +114,31 @@ default model.
 
 Context is not a limit: the transcript is read in twelve-minute parts, so no single request ever holds the
 whole lecture. Requests are not a limit either — four hours is 80 calls against a thousand.
+
+### English captions only
+
+The notes are written in English, from English captions. This is a deliberate limit, not an oversight: the
+prompts, the chapter schema, the notice wording and the failure messages are all English, and a lecture in
+another script produced mixed-language notes that were worse than none. So the app checks the captions
+**before the first API call** and, if fewer than 70% of the letters are Latin, stops with:
+
+> *This lecture's captions are not in English (only 4% of the letters are Latin). 4ubyu writes English notes
+> from English captions, so it will not spend a call on this one. Use a lecture with English captions, or turn
+> on YouTube's auto-translated English captions and try again.*
+
+What that check does and does not catch:
+
+| Captions | Result |
+|---|---|
+| English, including auto-generated | works |
+| Hindi, Arabic, Chinese, Japanese, Korean, Russian, Greek, Hebrew, Thai | refused before spending, with the real percentage shown |
+| French, Spanish, German, Portuguese, Italian, Turkish, Vietnamese (Latin script) | **not detected** — the check passes, and the notes will be written in English from non-English captions, which usually reads badly |
+
+The reason for the last row is that the check measures script, not language: a Latin-script lecture is
+indistinguishable from English by counting letters. There is no offline language classifier in the build, and
+adding one would mean shipping a model file, which the no-dependency rule forbids. If you study in a
+Latin-script language, translate the captions to English first (YouTube can do this on the video page) and the
+notes will be written from that track.
 
 ### It stops before it spends, not after
 
@@ -186,7 +212,7 @@ userscript is the same program.
 
 ```bash
 npm install                 # nothing to install, but this is the habit
-npm test                    # 106 JS tests: core, page, pipeline, built artifacts
+npm test                    # 126 JS tests: core, page, pipeline, built artifacts
 npm run assets              # regenerate src/assets.js from templates/base_workspace.html
 npm run assets:check        # fail if the page's stylesheet has drifted (or gained a remote URL)
 npm run build               # write 4ubyu.user.js and extension/dist/store/

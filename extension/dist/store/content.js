@@ -304,6 +304,46 @@
   }
 
   // -------------------------------------------------------------------------
+  // Which language the transcript is in
+  // -------------------------------------------------------------------------
+
+  /**
+   * What share of a transcript's letters are Latin letters.
+   *
+   * The product writes English notes, and it can only do that honestly from
+   * English speech. YouTube will sometimes hand back a track that is not the
+   * language it claims, or a "translation" that quietly did not happen, so the
+   * language label is not enough on its own — the words themselves are checked.
+   * Counting letters rather than words is deliberate: it needs no dictionary,
+   * works on an auto-generated caption line, and a Devanagari or Han transcript
+   * is unmistakable.
+   */
+  function latinShare(text) {
+    const source = String(text || "");
+    const letters = source.match(/\p{L}/gu);
+    if (!letters || !letters.length) return 1;
+    const latin = source.match(/\p{Script=Latin}/gu);
+    return (latin ? latin.length : 0) / letters.length;
+  }
+
+  /**
+   * Whether a transcript reads as English.
+   *
+   * Accented European languages share the Latin script and pass here; that is a
+   * known limit, stated in the README rather than hidden behind a claim of
+   * language detection. What this reliably catches is a transcript in a
+   * different writing system, which is the case the product cannot serve.
+   * A transcript with too few letters to judge is not rejected.
+   */
+  function isEnglishTranscript(text, { minimumLetters = 120, threshold = 0.7 } = {}) {
+    const source = String(text || "");
+    const letters = (source.match(/\p{L}/gu) || []).length;
+    if (letters < minimumLetters) return { english: true, share: 1, letters };
+    const share = latinShare(source);
+    return { english: share >= threshold, share, letters };
+  }
+
+  // -------------------------------------------------------------------------
   // Reading the model's answer to the composer prompt
   // -------------------------------------------------------------------------
 
@@ -662,6 +702,12 @@
     const config = PROVIDERS[provider] || PROVIDERS.groq;
     let target = model || config.defaultModel;
     let calls = 0;
+    // The provider's own report for the most recent answer. The pacer reads it:
+    // once it knows what an answer really costs, it stops reserving the whole
+    // completion ceiling for every request. With two calls in flight this is
+    // the latest sample, not a matched one — good enough for an average, and
+    // documented on the pacer.
+    let latestUsage = null;
 
     async function request(body, timeout = timeoutMs) {
       const controller = typeof AbortController === "function" ? new AbortController() : null;
@@ -684,6 +730,9 @@
         }
         // What was actually billed, reported before the answer is returned. A
         // meter that throws must never turn a good answer into a failure.
+        if (response.status === 200 && payload && payload.usage) {
+          latestUsage = payload.usage;
+        }
         if (response.status === 200 && payload && payload.usage && typeof onUsage === "function") {
           try {
             onUsage({ model: body.model, usage: payload.usage });
@@ -759,6 +808,9 @@
       model: target,
       get calls() {
         return calls;
+      },
+      get usage() {
+        return latestUsage;
       },
       setModel: (next) => {
         target = next;
@@ -986,6 +1038,8 @@
     LABELS,
     COMPOSER_PROMPT,
     MAX_COMPLETION_TOKENS,
+    latinShare,
+    isEnglishTranscript,
     PROVIDERS,
     isRequestTooLarge,
     isDailyLimit,
@@ -1938,6 +1992,559 @@ ${videoId
   }
 
   // ---------------------------------------------------------------------------
+  // Page chrome: the floating index and the reading column
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Notes-only is its own page, and the extracted stylesheet never described
+   * it: it was written for a three-pane workspace with a video column, and it
+   * has no rule for `.handbook-main`, `.handbook-sidebar` or the notes-only
+   * reading column. Without these rules the index renders as a full-width card
+   * stacked on top of the notes — which is exactly what it looked like.
+   *
+   * The rules are appended after the extracted sheet, and they carry
+   * `!important` where the sheet's own rules do, so the page looks the same
+   * whether or not the old template is ever regenerated.
+   */
+  const PAGE_LAYOUT_CSS = `
+  /* ==========================================================================
+     4U BY U — notes page shell: one floating glass index, one reading column
+     ========================================================================== */
+
+  #app-workspace.notes-only {
+    --glass-face: linear-gradient(158deg, rgb(30 34 43 / 0.86), rgb(14 16 21 / 0.92));
+    --glass-line: rgb(255 255 255 / 0.13);
+    --glass-line-lit: rgb(255 255 255 / 0.30);
+    --glass-shadow: 0 24px 60px -32px rgb(0 0 0 / 0.95), 0 2px 12px -6px rgb(0 0 0 / 0.6);
+    --index-width: clamp(258px, 21vw, 330px);
+    box-sizing: border-box;
+  }
+
+  #app-workspace.notes-only *,
+  #app-workspace.notes-only *::before,
+  #app-workspace.notes-only *::after { box-sizing: border-box; }
+
+  /* --- shell ------------------------------------------------------------- */
+  @media (min-width: 961px) {
+    #app-workspace.notes-only {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 14px !important;
+      width: 100% !important;
+      max-width: none !important;
+      height: 100vh !important;
+      padding: 14px clamp(16px, 2.2vw, 34px) 0 !important;
+      overflow: hidden !important;
+    }
+
+    #app-workspace.notes-only .handbook-main {
+      display: grid !important;
+      grid-template-columns: var(--index-width) minmax(0, 1fr) !important;
+      gap: clamp(16px, 1.6vw, 26px) !important;
+      align-items: stretch !important;
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    #app-workspace.notes-only .handbook-pane,
+    #app-workspace.notes-only #handbook-pane {
+      height: 100% !important;
+      max-height: 100% !important;
+      min-width: 0 !important;
+      padding: 0 6px 80px 0 !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      scrollbar-width: thin;
+      scrollbar-color: rgb(255 255 255 / 0.18) transparent;
+    }
+  }
+
+  /* --- the floating index ------------------------------------------------ */
+  #app-workspace.notes-only .handbook-sidebar {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 8px !important;
+    border: 1px solid var(--glass-line) !important;
+    border-radius: 22px !important;
+    background:
+      radial-gradient(340px 340px at var(--mx, 50%) var(--my, 0%),
+        rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.02) 46%, transparent 72%),
+      var(--glass-face) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(160%) !important;
+    backdrop-filter: blur(26px) saturate(160%) !important;
+    box-shadow: var(--glass-shadow), inset 0 1px 0 rgb(255 255 255 / 0.14) !important;
+    overflow: hidden !important;
+    transition: box-shadow 220ms ease, border-color 220ms ease !important;
+  }
+
+  /* The lit rim: a 1px gradient border that follows the pointer. */
+  #app-workspace.notes-only #handbook-toc::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background:
+      radial-gradient(260px 260px at var(--mx, 50%) var(--my, 0%),
+        rgb(255 255 255 / 0.55), transparent 70%),
+      linear-gradient(160deg, rgb(255 255 255 / 0.26), rgb(255 255 255 / 0.02) 45%, transparent 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  #app-workspace.notes-only #handbook-toc > * { position: relative; z-index: 1; }
+
+  #app-workspace.notes-only #handbook-toc .toc-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    margin: 0 0 4px 0 !important;
+    padding: 9px 10px 9px 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgb(255 255 255 / 0.07) !important;
+    border-radius: 15px !important;
+    cursor: pointer !important;
+    user-select: none !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-header:hover {
+    background: rgb(255 255 255 / 0.05) !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-header h3 {
+    margin: 0 !important;
+    color: #e8eef7 !important;
+    font-family: 'Roboto', system-ui, sans-serif !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.17em !important;
+    text-transform: uppercase !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-header-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-fold-icon {
+    opacity: 0.55 !important;
+    transition: transform 180ms ease !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc.toc-folded .toc-fold-icon {
+    transform: rotate(-90deg) !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-header-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-count {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    color: rgb(226 235 247 / 0.62) !important;
+    font-family: 'Roboto', system-ui, sans-serif !important;
+    font-size: 0.66rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.06em !important;
+    white-space: nowrap !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-fold-hint { display: none !important; }
+
+  #app-workspace.notes-only #handbook-toc .toc-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 4px 4px 4px !important;
+    list-style: none !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgb(255 255 255 / 0.16) transparent !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-list li { margin: 0 !important; }
+
+  #app-workspace.notes-only #handbook-toc .toc-list li a,
+  #app-workspace.notes-only #handbook-toc .toc-list li a.toc-link {
+    display: grid !important;
+    grid-template-columns: 1.55em minmax(0, 1fr) !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+    margin: 1px 0 !important;
+    border-radius: 11px !important;
+    color: #c7d2e0 !important;
+    text-decoration: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: background 140ms ease, color 140ms ease !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-list li a:hover,
+  #app-workspace.notes-only #handbook-toc .toc-list li a.toc-link:hover {
+    background: rgb(255 255 255 / 0.07) !important;
+    color: #ffffff !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-link.is-current {
+    background: linear-gradient(90deg, rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.03)) !important;
+    box-shadow: inset 2px 0 0 rgb(255 255 255 / 0.55) !important;
+    color: #ffffff !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-order {
+    min-width: 0 !important;
+    color: rgb(226 235 247 / 0.36) !important;
+    font-family: 'Roboto Mono', ui-monospace, monospace !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    text-align: right !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-title {
+    flex: initial !important;
+    color: inherit !important;
+    font-family: 'Roboto', system-ui, sans-serif !important;
+    font-size: 0.845rem !important;
+    font-weight: 500 !important;
+    line-height: 1.38 !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .toc-ts {
+    grid-column: 2 !important;
+    justify-self: start !important;
+    margin: 2px 0 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    color: rgb(226 235 247 / 0.32) !important;
+    font-family: 'Roboto Mono', ui-monospace, monospace !important;
+    font-size: 0.62rem !important;
+    font-weight: 500 !important;
+  }
+
+  #app-workspace.notes-only #handbook-toc .search-empty {
+    padding: 10px 12px !important;
+    color: rgb(226 235 247 / 0.6) !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* --- header ------------------------------------------------------------ */
+  #app-workspace.notes-only .handbook-header {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    z-index: 30 !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 12px 18px 11px !important;
+    border: 1px solid var(--glass-line) !important;
+    border-radius: 20px !important;
+    background:
+      radial-gradient(520px 180px at 18% 0%, rgb(255 255 255 / 0.10), transparent 70%),
+      linear-gradient(158deg, rgb(28 32 41 / 0.86), rgb(15 17 22 / 0.92)) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(160%) !important;
+    backdrop-filter: blur(26px) saturate(160%) !important;
+    box-shadow: 0 18px 46px -30px rgb(0 0 0 / 0.95), inset 0 1px 0 rgb(255 255 255 / 0.12) !important;
+    transition: none !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .header-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 0 0 4px 0 !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .brand-title {
+    color: #f8fafc !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.22em !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .brand-subtitle {
+    color: rgb(226 235 247 / 0.42) !important;
+    font-size: 0.52rem !important;
+    letter-spacing: 0.3em !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .video-title {
+    margin: 0 0 3px 0 !important;
+    color: #f1f5f9 !important;
+    font-family: 'Plus Jakarta Sans', 'Roboto', system-ui, sans-serif !important;
+    font-size: clamp(1.02rem, 1.25vw, 1.32rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.28 !important;
+    letter-spacing: -0.015em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .video-meta {
+    margin: 0 0 10px 0 !important;
+    color: rgb(203 213 225 / 0.6) !important;
+    font-size: 0.74rem !important;
+    line-height: 1.4 !important;
+  }
+
+  #app-workspace.notes-only .handbook-header.minimized {
+    padding: 12px 18px 11px !important;
+    background:
+      radial-gradient(520px 180px at 18% 0%, rgb(255 255 255 / 0.10), transparent 70%),
+      linear-gradient(158deg, rgb(28 32 41 / 0.86), rgb(15 17 22 / 0.92)) !important;
+  }
+
+  #app-workspace.notes-only .handbook-header.minimized .header-top,
+  #app-workspace.notes-only .handbook-header.minimized .video-meta { display: flex !important; }
+
+  #app-workspace.notes-only .handbook-header.minimized .video-title {
+    color: #f1f5f9 !important;
+    font-size: clamp(1.02rem, 1.25vw, 1.32rem) !important;
+    white-space: nowrap !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .minimal-toolbar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .search-input-wrapper {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: 520px !important;
+    height: 34px !important;
+    padding: 0 10px !important;
+    border: 1px solid rgb(255 255 255 / 0.1) !important;
+    border-radius: 10px !important;
+    background: rgb(255 255 255 / 0.05) !important;
+    transition: border-color 150ms ease, background 150ms ease !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .search-input-wrapper:focus-within {
+    border-color: rgb(255 255 255 / 0.28) !important;
+    background: rgb(255 255 255 / 0.08) !important;
+  }
+
+  #app-workspace.notes-only .handbook-header #notes-search {
+    width: 100% !important;
+    height: 100% !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    color: #e9eef7 !important;
+    font-family: 'Roboto', system-ui, sans-serif !important;
+    font-size: 0.8rem !important;
+  }
+
+  #app-workspace.notes-only .handbook-header #notes-search::placeholder {
+    color: rgb(203 213 225 / 0.42) !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .toolbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    margin-left: auto !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .btn-tool-sm {
+    height: 34px !important;
+    padding: 0 13px !important;
+    border: 1px solid rgb(255 255 255 / 0.14) !important;
+    border-radius: 10px !important;
+    background: rgb(255 255 255 / 0.06) !important;
+    color: #e9eef7 !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    transition: background 150ms ease, border-color 150ms ease !important;
+  }
+
+  #app-workspace.notes-only .handbook-header .btn-tool-sm:hover {
+    background: rgb(255 255 255 / 0.12) !important;
+    border-color: rgb(255 255 255 / 0.26) !important;
+  }
+
+  /* --- the reading column ------------------------------------------------ */
+  #app-workspace.notes-only .provenance,
+  #app-workspace.notes-only .notes-provenance {
+    margin: 2px 2px 14px !important;
+    color: rgb(203 213 225 / 0.5) !important;
+    font-size: 0.72rem !important;
+    line-height: 1.5 !important;
+  }
+
+  #app-workspace.notes-only .chapters-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    padding: 0 !important;
+    max-width: 1120px !important;
+  }
+
+  #app-workspace.notes-only .chapter-card,
+  #app-workspace.notes-only #handbook-chapters .chapter-card,
+  #app-workspace.notes-only article.chapter-card {
+    margin: 0 !important;
+    padding: clamp(18px, 2vw, 30px) clamp(18px, 2.2vw, 34px) !important;
+    border: 1px solid rgb(255 255 255 / 0.55) !important;
+    border-radius: 22px !important;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.97), rgb(244 247 251 / 0.95)) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(130%) !important;
+    backdrop-filter: blur(18px) saturate(130%) !important;
+    box-shadow:
+      0 26px 60px -38px rgb(0 0 0 / 0.95),
+      0 2px 10px -6px rgb(0 0 0 / 0.5),
+      inset 0 1px 0 rgb(255 255 255 / 0.9) !important;
+    scroll-margin-top: 14px !important;
+  }
+
+  #app-workspace.notes-only .chapter-card:hover,
+  #app-workspace.notes-only #handbook-chapters .chapter-card:hover {
+    transform: none !important;
+    border-color: rgb(255 255 255 / 0.8) !important;
+    box-shadow:
+      0 30px 70px -40px rgb(0 0 0 / 1),
+      0 2px 12px -6px rgb(0 0 0 / 0.55),
+      inset 0 1px 0 rgb(255 255 255 / 0.95) !important;
+  }
+
+  #app-workspace.notes-only .chapter-card .chapter-heading {
+    font-size: clamp(1.25rem, 1.6vw, 1.52rem) !important;
+  }
+
+  #app-workspace.notes-only .chapter-card .section-block {
+    padding-top: 18px !important;
+    margin-top: 18px !important;
+    border-top: 1px solid rgb(15 23 42 / 0.09) !important;
+  }
+
+  #app-workspace.notes-only .section-block .section-header {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+
+  /* --- narrow screens: the index moves back above the notes -------------- */
+  @media (max-width: 520px) {
+    #app-workspace.notes-only .handbook-header .btn-tool-sm span { display: none !important; }
+    #app-workspace.notes-only .handbook-header .btn-tool-sm { padding: 0 10px !important; }
+  }
+
+  @media (max-width: 960px) {
+    #app-workspace.notes-only {
+      display: block !important;
+      padding: 12px 12px 40px !important;
+      height: auto !important;
+    }
+
+    #app-workspace.notes-only .handbook-main {
+      display: block !important;
+      margin-top: 12px !important;
+    }
+
+    #app-workspace.notes-only .handbook-sidebar {
+      display: block !important;
+      height: auto !important;
+      margin-bottom: 14px !important;
+    }
+
+    #app-workspace.notes-only #handbook-toc {
+      max-height: 44vh !important;
+    }
+
+    #app-workspace.notes-only .handbook-header {
+      position: relative !important;
+    }
+
+    #app-workspace.notes-only .handbook-header .video-title {
+      white-space: normal !important;
+    }
+  }
+
+  /* --- print: paper, not chrome ------------------------------------------ */
+  @media print {
+    #app-workspace.notes-only {
+      display: block !important;
+      height: auto !important;
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+
+    #app-workspace.notes-only .handbook-main { display: block !important; }
+    #app-workspace.notes-only .handbook-sidebar { display: none !important; }
+    #app-workspace.notes-only .handbook-header {
+      position: static !important;
+      box-shadow: none !important;
+      border: 0 !important;
+      background: none !important;
+      color: #000 !important;
+    }
+    #app-workspace.notes-only .handbook-header .video-title,
+    #app-workspace.notes-only .handbook-header .brand-title { color: #000 !important; }
+    #app-workspace.notes-only #handbook-pane,
+    #app-workspace.notes-only .handbook-pane {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+    #app-workspace.notes-only .chapter-card {
+      background: #fff !important;
+      box-shadow: none !important;
+      border: 1px solid #d8dee8 !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+  }
+  `;
+
+  // ---------------------------------------------------------------------------
   // The whole page
   // ---------------------------------------------------------------------------
 
@@ -1948,7 +2555,7 @@ ${videoId
     /* TOC fold fix */
     #handbook-toc.toc-folded .toc-list { display: none !important; }
     `;
-    const fullCss = css + extraCss;
+    const fullCss = css + extraCss + PAGE_LAYOUT_CSS;
 
     const metadata = document.video_metadata || {};
     const title = metadata.title || "Lecture notes";
@@ -1989,11 +2596,7 @@ ${videoId
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(title)} — 4 U By U</title>
   <meta name="generator" content="4 U By U notes page (stylesheet from templates/base_workspace.html (sha ${assets.SOURCE?.css_sha256_12?.slice(0,12) || "unknown"}))" />
-  <style>${css}
-
-    /* TOC fold fix */
-    #handbook-toc.toc-folded .toc-list { display: none !important; }
-  </style>
+  <style>${fullCss}</style>
 </head>
 <body class="workspace-body">
   <div id="app-workspace" class="${view.player ? "" : "notes-only"}">
@@ -2106,6 +2709,39 @@ ${chaptersHtml}
       }
     }
 
+    // The index is a lit surface: the highlight follows the pointer, and the
+    // chapter being read is marked as the column scrolls.
+    (function () {
+      const tocEl = document.getElementById('handbook-toc');
+      if (!tocEl) return;
+      if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        tocEl.addEventListener('pointermove', function (event) {
+          const rect = tocEl.getBoundingClientRect();
+          tocEl.style.setProperty('--mx', (event.clientX - rect.left).toFixed(1) + 'px');
+          tocEl.style.setProperty('--my', (event.clientY - rect.top).toFixed(1) + 'px');
+        });
+      }
+
+      const pane = document.getElementById('handbook-pane');
+      if (!pane || typeof IntersectionObserver !== 'function') return;
+      const links = new Map();
+      tocEl.querySelectorAll('.toc-link').forEach(function (link) {
+        links.set(String(link.getAttribute('href') || '').slice(1), link);
+      });
+      if (!links.size) return;
+      const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          links.forEach(function (link) { link.classList.remove('is-current'); });
+          const current = links.get(entry.target.id);
+          if (current) current.classList.add('is-current');
+        });
+      }, { root: pane, rootMargin: '-8% 0px -72% 0px', threshold: 0 });
+      document.querySelectorAll('.chapter-card[id]').forEach(function (card) {
+        observer.observe(card);
+      });
+    })();
+
     // Smooth scroll for TOC links
     document.querySelectorAll('.toc-link').forEach(link => {
       link.addEventListener('click', function(e) {
@@ -2154,7 +2790,7 @@ ${chaptersHtml}
     PAGE_PRELUDE: "",
     PAGE_EPILOGUE: "",
     NOTES_SCRIPT: "",
-    PAGE_STYLE: assets.WORKSPACE_CSS + `
+    PAGE_STYLE: assets.WORKSPACE_CSS + PAGE_LAYOUT_CSS + `
     /* TOC fold fix */
     #handbook-toc.toc-folded .toc-list { display: none !important; }
     `,
@@ -2571,13 +3207,46 @@ ${chaptersHtml}
    * is still handled: `core.invokeReadingTranscript` reports it, and `runLecture`
    * stops on a daily limit and carries on after a per-minute one.
    */
-  function createPacer({ call, tokensPerMinute = 0, sleepImpl = core.sleep, onWait, now = () => Date.now() } = {}) {
+  function createPacer({ call, tokensPerMinute = 0, sleepImpl = core.sleep, onWait, now = () => Date.now(), usage = null } = {}) {
     const limit = Number(tokensPerMinute) || 0;
     const spent = [];
 
+    /**
+     * How many output tokens to reserve for a request.
+     *
+     * This used to always be the completion ceiling (3,072), and that one
+     * choice made every run about twice as slow as it needed to be: two
+     * requests at ~1,700 in + 3,072 reserved is over 8,000, so the pacer
+     * allowed exactly one call per minute even though the answers were half
+     * that size. Reserving a measured answer plus a small margin lets two
+     * calls share a minute, which is the difference between 15 minutes and 8
+     * for an hour of lecture.
+     *
+     * The first call still reserves the ceiling, because nothing has been
+     * measured yet. If the provider reports a large answer, the reserve stays
+     * large and behaviour is exactly what it was before. A 429 that slips
+     * through is still handled by the caller, so this trades a little risk for
+     * a measured speedup, not a guess.
+     */
+    function outputReserve() {
+      if (typeof usage !== "function") return core.MAX_COMPLETION_TOKENS;
+      let reported = null;
+      try {
+        reported = usage();
+      } catch (error) {
+        reported = null;
+      }
+      const completion = Number(reported && reported.completion_tokens) || 0;
+      if (!(completion > 0)) return core.MAX_COMPLETION_TOKENS;
+      return Math.min(
+        core.MAX_COMPLETION_TOKENS,
+        Math.max(700, Math.ceil(completion * 1.08))
+      );
+    }
+
     function tokensFor(prompt) {
       const chars = typeof prompt === "string" ? prompt.length : JSON.stringify(prompt || "").length;
-      return Math.ceil(chars / 4) + core.MAX_COMPLETION_TOKENS;
+      return Math.ceil(chars / 4) + outputReserve();
     }
 
     async function paced(request) {
@@ -3293,6 +3962,19 @@ ${chaptersHtml}
 .ubyu-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #38bdf8, #facc15); transition: width 0.3s ease; }
 .ubyu-log { margin: 10px 0 0; padding: 0; list-style: none; font: 11px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: #94a3b8; }
 .ubyu-log li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ubyu-quote {
+  min-height: 36px; margin: 0 0 10px; padding: 8px 12px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(148, 163, 184, 0.06);
+  color: #cbd5e1; font: italic 12px/1.5 Georgia, "Times New Roman", serif;
+  opacity: 0; transform: translateY(3px);
+  transition: opacity 420ms ease, transform 420ms ease;
+}
+.ubyu-quote[data-visible="1"] { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ubyu-quote { transition: opacity 120ms linear; transform: none; }
+}
 .ubyu-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed rgba(148, 163, 184, 0.16); }
 .ubyu-row:last-child { border-bottom: 0; }
 .ubyu-row b { font-weight: 600; color: #f8fafc; }
@@ -3350,6 +4032,8 @@ ${chaptersHtml}
       stopped: "",
       running: false,
       cancel: false,
+      quoteText: "",
+      quoteVisible: false,
       library: Array.isArray(store.get(KEY_LIBRARY, [])) ? store.get(KEY_LIBRARY, []) : [],
     };
 
@@ -3378,6 +4062,72 @@ ${chaptersHtml}
     doc.body.appendChild(node);
 
     const body = node.querySelector("[data-body]");
+
+    // -----------------------------------------------------------------------
+    // The waiting line
+    //
+    // A run is paced by the provider's tokens-per-minute allowance, so there
+    // are real minutes where the honest thing to show is the log and nothing
+    // else. This puts one calm line above it, holds it for three seconds, lets
+    // it go, and brings the next one. It is deliberately not a spinner and not
+    // a promise: it is something to read while the work happens.
+    // -----------------------------------------------------------------------
+
+    const LOADING_LINES = [
+      "Good things take time.",
+      "Slow is smooth; smooth is fast.",
+      "An hour of lecture is an hour of thinking. The notes take what they take.",
+      "Nothing here is invented — that is why it is not instant.",
+      "One section at a time, in the order you would have heard it.",
+      "The captions are already read. The writing is the part that takes minutes.",
+      "Patience is part of quality.",
+      "Written once, studied many times.",
+      "A careful explanation cannot be rushed.",
+      "Every section is written from the transcript, never from memory.",
+      "You are paying for notes you will keep, not for a progress bar.",
+      "The page is being built slowly so it opens instantly later.",
+      "Depth is the goal; speed is only the constraint.",
+      "Wait for the good part. It is being written now.",
+    ];
+
+    let quoteTimer = null;
+    let quoteIndex = 0;
+
+    function paintQuote() {
+      const element = body.querySelector("#ubyu-quote");
+      if (!element) return;
+      element.textContent = state.quoteText;
+      element.setAttribute("data-visible", state.quoteVisible ? "1" : "0");
+    }
+
+    function startQuotes() {
+      stopQuotes();
+      quoteIndex = Math.floor(Math.random() * LOADING_LINES.length);
+      state.quoteText = LOADING_LINES[quoteIndex];
+      state.quoteVisible = true;
+      paintQuote();
+      // Three seconds on, three seconds off. The first line is visible at once
+      // so the space is never an empty box while a call is warming up.
+      quoteTimer = setInterval(() => {
+        if (state.quoteVisible) {
+          state.quoteVisible = false;
+        } else {
+          quoteIndex = (quoteIndex + 1) % LOADING_LINES.length;
+          state.quoteText = LOADING_LINES[quoteIndex];
+          state.quoteVisible = true;
+        }
+        paintQuote();
+      }, 3000);
+    }
+
+    function stopQuotes() {
+      if (quoteTimer) {
+        clearInterval(quoteTimer);
+        quoteTimer = null;
+      }
+      state.quoteVisible = false;
+      paintQuote();
+    }
 
     // -----------------------------------------------------------------------
     // Storing and getting files
@@ -3549,11 +4299,13 @@ ${chaptersHtml}
       state.runError = "";
       state.stopped = "";
       render();
+      startQuotes();
 
       const limits = pipeline.MODEL_LIMITS[state.model];
       const call = pipeline.createPacer({
         call: caller.call,
         tokensPerMinute: limits ? limits.tokensPerMinute : 0,
+        usage: () => caller.usage,
         onWait: (ms) => {
           line(`Waiting ${Math.ceil(ms / 1000)}s for the minute's allowance…`);
           render();
@@ -3628,6 +4380,7 @@ ${chaptersHtml}
         state.step = "ready";
       } finally {
         state.running = false;
+        stopQuotes();
         // The ledger has just grown; the next estimate must see the new total.
         price();
         render();
@@ -3820,7 +4573,8 @@ ${chaptersHtml}
     }
 
     function runningView() {
-      return `<p><b>Writing your notes.</b> Nothing is invented: anything the model cannot write up is
+      return `<div class="ubyu-quote" id="ubyu-quote" data-visible="${state.quoteVisible ? "1" : "0"}">${escapeHtml(state.quoteText)}</div>
+        <p><b>Writing your notes.</b> Nothing is invented: anything the model cannot write up is
         marked as a notice, with the lecture's own words underneath.</p>
         <div class="ubyu-bar"><span style="width: ${state.percent}%"></span></div>
         <ul class="ubyu-log">${state.log.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")}</ul>
@@ -3897,10 +4651,18 @@ ${chaptersHtml}
         render();
       }
       if (!state.lecture && !state.reading && typeof capture === "function") readLecture();
+      // Reopening mid-run puts the waiting line back without touching the work.
+      if (state.running) startQuotes();
     }
 
     function close() {
       state.open = false;
+      // A closed panel has nothing to read the quote, and a run that is still
+      // going will restart it if it is opened again.
+      if (quoteTimer) {
+        clearInterval(quoteTimer);
+        quoteTimer = null;
+      }
       render();
     }
 
@@ -5051,6 +5813,23 @@ ${chaptersHtml}
       throw new Error(
         "Only " + segments.length + " caption line" + (segments.length === 1 ? "" : "s") +
           " could be found. Open the video's transcript panel once, then try again."
+      );
+    }
+
+    // The notes are written in English, from English speech. A non-English
+    // transcript is refused here, before a single API call is spent, with the
+    // real reason and a number rather than a vague "could not read this".
+    const spokenText = segments.map((segment) => segment.text || "").join(" ");
+    const language = UBYU.isEnglishTranscript(spokenText);
+    if (!language.english) {
+      const percent = Math.round(language.share * 100);
+      throw new Error(
+        "These captions are not in English, and 4 U By U only writes English notes. " +
+          "Only " + percent + "% of the letters in this transcript are Latin, so the words " +
+          "would have to be machine-translated before they could be explained — and technical " +
+          "terms do not survive that. Choose a lecture with English captions" +
+          (track.language ? " (this track is labelled \"" + track.language + "\")" : "") +
+          ". YouTube's own auto-translate is used when a track offers it; this one does not."
       );
     }
 

@@ -406,13 +406,46 @@
    * is still handled: `core.invokeReadingTranscript` reports it, and `runLecture`
    * stops on a daily limit and carries on after a per-minute one.
    */
-  function createPacer({ call, tokensPerMinute = 0, sleepImpl = core.sleep, onWait, now = () => Date.now() } = {}) {
+  function createPacer({ call, tokensPerMinute = 0, sleepImpl = core.sleep, onWait, now = () => Date.now(), usage = null } = {}) {
     const limit = Number(tokensPerMinute) || 0;
     const spent = [];
 
+    /**
+     * How many output tokens to reserve for a request.
+     *
+     * This used to always be the completion ceiling (3,072), and that one
+     * choice made every run about twice as slow as it needed to be: two
+     * requests at ~1,700 in + 3,072 reserved is over 8,000, so the pacer
+     * allowed exactly one call per minute even though the answers were half
+     * that size. Reserving a measured answer plus a small margin lets two
+     * calls share a minute, which is the difference between 15 minutes and 8
+     * for an hour of lecture.
+     *
+     * The first call still reserves the ceiling, because nothing has been
+     * measured yet. If the provider reports a large answer, the reserve stays
+     * large and behaviour is exactly what it was before. A 429 that slips
+     * through is still handled by the caller, so this trades a little risk for
+     * a measured speedup, not a guess.
+     */
+    function outputReserve() {
+      if (typeof usage !== "function") return core.MAX_COMPLETION_TOKENS;
+      let reported = null;
+      try {
+        reported = usage();
+      } catch (error) {
+        reported = null;
+      }
+      const completion = Number(reported && reported.completion_tokens) || 0;
+      if (!(completion > 0)) return core.MAX_COMPLETION_TOKENS;
+      return Math.min(
+        core.MAX_COMPLETION_TOKENS,
+        Math.max(700, Math.ceil(completion * 1.08))
+      );
+    }
+
     function tokensFor(prompt) {
       const chars = typeof prompt === "string" ? prompt.length : JSON.stringify(prompt || "").length;
-      return Math.ceil(chars / 4) + core.MAX_COMPLETION_TOKENS;
+      return Math.ceil(chars / 4) + outputReserve();
     }
 
     async function paced(request) {

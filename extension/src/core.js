@@ -198,6 +198,46 @@
   }
 
   // -------------------------------------------------------------------------
+  // Which language the transcript is in
+  // -------------------------------------------------------------------------
+
+  /**
+   * What share of a transcript's letters are Latin letters.
+   *
+   * The product writes English notes, and it can only do that honestly from
+   * English speech. YouTube will sometimes hand back a track that is not the
+   * language it claims, or a "translation" that quietly did not happen, so the
+   * language label is not enough on its own — the words themselves are checked.
+   * Counting letters rather than words is deliberate: it needs no dictionary,
+   * works on an auto-generated caption line, and a Devanagari or Han transcript
+   * is unmistakable.
+   */
+  function latinShare(text) {
+    const source = String(text || "");
+    const letters = source.match(/\p{L}/gu);
+    if (!letters || !letters.length) return 1;
+    const latin = source.match(/\p{Script=Latin}/gu);
+    return (latin ? latin.length : 0) / letters.length;
+  }
+
+  /**
+   * Whether a transcript reads as English.
+   *
+   * Accented European languages share the Latin script and pass here; that is a
+   * known limit, stated in the README rather than hidden behind a claim of
+   * language detection. What this reliably catches is a transcript in a
+   * different writing system, which is the case the product cannot serve.
+   * A transcript with too few letters to judge is not rejected.
+   */
+  function isEnglishTranscript(text, { minimumLetters = 120, threshold = 0.7 } = {}) {
+    const source = String(text || "");
+    const letters = (source.match(/\p{L}/gu) || []).length;
+    if (letters < minimumLetters) return { english: true, share: 1, letters };
+    const share = latinShare(source);
+    return { english: share >= threshold, share, letters };
+  }
+
+  // -------------------------------------------------------------------------
   // Reading the model's answer to the composer prompt
   // -------------------------------------------------------------------------
 
@@ -556,6 +596,12 @@
     const config = PROVIDERS[provider] || PROVIDERS.groq;
     let target = model || config.defaultModel;
     let calls = 0;
+    // The provider's own report for the most recent answer. The pacer reads it:
+    // once it knows what an answer really costs, it stops reserving the whole
+    // completion ceiling for every request. With two calls in flight this is
+    // the latest sample, not a matched one — good enough for an average, and
+    // documented on the pacer.
+    let latestUsage = null;
 
     async function request(body, timeout = timeoutMs) {
       const controller = typeof AbortController === "function" ? new AbortController() : null;
@@ -578,6 +624,9 @@
         }
         // What was actually billed, reported before the answer is returned. A
         // meter that throws must never turn a good answer into a failure.
+        if (response.status === 200 && payload && payload.usage) {
+          latestUsage = payload.usage;
+        }
         if (response.status === 200 && payload && payload.usage && typeof onUsage === "function") {
           try {
             onUsage({ model: body.model, usage: payload.usage });
@@ -653,6 +702,9 @@
       model: target,
       get calls() {
         return calls;
+      },
+      get usage() {
+        return latestUsage;
       },
       setModel: (next) => {
         target = next;
@@ -880,6 +932,8 @@
     LABELS,
     COMPOSER_PROMPT,
     MAX_COMPLETION_TOKENS,
+    latinShare,
+    isEnglishTranscript,
     PROVIDERS,
     isRequestTooLarge,
     isDailyLimit,

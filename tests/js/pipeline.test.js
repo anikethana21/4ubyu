@@ -318,8 +318,36 @@ test("calls are paced so the minute's allowance is not tripped", async () => {
   assert.ok(waited.length, "and the wait was reported rather than silent");
 });
 
-test("with no allowance to respect, a call is passed straight through", async () => {
-  let calls = 0;
+test("a measured answer lets a second call share the minute", async () => {
+  let clock = 0;
+  const sent = [];
+  let usage = null;
+  const paced = pipeline.createPacer({
+    call: async () => {
+      sent.push(clock);
+      usage = { prompt_tokens: 1600, completion_tokens: 1200 };
+      return "ok";
+    },
+    tokensPerMinute: 8000,
+    now: () => clock,
+    usage: () => usage,
+    sleepImpl: async (ms) => { clock += ms; },
+  });
+
+  // 6,400 characters is ~1,600 prompt tokens. Before anything is measured the
+  // pacer reserves the whole completion ceiling (1,600 + 3,072), which alone is
+  // already most of a minute.
+  const request = { messages: [{ role: "user", content: "x".repeat(6400) }] };
+  await paced(request);
+  await paced(request);
+  assert.equal(sent[0], 0);
+  assert.equal(sent[1], 0, "the measured 1,200-token answer frees the next call");
+
+  await paced(request);
+  assert.ok(sent[2] >= 60000, `the third still waits for the window: ${sent[2]}`);
+});
+
+test("with no allowance to respect, a call is passed straight through", async () => {  let calls = 0;
   const paced = pipeline.createPacer({ call: async () => { calls += 1; return "ok"; } });
   await paced({ messages: [{ role: "user", content: "hello" }] });
   assert.equal(calls, 1);

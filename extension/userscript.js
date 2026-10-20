@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.0.4
+// @version      2.1.0
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -1035,6 +1035,23 @@
       throw new Error(
         "Only " + segments.length + " caption line" + (segments.length === 1 ? "" : "s") +
           " could be found. Open the video's transcript panel once, then try again."
+      );
+    }
+
+    // The notes are written in English, from English speech. A non-English
+    // transcript is refused here, before a single API call is spent, with the
+    // real reason and a number rather than a vague "could not read this".
+    const spokenText = segments.map((segment) => segment.text || "").join(" ");
+    const language = UBYU.isEnglishTranscript(spokenText);
+    if (!language.english) {
+      const percent = Math.round(language.share * 100);
+      throw new Error(
+        "These captions are not in English, and 4 U By U only writes English notes. " +
+          "Only " + percent + "% of the letters in this transcript are Latin, so the words " +
+          "would have to be machine-translated before they could be explained — and technical " +
+          "terms do not survive that. Choose a lecture with English captions" +
+          (track.language ? " (this track is labelled \"" + track.language + "\")" : "") +
+          ". YouTube's own auto-translate is used when a track offers it; this one does not."
       );
     }
 

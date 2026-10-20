@@ -619,3 +619,33 @@ test("a real captured lecture can be sliced into a chapter window", (t) => {
   assert.equal(ubyu.clock(7740), "2:09:00");
   assert.equal(ubyu.clock(754), "12:34");
 });
+
+// ---------------------------------------------------------------------------
+// The language the notes can be written from
+// ---------------------------------------------------------------------------
+
+test("a transcript in another writing system is refused before anything is spent", () => {
+  const hindi = "यह एक हिंदी वाक्य है जिसमें तकनीकी शब्द हैं और उन्हें समझाया गया है। ".repeat(8);
+  const verdict = ubyu.isEnglishTranscript(hindi);
+  assert.equal(verdict.english, false, "Devanagari is not English");
+  assert.ok(verdict.share < 0.1, `the share is measured, not guessed: ${verdict.share}`);
+
+  const mandarin = "这是一个中文句子，用来解释机器学习的梯度下降算法。".repeat(12);
+  assert.equal(ubyu.isEnglishTranscript(mandarin).english, false);
+});
+
+test("English passes, and a language that shares the Latin script passes too", () => {
+  const english = "The learning rate scales the gradient step, so a large value diverges. ".repeat(8);
+  assert.equal(ubyu.isEnglishTranscript(english).english, true);
+  assert.ok(ubyu.latinShare(english) > 0.99);
+
+  // A known limit, stated rather than hidden: a European language uses the same
+  // letters, so this check does not pretend to detect it.
+  const french = "La descente de gradient avance vers le minimum de la fonction de cout. ".repeat(8);
+  assert.equal(ubyu.isEnglishTranscript(french).english, true);
+});
+
+test("too little text to judge is not a rejection", () => {
+  assert.equal(ubyu.isEnglishTranscript("").english, true);
+  assert.equal(ubyu.isEnglishTranscript("ok").english, true);
+});

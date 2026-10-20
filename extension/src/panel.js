@@ -112,6 +112,19 @@
 .ubyu-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #38bdf8, #facc15); transition: width 0.3s ease; }
 .ubyu-log { margin: 10px 0 0; padding: 0; list-style: none; font: 11px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: #94a3b8; }
 .ubyu-log li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ubyu-quote {
+  min-height: 36px; margin: 0 0 10px; padding: 8px 12px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(148, 163, 184, 0.06);
+  color: #cbd5e1; font: italic 12px/1.5 Georgia, "Times New Roman", serif;
+  opacity: 0; transform: translateY(3px);
+  transition: opacity 420ms ease, transform 420ms ease;
+}
+.ubyu-quote[data-visible="1"] { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ubyu-quote { transition: opacity 120ms linear; transform: none; }
+}
 .ubyu-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed rgba(148, 163, 184, 0.16); }
 .ubyu-row:last-child { border-bottom: 0; }
 .ubyu-row b { font-weight: 600; color: #f8fafc; }
@@ -169,6 +182,8 @@
       stopped: "",
       running: false,
       cancel: false,
+      quoteText: "",
+      quoteVisible: false,
       library: Array.isArray(store.get(KEY_LIBRARY, [])) ? store.get(KEY_LIBRARY, []) : [],
     };
 
@@ -197,6 +212,72 @@
     doc.body.appendChild(node);
 
     const body = node.querySelector("[data-body]");
+
+    // -----------------------------------------------------------------------
+    // The waiting line
+    //
+    // A run is paced by the provider's tokens-per-minute allowance, so there
+    // are real minutes where the honest thing to show is the log and nothing
+    // else. This puts one calm line above it, holds it for three seconds, lets
+    // it go, and brings the next one. It is deliberately not a spinner and not
+    // a promise: it is something to read while the work happens.
+    // -----------------------------------------------------------------------
+
+    const LOADING_LINES = [
+      "Good things take time.",
+      "Slow is smooth; smooth is fast.",
+      "An hour of lecture is an hour of thinking. The notes take what they take.",
+      "Nothing here is invented — that is why it is not instant.",
+      "One section at a time, in the order you would have heard it.",
+      "The captions are already read. The writing is the part that takes minutes.",
+      "Patience is part of quality.",
+      "Written once, studied many times.",
+      "A careful explanation cannot be rushed.",
+      "Every section is written from the transcript, never from memory.",
+      "You are paying for notes you will keep, not for a progress bar.",
+      "The page is being built slowly so it opens instantly later.",
+      "Depth is the goal; speed is only the constraint.",
+      "Wait for the good part. It is being written now.",
+    ];
+
+    let quoteTimer = null;
+    let quoteIndex = 0;
+
+    function paintQuote() {
+      const element = body.querySelector("#ubyu-quote");
+      if (!element) return;
+      element.textContent = state.quoteText;
+      element.setAttribute("data-visible", state.quoteVisible ? "1" : "0");
+    }
+
+    function startQuotes() {
+      stopQuotes();
+      quoteIndex = Math.floor(Math.random() * LOADING_LINES.length);
+      state.quoteText = LOADING_LINES[quoteIndex];
+      state.quoteVisible = true;
+      paintQuote();
+      // Three seconds on, three seconds off. The first line is visible at once
+      // so the space is never an empty box while a call is warming up.
+      quoteTimer = setInterval(() => {
+        if (state.quoteVisible) {
+          state.quoteVisible = false;
+        } else {
+          quoteIndex = (quoteIndex + 1) % LOADING_LINES.length;
+          state.quoteText = LOADING_LINES[quoteIndex];
+          state.quoteVisible = true;
+        }
+        paintQuote();
+      }, 3000);
+    }
+
+    function stopQuotes() {
+      if (quoteTimer) {
+        clearInterval(quoteTimer);
+        quoteTimer = null;
+      }
+      state.quoteVisible = false;
+      paintQuote();
+    }
 
     // -----------------------------------------------------------------------
     // Storing and getting files
@@ -368,11 +449,13 @@
       state.runError = "";
       state.stopped = "";
       render();
+      startQuotes();
 
       const limits = pipeline.MODEL_LIMITS[state.model];
       const call = pipeline.createPacer({
         call: caller.call,
         tokensPerMinute: limits ? limits.tokensPerMinute : 0,
+        usage: () => caller.usage,
         onWait: (ms) => {
           line(`Waiting ${Math.ceil(ms / 1000)}s for the minute's allowance…`);
           render();
@@ -447,6 +530,7 @@
         state.step = "ready";
       } finally {
         state.running = false;
+        stopQuotes();
         // The ledger has just grown; the next estimate must see the new total.
         price();
         render();
@@ -639,7 +723,8 @@
     }
 
     function runningView() {
-      return `<p><b>Writing your notes.</b> Nothing is invented: anything the model cannot write up is
+      return `<div class="ubyu-quote" id="ubyu-quote" data-visible="${state.quoteVisible ? "1" : "0"}">${escapeHtml(state.quoteText)}</div>
+        <p><b>Writing your notes.</b> Nothing is invented: anything the model cannot write up is
         marked as a notice, with the lecture's own words underneath.</p>
         <div class="ubyu-bar"><span style="width: ${state.percent}%"></span></div>
         <ul class="ubyu-log">${state.log.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")}</ul>
@@ -716,10 +801,18 @@
         render();
       }
       if (!state.lecture && !state.reading && typeof capture === "function") readLecture();
+      // Reopening mid-run puts the waiting line back without touching the work.
+      if (state.running) startQuotes();
     }
 
     function close() {
       state.open = false;
+      // A closed panel has nothing to read the quote, and a run that is still
+      // going will restart it if it is opened again.
+      if (quoteTimer) {
+        clearInterval(quoteTimer);
+        quoteTimer = null;
+      }
       render();
     }
 
