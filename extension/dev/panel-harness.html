@@ -413,6 +413,13 @@
               if (go) go.click();
             }, 1200);
           }
+          // `?min=1` collapses the panel, for a screenshot of the bar.
+          if (location.search.includes("min")) {
+            setTimeout(() => {
+              const min = document.querySelector("[data-act='minimize']");
+              if (min) min.click();
+            }, 2600);
+          }
         }
 
         // `?wallpaper=1` puts a bright, busy scene behind the panel. Glass is

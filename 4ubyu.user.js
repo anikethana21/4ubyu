@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.1.3
+// @version      2.1.4
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -3960,6 +3960,11 @@ ${chaptersHtml}
   to { opacity: 1; transform: none; }
 }
 .ubyu-panel[data-open="false"] { display: none; }
+/* Collapsed: the header is the whole panel. Nothing is lost - a run keeps
+   going, and the chip in the header keeps reporting it. */
+.ubyu-panel[data-minimized="true"] .ubyu-body { display: none; }
+.ubyu-panel[data-minimized="true"] { width: 300px; border-radius: 22px; }
+.ubyu-panel[data-minimized="true"] .ubyu-head { border-bottom: 0; }
 
 .ubyu-head {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -3990,6 +3995,30 @@ ${chaptersHtml}
   color: #8ff0c6; border-color: rgba(52, 211, 153, 0.3);
   background: rgba(52, 211, 153, 0.10);
 }
+.ubyu-min {
+  flex: none; width: 28px; height: 28px; display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: 8px; background: transparent;
+  cursor: pointer; padding: 0;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+.ubyu-min-bar {
+  position: relative; width: 11px; height: 1.5px; border-radius: 2px;
+  background: #a3b1c4;
+  transition: background 140ms ease;
+}
+/* The dash grows a stem when the panel is collapsed: minimise becomes expand. */
+.ubyu-min-bar::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 1.5px; height: 0; border-radius: 2px; background: inherit;
+  transform: translate(-50%, -50%);
+  transition: height 180ms ease;
+}
+.ubyu-panel[data-minimized="true"] .ubyu-min-bar { background: #e8eef6; }
+.ubyu-panel[data-minimized="true"] .ubyu-min-bar::after { height: 11px; }
+.ubyu-min:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.10); }
+.ubyu-min:hover .ubyu-min-bar { background: #f1f5f9; }
+.ubyu-min:focus-visible { outline: 2px solid #38bdf8; outline-offset: 1px; }
+
 .ubyu-close {
   flex: none; width: 28px; height: 28px; display: grid; place-items: center;
   border: 1px solid transparent; border-radius: 8px; background: transparent;
@@ -4254,6 +4283,9 @@ ${chaptersHtml}
       stopped: "",
       running: false,
       cancel: false,
+      // Collapsed to the header, so it stops covering the lecture. Separate from
+      // closed: closed hides everything and brings the corner button back.
+      minimized: false,
       quoteText: "",
       quoteVisible: false,
       library: Array.isArray(store.get(KEY_LIBRARY, [])) ? store.get(KEY_LIBRARY, []) : [],
@@ -4265,6 +4297,9 @@ ${chaptersHtml}
     node.innerHTML = `<div class="ubyu-head">
       <span class="ubyu-brand">4 U By U<small>FOR YOU BY YOU</small></span>
       <span class="ubyu-step" data-step-chip></span>
+      <button type="button" class="ubyu-min" title="Minimize" aria-expanded="true" data-act="minimize">
+        <span class="ubyu-min-bar" aria-hidden="true"></span>
+      </button>
       <button type="button" class="ubyu-close" title="Close" data-act="close">&times;</button>
     </div>
     <div class="ubyu-body" data-body></div>`;
@@ -4854,6 +4889,12 @@ ${chaptersHtml}
 
     function render() {
       node.setAttribute("data-open", String(state.open && state.available));
+      node.setAttribute("data-minimized", String(state.minimized));
+      const minButton = node.querySelector("[data-act='minimize']");
+      if (minButton) {
+        minButton.setAttribute("aria-expanded", String(!state.minimized));
+        minButton.title = state.minimized ? "Expand" : "Minimize";
+      }
       fab.hidden = state.open || !state.available;
       const views = {
         setup: setupView,
@@ -4873,7 +4914,12 @@ ${chaptersHtml}
           done: "DONE",
           library: "LIBRARY",
         };
-        chip.textContent = labels[state.step] || "";
+        // While the panel is collapsed the chip is the only thing left to read,
+        // so it carries the progress too.
+        chip.textContent =
+          state.step === "running"
+            ? `WRITING ${Math.round(state.percent)}%`
+            : labels[state.step] || "";
         chip.setAttribute("data-state", state.step);
       }
       const modelSelect = body.querySelector("[data-model]");
@@ -4913,6 +4959,14 @@ ${chaptersHtml}
 
     fab.addEventListener("click", () => open());
 
+    // A collapsed panel is a bar: clicking the bar itself brings it back, which
+    // is what people try before they look for the button.
+    node.querySelector(".ubyu-head").addEventListener("click", (event) => {
+      if (event.target.closest("[data-act]") || !state.minimized) return;
+      state.minimized = false;
+      render();
+    });
+
     node.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && event.target.matches("[data-key]")) {
         event.preventDefault();
@@ -4940,6 +4994,10 @@ ${chaptersHtml}
       const act = button.getAttribute("data-act");
       const id = button.getAttribute("data-id");
       if (act === "close") return close();
+      if (act === "minimize") {
+        state.minimized = !state.minimized;
+        return render();
+      }
       if (act === "check-key") return void checkKey();
       if (act === "generate") return void generate();
       if (act === "recheck") {
