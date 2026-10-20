@@ -49,96 +49,298 @@
   }
 
   const CSS = `
+/* ---------------------------------------------------------------------------
+   The panel: a small, opaque glass card in the corner of whatever page you are
+   on. Opaque on purpose - a see-through body over a white lecture slide is
+   unreadable - so the glass read comes from the rim light, the corner glow and
+   the depth of the shadow stack, not from transparency.
+--------------------------------------------------------------------------- */
+
 .ubyu-fab {
   position: fixed; right: 18px; bottom: 18px; z-index: 2147483000;
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(226, 232, 240, 0.22);
-  background: linear-gradient(135deg, rgba(28, 32, 40, 0.96), rgba(17, 20, 26, 0.96));
-  color: #f8fafc; font: 600 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
-  cursor: pointer; box-shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 16px 10px 10px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(120% 130% at 0% 0%, rgba(250, 204, 21, 0.16), transparent 58%),
+    linear-gradient(160deg, #242832, #12151b);
+  color: #f8fafc; font: 600 12.5px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: 0.01em; cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 12px 32px rgba(2, 6, 23, 0.5);
+  transition: transform 140ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
-.ubyu-fab:hover { border-color: rgba(250, 204, 21, 0.55); }
+.ubyu-fab:hover {
+  border-color: rgba(250, 204, 21, 0.45);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 16px 38px rgba(2, 6, 23, 0.55);
+}
+.ubyu-fab:active { transform: translateY(0); }
+.ubyu-fab:focus-visible { outline: 2px solid #facc15; outline-offset: 3px; }
+.ubyu-fab .ubyu-mark { width: 22px; height: 22px; border-radius: 7px; font-size: 12px; }
 .ubyu-fab[hidden] { display: none; }
+
+.ubyu-mark {
+  flex: none; width: 26px; height: 26px; border-radius: 8px;
+  display: grid; place-items: center;
+  font: 900 13px/1 system-ui, sans-serif; color: #1d1503;
+  background: linear-gradient(160deg, #fde68a, #f0b012);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 2px 8px rgba(240, 176, 18, 0.28);
+}
+
 .ubyu-panel {
   position: fixed; right: 18px; bottom: 18px; z-index: 2147483001;
-  width: 372px; max-width: calc(100vw - 24px); max-height: min(78vh, 720px);
+  width: 384px; max-width: calc(100vw - 24px); max-height: min(80vh, 760px);
   display: flex; flex-direction: column; overflow: hidden;
-  border-radius: 16px; border: 1px solid rgba(226, 232, 240, 0.16);
-  /* Opaque on purpose: the panel floats over whatever page you are on, and a
-     see-through body is unreadable over a white lecture slide. The glass read
-     comes from the rim light and the corner glow, not from transparency. */
+  border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.11);
   background:
-    radial-gradient(120% 80% at 100% 0%, rgba(56, 189, 248, 0.1), transparent 62%),
-    radial-gradient(90% 70% at 0% 100%, rgba(250, 204, 21, 0.06), transparent 60%),
-    linear-gradient(160deg, #1b1f27 0%, #12161d 62%, #0e1218 100%);
-  color: #e2e8f0; font: 13px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    radial-gradient(120% 80% at 100% 0%, rgba(56, 189, 248, 0.10), transparent 62%),
+    radial-gradient(90% 70% at 0% 100%, rgba(250, 204, 21, 0.055), transparent 60%),
+    linear-gradient(160deg, #1c2029 0%, #12161d 62%, #0d1016 100%);
+  color: #e2e8f0; font: 13px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px rgba(2, 6, 23, 0.35),
-    0 24px 60px rgba(2, 6, 23, 0.55);
+    0 0 0 1px rgba(2, 6, 23, 0.45),
+    0 28px 70px rgba(2, 6, 23, 0.6);
+  animation: ubyu-in 220ms cubic-bezier(0.22, 0.8, 0.28, 1);
+}
+/* One lit edge along the top: the single detail that makes a flat rectangle
+   read as glass rather than as a box. */
+.ubyu-panel::before {
+  content: ""; position: absolute; top: 0; left: 28px; right: 28px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  pointer-events: none;
+}
+@keyframes ubyu-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: none; }
 }
 .ubyu-panel[data-open="false"] { display: none; }
+
 .ubyu-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 12px 14px; border-bottom: 1px solid rgba(226, 232, 240, 0.1);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 13px 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
 }
-.ubyu-brand { font-weight: 800; letter-spacing: 0.08em; font-size: 12px; color: #facc15; }
-.ubyu-brand small { display: block; font-weight: 500; letter-spacing: 0.16em; color: #94a3b8; font-size: 8px; }
+.ubyu-brand {
+  display: flex; align-items: center; gap: 9px;
+  font-weight: 700; letter-spacing: 0.10em; font-size: 11.5px; color: #f6f8fb;
+}
+.ubyu-brand small {
+  display: block; margin-top: 2px;
+  font-weight: 600; letter-spacing: 0.20em; color: #7e8da3; font-size: 7.5px;
+}
+.ubyu-step {
+  margin-left: auto; margin-right: 4px;
+  padding: 3px 8px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font: 700 8.5px/1 system-ui, sans-serif; letter-spacing: 0.16em;
+  color: #7e8da3;
+}
+.ubyu-step[data-state="running"] {
+  color: #a5e3ff; border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.10);
+}
+.ubyu-step[data-state="done"] {
+  color: #8ff0c6; border-color: rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.10);
+}
 .ubyu-close {
-  border: 0; background: transparent; color: #94a3b8; font-size: 18px; line-height: 1;
-  cursor: pointer; padding: 2px 6px; border-radius: 6px;
+  flex: none; width: 28px; height: 28px; display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: 8px; background: transparent;
+  color: #8b98ab; font-size: 17px; line-height: 1; cursor: pointer;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
 }
-.ubyu-close:hover { color: #e2e8f0; background: rgba(148, 163, 184, 0.12); }
-.ubyu-body { padding: 14px; overflow-y: auto; }
-.ubyu-body p { margin: 0 0 10px; }
-.ubyu-muted { color: #94a3b8; font-size: 12px; }
+.ubyu-close:hover { color: #f1f5f9; background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.08); }
+.ubyu-close:focus-visible { outline: 2px solid #38bdf8; outline-offset: 1px; }
+
+.ubyu-body { padding: 14px 15px 16px; overflow-y: auto; }
+.ubyu-body p { margin: 0 0 11px; color: #cfd9e6; }
+.ubyu-body::-webkit-scrollbar { width: 10px; }
+.ubyu-body::-webkit-scrollbar-track { background: transparent; }
+.ubyu-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22); border-radius: 999px;
+  border: 3px solid transparent; background-clip: padding-box;
+}
+.ubyu-body::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.38); background-clip: padding-box; }
+
+.ubyu-muted { color: #8b98ab; font-size: 11.5px; line-height: 1.5; }
+
 .ubyu-note {
-  border: 1px solid rgba(148, 163, 184, 0.28); border-left: 3px solid #38bdf8;
-  border-radius: 8px; padding: 8px 10px; margin: 0 0 10px; font-size: 12px; color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-left: 2px solid #38bdf8;
+  border-radius: 12px; padding: 10px 12px; margin: 0 0 12px;
+  font-size: 12px; line-height: 1.55; color: #c9d4e2;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.09), rgba(148, 163, 184, 0.035));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
+.ubyu-note b { color: #f4f7fb; font-weight: 650; }
 .ubyu-note.warn { border-left-color: #f59e0b; }
 .ubyu-note.bad { border-left-color: #f87171; }
 .ubyu-note.good { border-left-color: #34d399; }
-.ubyu-field { margin: 0 0 10px; }
-.ubyu-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 4px; }
-.ubyu-input, .ubyu-select {
-  width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.3); background: rgba(15, 18, 24, 0.9);
-  color: #e2e8f0; font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+
+.ubyu-field { margin: 0 0 12px; }
+.ubyu-field label {
+  display: block; margin-bottom: 6px; font-weight: 600;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #8b98ab;
 }
-.ubyu-select { font-family: system-ui, sans-serif; }
+.ubyu-input, .ubyu-select {
+  width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(6, 9, 14, 0.55);
+  color: #e8edf5; font: 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.ubyu-input::placeholder { color: #5f6c80; }
+.ubyu-input:focus, .ubyu-select:focus {
+  outline: none; border-color: rgba(56, 189, 248, 0.75);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.16), inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.ubyu-select {
+  font-family: system-ui, sans-serif; appearance: none; padding-right: 34px;
+  /* A chevron drawn with two gradients, so there is no image to fetch and no
+     data URI to go stale. */
+  background-image:
+    linear-gradient(45deg, transparent 50%, #94a3b8 50%),
+    linear-gradient(135deg, #94a3b8 50%, transparent 50%);
+  background-position: calc(100% - 17px) calc(50% + 1px), calc(100% - 12px) calc(50% + 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.ubyu-select option { background: #12161d; color: #e2e8f0; }
+
 .ubyu-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .ubyu-btn {
-  border: 1px solid rgba(226, 232, 240, 0.18); border-radius: 9px; padding: 8px 12px;
-  background: rgba(148, 163, 184, 0.12); color: #e2e8f0; cursor: pointer;
-  font: 600 12px/1 system-ui, sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 9px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  color: #e8edf5; cursor: pointer;
+  font: 600 12px/1 system-ui, sans-serif; letter-spacing: 0.01em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(2, 6, 23, 0.4);
+  transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
-.ubyu-btn:hover { border-color: rgba(250, 204, 21, 0.5); }
-.ubyu-btn[disabled] { opacity: 0.5; cursor: default; }
-.ubyu-btn.primary { background: linear-gradient(135deg, #facc15, #f59e0b); color: #1f2937; border-color: transparent; }
-.ubyu-btn.link { border: 0; background: transparent; color: #93c5fd; padding: 4px 2px; }
-.ubyu-bar { height: 6px; border-radius: 999px; background: rgba(148, 163, 184, 0.2); overflow: hidden; margin: 8px 0; }
-.ubyu-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #38bdf8, #facc15); transition: width 0.3s ease; }
-.ubyu-log { margin: 10px 0 0; padding: 0; list-style: none; font: 11px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: #94a3b8; }
+.ubyu-btn:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 3px rgba(56, 189, 248, 0.10);
+}
+.ubyu-btn:active { transform: translateY(1px); }
+.ubyu-btn:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+.ubyu-btn[disabled] { opacity: 0.45; cursor: default; box-shadow: none; transform: none; }
+.ubyu-btn[disabled]:hover { border-color: rgba(255, 255, 255, 0.12); box-shadow: none; }
+
+.ubyu-btn.primary {
+  background: linear-gradient(180deg, #fde68a, #f5b91b 55%, #e5a209);
+  color: #211705; border-color: rgba(255, 255, 255, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 8px 22px rgba(245, 185, 27, 0.22);
+}
+.ubyu-btn.primary:hover {
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 10px 26px rgba(245, 185, 27, 0.34);
+}
+.ubyu-actions .ubyu-btn.primary { flex: 1 1 100%; padding: 11px 14px; }
+
+.ubyu-btn.link {
+  border: 0; background: transparent; color: #9ec5ff; padding: 4px 2px;
+  box-shadow: none; font-weight: 600;
+}
+.ubyu-btn.link:hover { color: #cfe3ff; box-shadow: none; text-decoration: underline; text-underline-offset: 3px; }
+
+.ubyu-bar {
+  height: 8px; margin: 10px 0 4px; border-radius: 999px;
+  background: rgba(8, 11, 16, 0.7); overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.ubyu-bar span {
+  position: relative; display: block; height: 100%; width: 0; overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #a78bfa 55%, #facc15);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+  transition: width 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ubyu-bar span::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: ubyu-sheen 2.4s ease-in-out infinite;
+}
+@keyframes ubyu-sheen {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(320%); }
+}
+
+.ubyu-log {
+  margin: 12px 0 0; padding: 2px 0 2px 12px; list-style: none;
+  border-left: 1px solid rgba(56, 189, 248, 0.28);
+  font: 11px/1.75 ui-monospace, SFMono-Regular, Menlo, monospace; color: #8b98ab;
+}
 .ubyu-log li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ubyu-log li:first-child { color: #cbd5e1; }
+
 .ubyu-quote {
-  height: 46px; margin: 0 0 10px; padding: 6px 12px;
+  height: 48px; margin: 0 0 12px; padding: 6px 12px;
   display: flex; align-items: center; justify-content: center; text-align: center;
-  overflow: hidden;
-  border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(148, 163, 184, 0.06);
-  color: #cbd5e1; font: italic 11.5px/1.45 Georgia, "Times New Roman", serif;
+  overflow: hidden; border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.075), rgba(148, 163, 184, 0.035));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: #c8d6e6; font: italic 12px/1.5 Georgia, "Times New Roman", serif;
 }
 .ubyu-quote span { opacity: 0; transform: translateY(2px); transition: opacity 420ms ease, transform 420ms ease; }
 .ubyu-quote[data-visible="1"] span { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) {
-  .ubyu-quote span { transition: opacity 120ms linear; transform: none; }
+
+.ubyu-row {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
-.ubyu-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed rgba(148, 163, 184, 0.16); }
-.ubyu-row:last-child { border-bottom: 0; }
+.ubyu-row:first-child { border-top: 0; padding-top: 0; }
+.ubyu-row:last-child { padding-bottom: 0; }
 .ubyu-row b { font-weight: 600; color: #f8fafc; }
-.ubyu-check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; margin: 0 0 10px; }
+
+.ubyu-check {
+  display: flex; align-items: flex-start; gap: 9px;
+  margin: 0 0 12px; font-size: 11.5px; line-height: 1.45; color: #b9c6d6;
+}
+.ubyu-check input[type="checkbox"] {
+  appearance: none; flex: none; width: 15px; height: 15px; margin: 2px 0 0;
+  position: relative; cursor: pointer; border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(6, 9, 14, 0.6);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.ubyu-check input[type="checkbox"]:checked {
+  background: linear-gradient(180deg, #fde68a, #f0b012);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.ubyu-check input[type="checkbox"]:checked::after {
+  content: ""; position: absolute; left: 4px; top: 1px;
+  width: 3px; height: 7px; border: solid #241a04;
+  border-width: 0 1.8px 1.8px 0; transform: rotate(42deg);
+}
+.ubyu-check input[type="checkbox"]:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ubyu-panel { animation: none; }
+  .ubyu-bar span::after { animation: none; }
+  .ubyu-quote span { transition: opacity 120ms linear; transform: none; }
+  .ubyu-fab, .ubyu-btn { transition: none; }
+}
 `;
+
 
   /**
    * Install the panel and return its handle.
@@ -200,7 +402,8 @@
     node.className = "ubyu-panel";
     node.setAttribute("data-open", "false");
     node.innerHTML = `<div class="ubyu-head">
-      <span class="ubyu-brand">4 U BY U<small>FOR YOU BY YOU</small></span>
+      <span class="ubyu-brand"><span class="ubyu-mark" aria-hidden="true">4</span><span>U BY U<small>FOR YOU BY YOU</small></span></span>
+      <span class="ubyu-step" data-step-chip></span>
       <button type="button" class="ubyu-close" title="Close" data-act="close">&times;</button>
     </div>
     <div class="ubyu-body" data-body></div>`;
@@ -209,7 +412,7 @@
     fab.type = "button";
     fab.className = "ubyu-fab";
     fab.title = "Turn this lecture into study notes";
-    fab.innerHTML = "✦ 4 U BY U · Make notes";
+    fab.innerHTML = `<span class="ubyu-mark" aria-hidden="true">4</span><span>Make notes</span>`;
 
     if (!doc.getElementById("ubyu-panel-style")) {
       const style = doc.createElement("style");
@@ -791,6 +994,18 @@
       };
       const view = views[state.step] || setupView;
       body.innerHTML = view();
+      const chip = node.querySelector("[data-step-chip]");
+      if (chip) {
+        const labels = {
+          setup: "SETUP",
+          ready: "READY",
+          running: "WRITING",
+          done: "DONE",
+          library: "LIBRARY",
+        };
+        chip.textContent = labels[state.step] || "";
+        chip.setAttribute("data-state", state.step);
+      }
       const modelSelect = body.querySelector("[data-model]");
       if (modelSelect) {
         modelSelect.value = state.model;
