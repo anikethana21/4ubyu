@@ -1026,6 +1026,14 @@
 
     function readyView() {
       const lecture = state.lecture;
+      if (!lecture) {
+        // Lecture hasn't been read yet (e.g. right after SPA navigation).
+        // Show a brief loading state instead of crashing on lecture.video.
+        return `<div class="ubyu-note">
+            <b>Loading lecture…</b><br/>
+            <span class="ubyu-muted">Reading captions for the new video.</span>
+          </div>`;
+      }
       const metadata = lecture.video || {};
       const title = metadata.title || "this lecture";
       return `<div class="ubyu-note good">

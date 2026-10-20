@@ -388,12 +388,16 @@
     "Answer in exactly this shape. Write each heading on its own line, with nothing else on " +
     "that line:\n\n" +
     "EXPLANATION\n" +
-    "A thorough, detailed explanation written directly to the student. Use second person: " +
+    "A MAXIMALLY CONCISE explanation written directly to the student. Use second person: " +
     "'You will see...', 'Here is what happens...', 'The key point is...'. " +
-    "Write multiple substantial paragraphs. Preserve the instructor's own terminology, " +
-    "variable names, function names, and examples. If code or algorithms are discussed, " +
-    "describe the logic step by step. If mathematical concepts appear, explain the intuition " +
-    "and the formula. Do not summarize — explain. Write MORE not less; depth is the goal.\n\n" +
+    "Write 1-2 DENSE paragraphs — every word must earn its place. " +
+    "Preserve the instructor's terminology, variable names, function names, and examples. " +
+    "If code or algorithms are discussed, describe the logic step by step in minimal words. " +
+    "If mathematical concepts appear, state the formula and its meaning in one sentence. " +
+    "Do not summarize — explain. Be RUTHLESSLY economical; every sentence must carry a " +
+    "distinct, non-redundant concept. Target HALF the length you would normally write. " +
+    "Cut fluff, transitions, hedging, and restatement. Prefer bullet-style density where " +
+    "it reads naturally.\n\n" +
     "CODE\n" +
     "If the transcript contains code, algorithmic pseudocode, configuration, command-line " +
     "snippets, or concrete implementation steps, extract them here as annotated code blocks. " +
@@ -408,17 +412,17 @@
     "in fog taking steps downhill by feeling the slope with their feet\" not just " +
     "\"it's like walking downhill\"). If no good analogy exists, write NONE.\n\n" +
     "KEY TAKEAWAYS\n" +
-    "Five to seven substantive takeaways, each a full sentence starting with \"- \". " +
-    "Each must be something a student would write on a cheat sheet before an exam. " +
+    "Three to four SUBSTANTIVE takeaways, each a full sentence starting with \"- \". " +
+    "Each must be cheat-sheet density: specific values, conditions, or mechanisms. " +
     "Prefer: \"- The learning rate scales the gradient step; too large diverges, too small " +
     "stalls — start at 1/sqrt(n_features) and tune by factors of 10.\" over " +
     " \"- Learning rate matters.\"\n\n" +
     "COMMON MISTAKES\n" +
-    "Two to three specific mistakes students make with this exact material, written as " +
+    "One to two specific mistakes students make with this exact material, written as " +
     "\"Mistake: ... -> Fix: ...\". Be concrete: reference the exact function, parameter, " +
     "or step from the transcript. If none come to mind, write NONE.\n\n" +
     "CONCRETE EXAMPLES\n" +
-    "Every example the instructor actually used in this section, with enough detail to " +
+    "The MOST IMPORTANT example the instructor used in this section, with enough detail to " +
     "reproduce it. If the instructor ran code with specific inputs/outputs, include them. " +
     "If they walked through a numerical example, show the numbers. Write NONE if the " +
     "transcript has no examples here.\n\n" +
