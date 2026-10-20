@@ -4043,22 +4043,33 @@ ${chaptersHtml}
     // ---- 4. The document -----------------------------------------------------
     const chaptersOut = withTranscripts
       .filter((chapter) => chapter.sections.length)
-      .map((chapter) => ({
-        title: chapter.title || `Part ${chapter.chapter_order || 1}`,
-        timestamp_seconds: chapter.timestamp_seconds,
-        overview: chapter.overview || "",
-        sections: chapter.sections.map((section) => ({
-          title: section.title,
-          timestamp_seconds: section.start,
-          explanation: section.explanation,
-          analogies: section.analogy ? [section.analogy] : section.analogies || [],
-          key_points: section.key_points || [],
-          pitfalls: section.pitfalls || [],
-          examples: section.examples || [],
-          diagram_hint: section.diagram || section.diagram_hint || "",
-          degraded: Boolean(section.degraded),
-        })),
-      }));
+      .map((chapter) => {
+        // Suppress duplicate: if chapter has exactly one section and its title
+        // matches the chapter title (case-insensitive), merge them — the section
+        // becomes the chapter body with no redundant heading.
+        const single = chapter.sections.length === 1;
+        const match = single &&
+          chapter.sections[0].title.trim().toLowerCase() === chapter.title.trim().toLowerCase();
+        const sections = match
+          ? [{ ...chapter.sections[0], title: "" }] // empty title = no heading in renderer
+          : chapter.sections.map((section) => ({
+              title: section.title,
+              timestamp_seconds: section.start,
+              explanation: section.explanation,
+              analogies: section.analogy ? [section.analogy] : section.analogies || [],
+              key_points: section.key_points || [],
+              pitfalls: section.pitfalls || [],
+              examples: section.examples || [],
+              diagram_hint: section.diagram || section.diagram_hint || "",
+              degraded: Boolean(section.degraded),
+            }));
+        return {
+          title: chapter.title || `Part ${chapter.chapter_order || 1}`,
+          timestamp_seconds: chapter.timestamp_seconds,
+          overview: chapter.overview || "",
+          sections,
+        };
+      });
 
     const document = workspace.buildNotesDocument({
       video: {
