@@ -144,6 +144,10 @@
       // on YouTube's home page, so the button is not offered there.
       available: true,
       step: "setup",
+      // Which lecture the panel is currently holding. YouTube changes the URL
+      // without reloading the document, so this is how the panel notices that
+      // the lecture underneath it is no longer the one it read.
+      videoId: "",
       apiKey: String(store.get(KEY_API, "") || ""),
       provider: "groq",
       model: String(store.get(KEY_MODEL, "") || ""),
@@ -294,6 +298,12 @@
         state.modelsError = error && error.message ? error.message : String(error);
       }
       render();
+      // A saved key is not the same thing as a readable lecture. If the captions
+      // were never captured, try again now — otherwise the button looks like it
+      // did nothing and the panel sits on this screen forever.
+      if (!state.modelsError && !state.lecture && !state.reading && typeof capture === "function") {
+        await readLecture();
+      }
     }
 
     // -----------------------------------------------------------------------
@@ -485,6 +495,17 @@
         </div>
         <p class="ubyu-muted">A free key from console.groq.com is enough. Notes stay free to make.</p>
         ${state.modelsError ? `<div class="ubyu-note bad">${escapeHtml(state.modelsError)}</div>` : ""}
+        ${state.reading ? `<div class="ubyu-note">Reading this lecture's captions…</div>` : ""}
+        ${
+          state.lectureError
+            ? `<div class="ubyu-note bad"><b>This lecture's captions could not be read, so there is nothing to write notes from yet.</b><br/>
+                ${escapeHtml(state.lectureError)}<br/>
+                <span class="ubyu-muted">A saved key alone cannot fix this — the transcript is what is missing.</span></div>
+                <div class="ubyu-actions">
+                  <button type="button" class="ubyu-btn" data-act="recheck-lecture">Read this lecture again</button>
+                </div>`
+            : ""
+        }
         ${models}
         <div class="ubyu-actions">
           <button type="button" class="ubyu-btn primary" data-act="check-key">
@@ -646,6 +667,10 @@
         state.modelsError = "";
         return render();
       }
+      if (act === "recheck-lecture") {
+        if (!state.reading && typeof capture === "function") void readLecture();
+        return undefined;
+      }
       if (act === "stop") {
         state.cancel = true;
         line("Stopping after this section…");
@@ -728,6 +753,38 @@
         state.available = Boolean(available);
         if (!state.available) state.open = false;
         render();
+      },
+      /**
+       * Tell the panel which lecture is on screen now.
+       *
+       * YouTube swaps videos without reloading the document. Without this, the
+       * panel keeps the first lecture it read and will not read another until
+       * the whole browser is restarted. When the id changes, everything that
+       * belonged to the old lecture is dropped.
+       */
+      setVideo(videoId) {
+        const id = String(videoId || "");
+        if (id === state.videoId) return;
+        state.videoId = id;
+        state.lecture = null;
+        state.lectureError = "";
+        state.estimate = null;
+        state.fit = null;
+        state.document = null;
+        state.stats = null;
+        state.runError = "";
+        state.stopped = "";
+        state.percent = 0;
+        state.log = [];
+        // A run started on the old lecture must not keep writing.
+        if (state.running) state.cancel = true;
+        if (state.step === "running" || state.step === "done" || state.step === "library") {
+          state.step = state.apiKey ? "ready" : "setup";
+        }
+        render();
+        if (state.open && id && !state.running && typeof capture === "function") {
+          void readLecture();
+        }
       },
     };
   }

@@ -307,7 +307,7 @@
   // Reading the model's answer to the composer prompt
   // -------------------------------------------------------------------------
 
-  const LABELS = ["EXPLANATION", "ANALOGY", "KEY POINTS", "PITFALLS", "EXAMPLE"];
+  const LABELS = ["EXPLANATION", "ANALOGY", "KEY POINTS", "PITFALLS", "EXAMPLE", "DIAGRAM HINT"];
 
   function escapeRegExp(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -401,6 +401,11 @@
       key_points: items(blocks["KEY POINTS"] || ""),
       pitfalls: items(blocks["PITFALLS"] || "", 3),
       examples: items(blocks["EXAMPLE"] || "", 2),
+      // The composer is told to write NONE when no diagram helps; that is an
+      // absence, not a diagram.
+      diagram: /^none\b/i.test((blocks["DIAGRAM HINT"] || "").trim())
+        ? ""
+        : (blocks["DIAGRAM HINT"] || "").trim(),
     };
   }
 
@@ -485,8 +490,11 @@
     "transcript has no examples here.\n\n" +
     "DIAGRAM HINT\n" +
     "If a diagram would genuinely help this section (architecture, data flow, state " +
-    "machine, mathematical relationship, tree/graph structure), describe exactly what it " +
-    "should show and suggest Mermaid syntax. Write NONE if no diagram adds value. " +
+    "machine, mathematical relationship, tree/graph structure), write the Mermaid source " +
+    "itself, starting on its own line with the Mermaid diagram type (for example " +
+    "'flowchart TD'). No triple-backtick fence, no explanation around it, no prose before " +
+    "or after it — the reader pastes exactly what you write into mermaid.live. " +
+    "Write NONE if no diagram adds value. " +
     "Do not force diagrams everywhere — only where they clarify something text cannot.";
 
   /** Fill a prompt's `{placeholders}` from a values object, leaving others alone. */
@@ -1360,6 +1368,37 @@
     return escapeHtml(stripInlineMath(value));
   }
 
+  /**
+   * Mermaid is not loaded into the page. Shipping the renderer would add a
+   * large script and a second thing that can fail to load, and the notes are
+   * meant to open with no network at all. So a diagram is shown as the source
+   * that was written, labelled with where to paste it, rather than as a broken
+   * picture. ```` ```mermaid ```` fences are unwrapped first, so the reader gets
+   * the diagram text and not three backticks in the middle of a paragraph.
+   */
+  function mermaidBlocks(value) {
+    const raw = String(value === undefined || value === null ? "" : value);
+    const blocks = [];
+    const rest = raw.replace(/```mermaid[ \t]*\r?\n([\s\S]*?)```/g, (match, code) => {
+      blocks.push(code.trim());
+      return "";
+    });
+    const remainder = rest.trim();
+    // A hint field often holds the diagram with no fence around it at all.
+    if (!blocks.length && /^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline)\b/m.test(remainder)) {
+      blocks.push(remainder);
+      return { text: "", blocks };
+    }
+    return { text: remainder, blocks };
+  }
+
+  function mermaidCard(code) {
+    return `<div class="code-block-card glass-card">
+            <p class="code-preamble">Diagram source — paste it into mermaid.live to draw it</p>
+            <pre><code class="language-mermaid">${escapeHtml(code)}</code></pre>
+          </div>`;
+  }
+
   // Version 2 is the data the page is drawn from.
   const SCHEMA_VERSION = 2;
 
@@ -1669,13 +1708,17 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
       )
       .join("\n");
 
-    // Diagram hint - render as Mermaid if present
-    const diagram = theory.diagram_hint
-      ? `          <div class="diagram-card glass-card">
+    // The diagram hint holds the diagram. It may or may not still be wrapped in
+    // ```mermaid fences, so both shapes are accepted.
+    const hintedDiagram = mermaidBlocks(theory.diagram_hint || "");
+    const diagram =
+      hintedDiagram.blocks.length || hintedDiagram.text
+        ? `          <div class="diagram-card glass-card">
             <h4>Diagram</h4>
-            <div class="mermaid">${text(theory.diagram_hint)}</div>
+            ${hintedDiagram.blocks.map(mermaidCard).join("\n")}
+            ${hintedDiagram.text ? `<p>${text(hintedDiagram.text)}</p>` : ""}
           </div>`
-      : "";
+        : "";
 
     const supplement = section.supplement_block
       ? `          <div class="supplement-card glass-card">
@@ -1684,8 +1727,11 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
           </div>`
       : "";
 
-    // Explanation with math rendering
-    const explanationHtml = renderMarkdown(textPlain(theory.explanation || ""));
+    // Explanation, with any diagram fences lifted out of the prose and shown as
+    // labelled source underneath it.
+    const explainedDiagram = mermaidBlocks(theory.explanation || "");
+    const explanationHtml = renderMarkdown(textPlain(explainedDiagram.text || ""));
+    const explanationCards = explainedDiagram.blocks.map(mermaidCard).join("\n");
 
     return `          <section class="section-block glass-card" data-chapter-title="${escapeHtml(
       section.section_title
@@ -1699,7 +1745,7 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
               </div>
             </div>
             <div class="theory-block">
-              <div class="theory-content">${explanationHtml}</div>
+              <div class="theory-content">${explanationHtml}${explanationCards}</div>
 ${analogies}
             </div>
 ${codeBlocks}
@@ -2620,13 +2666,16 @@ ${chaptersHtml}
     };
 
     // Global run timeout: if anything hangs, we fail fast instead of
-    // leaving the user staring at a blank panel forever.
+    // leaving the user staring at a blank panel forever. The timer is cleared
+    // when the run finishes, so a finished run leaves nothing pending behind.
     const runTimeoutMs = options.timeoutMs || 300000; // 5 minutes default
     const runController = typeof AbortController === "function" ? new AbortController() : null;
-    const runTimer = runController ? setTimeout(() => runController.abort(), runTimeoutMs) : null;
+    let runTimer = null;
     const runTimeoutPromise = new Promise((_, reject) => {
-      if (!runController) return;
-      setTimeout(() => reject(new Error(`the run took longer than ${Math.round(runTimeoutMs / 1000)} seconds`)), runTimeoutMs);
+      runTimer = setTimeout(() => {
+        if (runController) runController.abort();
+        reject(new Error(`the run took longer than ${Math.round(runTimeoutMs / 1000)} seconds`));
+      }, runTimeoutMs);
     });
     const runPromise = (async () => {
       try {
@@ -2870,6 +2919,7 @@ ${chaptersHtml}
           key_points: section.key_points || [],
           pitfalls: section.pitfalls || [],
           examples: section.examples || [],
+          diagram_hint: section.diagram || section.diagram_hint || "",
           degraded: Boolean(section.degraded),
         })),
       }));
@@ -3068,6 +3118,10 @@ ${chaptersHtml}
       // on YouTube's home page, so the button is not offered there.
       available: true,
       step: "setup",
+      // Which lecture the panel is currently holding. YouTube changes the URL
+      // without reloading the document, so this is how the panel notices that
+      // the lecture underneath it is no longer the one it read.
+      videoId: "",
       apiKey: String(store.get(KEY_API, "") || ""),
       provider: "groq",
       model: String(store.get(KEY_MODEL, "") || ""),
@@ -3218,6 +3272,12 @@ ${chaptersHtml}
         state.modelsError = error && error.message ? error.message : String(error);
       }
       render();
+      // A saved key is not the same thing as a readable lecture. If the captions
+      // were never captured, try again now — otherwise the button looks like it
+      // did nothing and the panel sits on this screen forever.
+      if (!state.modelsError && !state.lecture && !state.reading && typeof capture === "function") {
+        await readLecture();
+      }
     }
 
     // -----------------------------------------------------------------------
@@ -3409,6 +3469,17 @@ ${chaptersHtml}
         </div>
         <p class="ubyu-muted">A free key from console.groq.com is enough. Notes stay free to make.</p>
         ${state.modelsError ? `<div class="ubyu-note bad">${escapeHtml(state.modelsError)}</div>` : ""}
+        ${state.reading ? `<div class="ubyu-note">Reading this lecture's captions…</div>` : ""}
+        ${
+          state.lectureError
+            ? `<div class="ubyu-note bad"><b>This lecture's captions could not be read, so there is nothing to write notes from yet.</b><br/>
+                ${escapeHtml(state.lectureError)}<br/>
+                <span class="ubyu-muted">A saved key alone cannot fix this — the transcript is what is missing.</span></div>
+                <div class="ubyu-actions">
+                  <button type="button" class="ubyu-btn" data-act="recheck-lecture">Read this lecture again</button>
+                </div>`
+            : ""
+        }
         ${models}
         <div class="ubyu-actions">
           <button type="button" class="ubyu-btn primary" data-act="check-key">
@@ -3570,6 +3641,10 @@ ${chaptersHtml}
         state.modelsError = "";
         return render();
       }
+      if (act === "recheck-lecture") {
+        if (!state.reading && typeof capture === "function") void readLecture();
+        return undefined;
+      }
       if (act === "stop") {
         state.cancel = true;
         line("Stopping after this section…");
@@ -3652,6 +3727,38 @@ ${chaptersHtml}
         state.available = Boolean(available);
         if (!state.available) state.open = false;
         render();
+      },
+      /**
+       * Tell the panel which lecture is on screen now.
+       *
+       * YouTube swaps videos without reloading the document. Without this, the
+       * panel keeps the first lecture it read and will not read another until
+       * the whole browser is restarted. When the id changes, everything that
+       * belonged to the old lecture is dropped.
+       */
+      setVideo(videoId) {
+        const id = String(videoId || "");
+        if (id === state.videoId) return;
+        state.videoId = id;
+        state.lecture = null;
+        state.lectureError = "";
+        state.estimate = null;
+        state.fit = null;
+        state.document = null;
+        state.stats = null;
+        state.runError = "";
+        state.stopped = "";
+        state.percent = 0;
+        state.log = [];
+        // A run started on the old lecture must not keep writing.
+        if (state.running) state.cancel = true;
+        if (state.step === "running" || state.step === "done" || state.step === "library") {
+          state.step = state.apiKey ? "ready" : "setup";
+        }
+        render();
+        if (state.open && id && !state.running && typeof capture === "function") {
+          void readLecture();
+        }
       },
     };
   }
@@ -4680,7 +4787,12 @@ ${chaptersHtml}
    * the two others are there for the times it does not fire.
    */
   function refresh() {
-    panel.setAvailable(/^\/watch/.test(location.pathname));
+    const onWatch = /^\/watch/.test(location.pathname);
+    panel.setAvailable(onWatch);
+    // Every YouTube video has the same pathname (/watch); only ?v= changes.
+    // So the panel is told which lecture is on screen; when that id changes it
+    // drops the old transcript instead of holding it hostage until a restart.
+    if (typeof panel.setVideo === "function") panel.setVideo(onWatch ? currentVideoId() : "");
   }
 
   GM_registerMenuCommand("✦ Turn this lecture into notes", () => panel.open());
@@ -4689,13 +4801,16 @@ ${chaptersHtml}
   refresh();
   document.addEventListener("yt-navigate-finish", refresh);
   window.addEventListener("popstate", refresh);
-  let lastPath = location.pathname;
+  // The query string is watched too: moving from one lecture to the next keeps
+  // the pathname at /watch, so watching only the pathname would never fire.
+  let lastUrl = location.pathname + location.search;
   setInterval(() => {
-    if (location.pathname !== lastPath) {
-      lastPath = location.pathname;
+    const now = location.pathname + location.search;
+    if (now !== lastUrl) {
+      lastUrl = now;
       refresh();
     }
-  }, 1200);
+  }, 800);
 })();
   }
 

@@ -568,13 +568,16 @@
     };
 
     // Global run timeout: if anything hangs, we fail fast instead of
-    // leaving the user staring at a blank panel forever.
+    // leaving the user staring at a blank panel forever. The timer is cleared
+    // when the run finishes, so a finished run leaves nothing pending behind.
     const runTimeoutMs = options.timeoutMs || 300000; // 5 minutes default
     const runController = typeof AbortController === "function" ? new AbortController() : null;
-    const runTimer = runController ? setTimeout(() => runController.abort(), runTimeoutMs) : null;
+    let runTimer = null;
     const runTimeoutPromise = new Promise((_, reject) => {
-      if (!runController) return;
-      setTimeout(() => reject(new Error(`the run took longer than ${Math.round(runTimeoutMs / 1000)} seconds`)), runTimeoutMs);
+      runTimer = setTimeout(() => {
+        if (runController) runController.abort();
+        reject(new Error(`the run took longer than ${Math.round(runTimeoutMs / 1000)} seconds`));
+      }, runTimeoutMs);
     });
     const runPromise = (async () => {
       try {
@@ -818,6 +821,7 @@
           key_points: section.key_points || [],
           pitfalls: section.pitfalls || [],
           examples: section.examples || [],
+          diagram_hint: section.diagram || section.diagram_hint || "",
           degraded: Boolean(section.degraded),
         })),
       }));

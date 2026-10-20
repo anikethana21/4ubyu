@@ -221,7 +221,7 @@ test("an equation is readable on a page that renders no LaTeX", () => {
   assert.match(html, /f_t = \\sigma/, "the equation is there");
   assert.match(html, /Inline: \(h_\{t-1\}\)/, "and so is an inline one");
   // The document keeps them
-  assert.match(document.chapters[0].sections[0].theory_block.explanation, /\\\\\[ f_t = \\sigma/);
+  assert.match(document.chapters[0].sections[0].theory_block.explanation, /\\\[ f_t = \\sigma/);
 });
 
 test("a search that matches nothing says so instead of showing an empty column", () => {
@@ -361,7 +361,7 @@ test("KaTeX delimiters are preserved in the document for math rendering", () => 
   const document = sampleDocument();
   const html = renderWithoutStylesheet(sampleDocument());
   assert.match(html, /f_t = \\sigma/, "equation rendered");
-  assert.match(document.chapters[0].sections[0].theory_block.explanation, /\\\\\[ f_t = \\sigma/);
+  assert.match(document.chapters[0].sections[0].theory_block.explanation, /\\\[ f_t = \\sigma/);
 });
 
 test("no external requests in the downloaded page", () => {
@@ -370,4 +370,34 @@ test("no external requests in the downloaded page", () => {
   for (const url of urls) {
     assert.match(url, /^https:\/\/www\.youtube\.com\/watch\?v=/, `unexpected external address: ${url}`);
   }
+});
+
+test("a mermaid fence in the explanation becomes a labelled block, not raw backticks", () => {
+  const chapters = sampleChapters();
+  chapters[0].sections[0].explanation =
+    "Gates decide what to keep.\n\n```mermaid\nflowchart TD\n  A[input] --> B[forget gate]\n```\n";
+  const html = renderWithoutStylesheet(
+    workspace.buildNotesDocument({ video: { video_id: "abc" }, chapters })
+  );
+  assert.doesNotMatch(html, /```mermaid/, "the fence markers are gone");
+  assert.match(html, /language-mermaid/, "the source is still shown");
+  assert.match(html, /mermaid\.live/, "and the reader is told where to paste it");
+  assert.match(html, /A\[input\] --&gt; B\[forget gate\]|A\[input\] --> B\[forget gate\]/);
+});
+
+test("a diagram hint is drawn from its own field, and NONE means no diagram", () => {
+  const chapters = sampleChapters();
+  chapters[0].sections[0].diagram_hint = "flowchart LR\n  X --> Y";
+  const withDiagram = renderWithoutStylesheet(
+    workspace.buildNotesDocument({ video: { video_id: "abc" }, chapters })
+  );
+  assert.match(withDiagram, /language-mermaid/, "the hint is rendered as diagram source");
+  assert.match(withDiagram, /X --&gt; Y|X --> Y/);
+
+  const none = sampleChapters();
+  none[0].sections[0].diagram_hint = "NONE";
+  const noneHtml = renderWithoutStylesheet(
+    workspace.buildNotesDocument({ video: { video_id: "abc" }, chapters: none })
+  );
+  assert.doesNotMatch(noneHtml, /language-mermaid/, "NONE is an absence, not a diagram");
 });

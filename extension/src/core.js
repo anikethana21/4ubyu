@@ -201,7 +201,7 @@
   // Reading the model's answer to the composer prompt
   // -------------------------------------------------------------------------
 
-  const LABELS = ["EXPLANATION", "ANALOGY", "KEY POINTS", "PITFALLS", "EXAMPLE"];
+  const LABELS = ["EXPLANATION", "ANALOGY", "KEY POINTS", "PITFALLS", "EXAMPLE", "DIAGRAM HINT"];
 
   function escapeRegExp(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -295,6 +295,11 @@
       key_points: items(blocks["KEY POINTS"] || ""),
       pitfalls: items(blocks["PITFALLS"] || "", 3),
       examples: items(blocks["EXAMPLE"] || "", 2),
+      // The composer is told to write NONE when no diagram helps; that is an
+      // absence, not a diagram.
+      diagram: /^none\b/i.test((blocks["DIAGRAM HINT"] || "").trim())
+        ? ""
+        : (blocks["DIAGRAM HINT"] || "").trim(),
     };
   }
 
@@ -379,8 +384,11 @@
     "transcript has no examples here.\n\n" +
     "DIAGRAM HINT\n" +
     "If a diagram would genuinely help this section (architecture, data flow, state " +
-    "machine, mathematical relationship, tree/graph structure), describe exactly what it " +
-    "should show and suggest Mermaid syntax. Write NONE if no diagram adds value. " +
+    "machine, mathematical relationship, tree/graph structure), write the Mermaid source " +
+    "itself, starting on its own line with the Mermaid diagram type (for example " +
+    "'flowchart TD'). No triple-backtick fence, no explanation around it, no prose before " +
+    "or after it — the reader pastes exactly what you write into mermaid.live. " +
+    "Write NONE if no diagram adds value. " +
     "Do not force diagrams everywhere — only where they clarify something text cannot.";
 
   /** Fill a prompt's `{placeholders}` from a values object, leaving others alone. */

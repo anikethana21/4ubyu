@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.0.0
+// @version      2.0.1
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -1077,7 +1077,12 @@
    * the two others are there for the times it does not fire.
    */
   function refresh() {
-    panel.setAvailable(/^\/watch/.test(location.pathname));
+    const onWatch = /^\/watch/.test(location.pathname);
+    panel.setAvailable(onWatch);
+    // Every YouTube video has the same pathname (/watch); only ?v= changes.
+    // So the panel is told which lecture is on screen; when that id changes it
+    // drops the old transcript instead of holding it hostage until a restart.
+    if (typeof panel.setVideo === "function") panel.setVideo(onWatch ? currentVideoId() : "");
   }
 
   GM_registerMenuCommand("✦ Turn this lecture into notes", () => panel.open());
@@ -1086,11 +1091,14 @@
   refresh();
   document.addEventListener("yt-navigate-finish", refresh);
   window.addEventListener("popstate", refresh);
-  let lastPath = location.pathname;
+  // The query string is watched too: moving from one lecture to the next keeps
+  // the pathname at /watch, so watching only the pathname would never fire.
+  let lastUrl = location.pathname + location.search;
   setInterval(() => {
-    if (location.pathname !== lastPath) {
-      lastPath = location.pathname;
+    const now = location.pathname + location.search;
+    if (now !== lastUrl) {
+      lastUrl = now;
       refresh();
     }
-  }, 1200);
+  }, 800);
 })();

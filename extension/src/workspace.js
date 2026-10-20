@@ -87,6 +87,37 @@
     return escapeHtml(stripInlineMath(value));
   }
 
+  /**
+   * Mermaid is not loaded into the page. Shipping the renderer would add a
+   * large script and a second thing that can fail to load, and the notes are
+   * meant to open with no network at all. So a diagram is shown as the source
+   * that was written, labelled with where to paste it, rather than as a broken
+   * picture. ```` ```mermaid ```` fences are unwrapped first, so the reader gets
+   * the diagram text and not three backticks in the middle of a paragraph.
+   */
+  function mermaidBlocks(value) {
+    const raw = String(value === undefined || value === null ? "" : value);
+    const blocks = [];
+    const rest = raw.replace(/```mermaid[ \t]*\r?\n([\s\S]*?)```/g, (match, code) => {
+      blocks.push(code.trim());
+      return "";
+    });
+    const remainder = rest.trim();
+    // A hint field often holds the diagram with no fence around it at all.
+    if (!blocks.length && /^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline)\b/m.test(remainder)) {
+      blocks.push(remainder);
+      return { text: "", blocks };
+    }
+    return { text: remainder, blocks };
+  }
+
+  function mermaidCard(code) {
+    return `<div class="code-block-card glass-card">
+            <p class="code-preamble">Diagram source — paste it into mermaid.live to draw it</p>
+            <pre><code class="language-mermaid">${escapeHtml(code)}</code></pre>
+          </div>`;
+  }
+
   // Version 2 is the data the page is drawn from.
   const SCHEMA_VERSION = 2;
 
@@ -396,13 +427,17 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
       )
       .join("\n");
 
-    // Diagram hint - render as Mermaid if present
-    const diagram = theory.diagram_hint
-      ? `          <div class="diagram-card glass-card">
+    // The diagram hint holds the diagram. It may or may not still be wrapped in
+    // ```mermaid fences, so both shapes are accepted.
+    const hintedDiagram = mermaidBlocks(theory.diagram_hint || "");
+    const diagram =
+      hintedDiagram.blocks.length || hintedDiagram.text
+        ? `          <div class="diagram-card glass-card">
             <h4>Diagram</h4>
-            <div class="mermaid">${text(theory.diagram_hint)}</div>
+            ${hintedDiagram.blocks.map(mermaidCard).join("\n")}
+            ${hintedDiagram.text ? `<p>${text(hintedDiagram.text)}</p>` : ""}
           </div>`
-      : "";
+        : "";
 
     const supplement = section.supplement_block
       ? `          <div class="supplement-card glass-card">
@@ -411,8 +446,11 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
           </div>`
       : "";
 
-    // Explanation with math rendering
-    const explanationHtml = renderMarkdown(textPlain(theory.explanation || ""));
+    // Explanation, with any diagram fences lifted out of the prose and shown as
+    // labelled source underneath it.
+    const explainedDiagram = mermaidBlocks(theory.explanation || "");
+    const explanationHtml = renderMarkdown(textPlain(explainedDiagram.text || ""));
+    const explanationCards = explainedDiagram.blocks.map(mermaidCard).join("\n");
 
     return `          <section class="section-block glass-card" data-chapter-title="${escapeHtml(
       section.section_title
@@ -426,7 +464,7 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
               </div>
             </div>
             <div class="theory-block">
-              <div class="theory-content">${explanationHtml}</div>
+              <div class="theory-content">${explanationHtml}${explanationCards}</div>
 ${analogies}
             </div>
 ${codeBlocks}
