@@ -4720,8 +4720,18 @@ ${chaptersHtml}
         },
       });
 
-      const total = (state.estimate && state.estimate.sections) || 0;
-      let planned = 0;
+      // What the run promised to do, in the same units the estimate used: one
+      // call to plan each part, one to write each section. `event.index` cannot
+      // be used for progress: it counts within one part and restarts at 1 with
+      // the next, so dividing it by the run's total made the bar fall back every
+      // time a part began. Steps are counted here instead, and only ever forward.
+      const totalSteps = (state.estimate && (state.estimate.calls || state.estimate.sections)) || 0;
+      let stepsDone = 0;
+      const advance = () => {
+        stepsDone += 1;
+        const share = totalSteps ? Math.round((stepsDone / Math.max(1, totalSteps)) * 100) : 0;
+        state.percent = Math.max(state.percent, Math.min(95, share));
+      };
 
       try {
         const result = await pipeline.runLecture({
@@ -4746,7 +4756,7 @@ ${chaptersHtml}
               );
             }
             if (event.type === "plan-done") {
-              planned += 1;
+              advance();
               line(
                 event.plan.planned
                   ? `${event.plan.title} — ${event.plan.sections.length} topic${event.plan.sections.length === 1 ? "" : "s"}`
@@ -4755,7 +4765,9 @@ ${chaptersHtml}
             }
             if (event.type === "section") {
               line(`Writing “${event.section.title}”…`);
-              state.percent = total ? Math.min(95, Math.round((event.index - 1) / Math.max(1, total) * 100)) : 0;
+            }
+            if (event.type === "section-done") {
+              advance();
             }
             if (event.type === "done") {
               state.percent = 100;
