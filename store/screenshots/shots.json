@@ -1,0 +1,28 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "shots": [
+    {
+      "name": "01-estimate",
+      "note": "the panel ready to run, with the estimate before anything is spent"
+    },
+    {
+      "name": "02-writing",
+      "note": "mid-run: progress, the quote, and the log of what it is doing"
+    },
+    {
+      "name": "03-done",
+      "note": "the run finished: one file, ready to download"
+    },
+    {
+      "name": "04-notes-page",
+      "note": "the study page the run downloads, in one self-contained file"
+    },
+    {
+      "name": "05-notes-sections",
+      "note": "the notes themselves, one section per idea"
+    }
+  ]
+}

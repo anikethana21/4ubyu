@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<!--
+  The 440 x 280 promo tile, drawn at exactly that size so it can be screenshotted
+  without scaling: `node extension/dev/shots.js` writes
+  `store/promo/promo-440x280.png` from this file.
+
+  Every mark is inline. Nothing here loads from the network.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; padding: 0; width: 440px; height: 280px; overflow: hidden;
+        background: #0b0f15;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      .tile {
+        position: relative; width: 440px; height: 280px; overflow: hidden;
+        background:
+          radial-gradient(320px 220px at 84% 8%, rgba(250, 204, 21, 0.20), transparent 68%),
+          radial-gradient(420px 280px at 8% 108%, rgba(56, 132, 255, 0.16), transparent 70%),
+          linear-gradient(158deg, #10161f 0%, #0a0d12 62%);
+      }
+      /* A quiet grid, so the tile does not read as an empty rectangle. */
+      .grid {
+        position: absolute; inset: 0; opacity: 0.5;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 28px 28px;
+        mask-image: radial-gradient(300px 220px at 78% 22%, #000 0%, transparent 78%);
+      }
+      .body { position: relative; padding: 30px 30px 26px; height: 100%; display: flex; flex-direction: column; }
+      .mark { display: flex; align-items: center; gap: 11px; }
+      .mark svg { width: 38px; height: 38px; border-radius: 11px; box-shadow: 0 8px 22px rgba(240, 176, 18, 0.22); }
+      .wordmark { font-weight: 800; font-size: 17px; letter-spacing: 0.16em; color: #facc15; }
+      .wordmark small {
+        display: block; margin-top: 3px; font-size: 7.5px; font-weight: 600;
+        letter-spacing: 0.3em; color: #93a1b3;
+      }
+      h1 {
+        margin: 26px 0 0; font-size: 27px; line-height: 1.24; letter-spacing: -0.02em;
+        font-weight: 700; color: #eef3f9; max-width: 330px;
+      }
+      h1 em {
+        font-style: normal; background: linear-gradient(135deg, #fde68a, #f0b012);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .foot {
+        margin-top: auto; font-size: 11.5px; letter-spacing: 0.01em; color: #9fb0c4;
+      }
+      .foot b { color: #dbe5f0; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <div class="tile">
+      <div class="grid"></div>
+      <div class="body">
+        <div class="mark">
+          <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="gold" x1="0" y1="0" x2="0.55" y2="1">
+                <stop offset="0" stop-color="#fde68a" />
+                <stop offset="1" stop-color="#f0b012" />
+              </linearGradient>
+            </defs>
+            <rect width="128" height="128" rx="33" fill="url(#gold)" />
+            <path d="M8 33 A33 33 0 0 1 41 8 H87 A33 33 0 0 1 120 33"
+                  fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="3" stroke-linecap="round" />
+            <text x="64" y="93" text-anchor="middle" font-family="system-ui, 'Segoe UI', Roboto, sans-serif"
+                  font-weight="900" font-size="92" letter-spacing="-3" fill="#1d1503">4</text>
+          </svg>
+          <div class="wordmark">4 U BY U<small>FOR YOU BY YOU</small></div>
+        </div>
+
+        <h1>A lecture becomes <em>notes you can keep</em>.</h1>
+
+        <div class="foot">
+          <b>Chapters by topic</b> · your own API key · one HTML file · no account
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

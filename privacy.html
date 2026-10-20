@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy — 4 U By U</title>
+    <meta
+      name="description"
+      content="What 4 U By U reads, what it stores in your browser, and the one thing it sends anywhere: the captions of the lecture you asked it to write up, to the provider whose key you supplied."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --gold: #facc15;
+        --amber: #f59e0b;
+        --ink: #0c0f14;
+        --panel: #151a21;
+        --line: #263041;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: radial-gradient(1200px 600px at 50% -10%, #1b2330 0%, var(--ink) 55%);
+        color: var(--text); font: 16px/1.7 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { max-width: 760px; margin: 0 auto; padding: 64px 24px 96px; }
+      .brand { font: 800 13px/1 system-ui, sans-serif; letter-spacing: 0.22em; color: var(--gold); }
+      .brand small { display: block; margin-top: 6px; font-weight: 500; letter-spacing: 0.34em; color: var(--muted); font-size: 9px; }
+      h1 { font-size: clamp(1.6rem, 4.2vw, 2.3rem); line-height: 1.24; letter-spacing: -0.02em; margin: 26px 0 6px; }
+      h2 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin: 40px 0 12px; }
+      p { margin: 0 0 14px; }
+      a { color: #7dd3fc; }
+      ul { padding-left: 22px; margin: 0 0 14px; }
+      li { margin: 6px 0; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; color: #fde68a; }
+      .card { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 18px 20px; margin: 0 0 16px; }
+      .card.ask { border-left: 3px solid var(--gold); }
+      .muted { color: var(--muted); }
+      .lede { font-size: 1.04rem; color: #cbd5e1; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
+      th, td { text-align: left; vertical-align: top; padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line); }
+      th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; }
+      tr:last-child td { border-bottom: 0; }
+      .yes { color: #fca5a5; font-weight: 600; }
+      .no { color: #86efac; font-weight: 600; }
+      footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.86rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">4 U BY U<small>FOR YOU BY YOU</small></div>
+      <h1>Privacy</h1>
+      <p class="muted" style="margin-bottom: 22px">Last updated 20 October 2026.</p>
+
+      <p class="lede">
+        4 U By U turns a YouTube lecture into study notes. It runs entirely in your browser, and it has no
+        server of its own. This page says exactly what it reads, what it keeps, and the one thing it sends
+        anywhere.
+      </p>
+
+      <h2>The short version</h2>
+      <div class="card ask">
+        <p>
+          The captions of the lecture you choose are sent to the AI provider whose API key you supplied — Groq,
+          at <code>api.groq.com</code> — so that it can write the notes you asked for. That is the only request
+          that leaves your browser. There is no account, no analytics, no advertising, no tracking, and no
+          server that we operate or could read from.
+        </p>
+        <p style="margin-bottom: 0" class="muted">
+          If you would rather not send anything to a third party, do not press Generate. Reading the page,
+          choosing a model and seeing the estimate send nothing.
+        </p>
+      </div>
+
+      <h2>What it reads</h2>
+      <ul>
+        <li>The page you are on, only on <code>https://www.youtube.com/*</code>: the video's title, channel,
+          id, duration, and the caption track the player already loaded.</li>
+        <li>The captions of that lecture, which is how the notes are written.</li>
+        <li>Nothing else on the page, and no other site. It cannot read other tabs or other sites.</li>
+      </ul>
+
+      <h2>What leaves your browser</h2>
+      <div class="card">
+        <table>
+          <tr><th>What</th><th>Where</th><th>Why</th></tr>
+          <tr>
+            <td>Your API key</td>
+            <td><code>https://api.groq.com</code>, in the request's own authentication header</td>
+            <td>It identifies your account to the provider. It is not sent anywhere else.</td>
+          </tr>
+          <tr>
+            <td>The caption text and title of the lecture you asked about, in the prompt</td>
+            <td>The same address</td>
+            <td>It is what the model reads to write the notes.</td>
+          </tr>
+        </table>
+        <p class="muted" style="margin: 14px 0 0">
+          That request is made from the extension's own background worker, not from the YouTube page, so the
+          page's security policy cannot see or change it. The provider's handling of what it receives is
+          governed by <a href="https://groq.com/privacy-policy/">Groq's privacy policy</a>, not by this one.
+        </p>
+      </div>
+
+      <h2>What it keeps, and where</h2>
+      <p>
+        Everything it keeps stays in your browser's own storage for the extension (or your script manager's
+        storage, for the userscript version). None of it is synced to any account, and none of it is readable by
+        anyone else.
+      </p>
+      <ul>
+        <li><b>Your API key</b> — so you do not have to paste it again on the next lecture.</li>
+        <li><b>Your chosen model</b> — so the estimate and the run use the model you picked.</li>
+        <li><b>The notes you generated</b>, kept in “My notes” — so a finished lecture can be reopened or
+          downloaded again without paying for it twice.</li>
+        <li><b>A usage ledger</b> — tokens the provider reported, per model, per day, kept on your machine so the
+          panel can warn you before a run would exceed the day's allowance. It contains no text from the lecture.</li>
+        <li><b>In-progress work</b> — a part that was written before an interruption, so a run can continue
+          instead of starting over.</li>
+      </ul>
+      <p class="muted">
+        You can delete the key in the panel, and everything else by removing the extension or clearing the
+        extension's site data. Uninstalling it removes its storage with it.
+      </p>
+
+      <h2>What it never does</h2>
+      <table>
+        <tr>
+          <td>Creates an account, or asks for your name, email or anything personal</td>
+          <td class="no">Never</td>
+        </tr>
+        <tr>
+          <td>Loads analytics, telemetry, advertising, or a third-party script or font</td>
+          <td class="no">Never</td>
+        </tr>
+        <tr>
+          <td>Reads your browsing history, your other tabs, or any site other than YouTube</td>
+          <td class="no">Never</td>
+        </tr>
+        <tr>
+          <td>Downloads or runs code from the internet</td>
+          <td class="no">Never</td>
+        </tr>
+        <tr>
+          <td>Sells, rents or shares data with anyone, or uses it for advertising or profiling</td>
+          <td class="no">Never</td>
+        </tr>
+        <tr>
+          <td>Sends the lecture's captions anywhere except the provider you configured, and only when you press
+            Generate</td>
+          <td class="no">Never</td>
+        </tr>
+      </table>
+
+      <h2>The notes you download</h2>
+      <p>
+        The notes are one self-contained HTML file saved by your browser, wherever your browser saves downloads.
+        It contains the lecture's title, channel, timestamps, the notes, and links back to YouTube at each
+        timestamp. It has no scripts that contact a server, no fonts or styles from the internet, and no
+        analytics: it opens from your own disk, offline, for as long as you keep it. Sharing it shares exactly
+        what is written in it, nothing more.
+      </p>
+
+      <h2>Children</h2>
+      <p>
+        It is not directed at children under 13, and it collects nothing about anyone. A child using it would
+        still need an API key of their own, which requires accepting the provider's terms.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        If what the program sends or stores ever changes, this page changes with it in the same commit, and the
+        date at the top changes. The source is public, so the claims here can be checked against the code.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions, or a correction to this page:
+        <a href="https://github.com/anikethana21/4ubyu/issues">github.com/anikethana21/4ubyu/issues</a>.
+        The developer's contact address is also on the Chrome Web Store listing, under “Developer”.
+      </p>
+
+      <footer>
+        4 U By U — MIT licensed · <a href="./">the install page</a> ·
+        <a href="https://github.com/anikethana21/4ubyu">source</a>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -204,15 +204,17 @@ placed by the parameter count in its id.
 an `@updateURL`, so it keeps itself current from that page.
 
 **Chrome extension.** `npm run build` writes `extension/dist/store/` (a Manifest V3 package: one content
-script, one service worker, `storage` and the provider's address as its only permissions). `npm run package`
-zips it for the store. The store fee is the only part of this that costs money, so it is deferred; the
-userscript is the same program.
+script, one service worker, four icon sizes, `storage` and the provider's address as its only permissions).
+`npm run package` zips it. The submission kit — every field the Chrome Web Store asks for, the screenshots at
+the size it asks for, and the privacy-practices answers — is in [`store/SUBMISSION.md`](store/SUBMISSION.md);
+the listing itself is pending review. The zip is not submitted yet: the extension still needs one real
+end-to-end run in Chrome first.
 
 ## Development
 
 ```bash
 npm install                 # nothing to install, but this is the habit
-npm test                    # 128 JS tests: core, page, pipeline, built artifacts
+npm test                    # 130 JS tests: core, page, pipeline, built artifacts
 npm run assets              # regenerate src/assets.js from templates/base_workspace.html
 npm run assets:check        # fail if the page's stylesheet has drifted (or gained a remote URL)
 npm run build               # write 4ubyu.user.js and extension/dist/store/
@@ -232,7 +234,7 @@ no key and no network.
 ## Tests
 
 ```bash
-npm test                                              # 106 JavaScript tests
+npm test                                              # 130 JavaScript tests
 python -X utf8 -m pytest tests -q                     # 98 Python tests (the frozen reference pipeline)
 ```
 
@@ -251,17 +253,25 @@ never reached the file a user installs.
 - **No claims of being unhackable.** No software is. What is true here is narrower and checkable: the program
   is one readable file, it asks for the smallest permission set that works, and every note on the page can be
   traced back to the words it came from.
+- **The policy is a page, not a promise.** [`privacy.html`](privacy.html) lists the two things that leave the
+  browser — the lecture's caption text and your key, both to the provider you configured — and everything that
+  is kept locally.
 
 ## Repository layout
 
 ```text
 4ubyu.user.js              the built userscript — what gets installed (generated; do not edit)
 index.html                 the install page served by GitHub Pages
+privacy.html               the privacy policy the store listing points at
+store/                     the submission kit: listing copy, screenshots, promo tile
 extension/
   userscript.js            the userscript's shell: header, storage, YouTube capture, bootstrap
+  page-bridge.js           the extension's window into YouTube's own world (MAIN-world content script)
   build.js                 folds src/*.js into the userscript and the extension package
   src/                     core.js · pipeline.js · workspace.js · markdown.js · panel.js · assets.js
-  dev/                     run.js · render.js · serve.js · panel-harness.html
+  assets/                  icon.svg and the four PNGs rasterised from it
+  tools/                   package.js · icons.js · extract-assets.js
+  dev/                     run.js · render.js · serve.js · shots.js · panel-harness.html
   dist/store/              the built Manifest V3 extension package (generated)
 tests/js/                  the JavaScript suite, including tests of the built artifacts
 core/, api/, scripts/, …   the original server-side prototype: FastAPI, LangGraph, pgvector
