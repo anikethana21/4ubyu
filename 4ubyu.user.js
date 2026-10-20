@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.2.4
+// @version      2.2.5
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -6566,6 +6566,10 @@ ${chaptersHtml}
     // So the panel is told which lecture is on screen; when that id changes it
     // drops the old transcript instead of holding it hostage until a restart.
     if (typeof panel.setVideo === "function") panel.setVideo(onWatch ? currentVideoId() : "");
+
+    // Clear stale resource timings (old video's timedtext URLs) so
+    // findPlayerCaptionUrl() doesn't pick up the previous lecture's caption URL.
+    try { performance.clearResourceTimings(); } catch (e) { /* ignore */ }
   }
 
   GM_registerMenuCommand("✦ Turn this lecture into notes", () => panel.open());

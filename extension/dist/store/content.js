@@ -6590,6 +6590,10 @@ ${chaptersHtml}
     // So the panel is told which lecture is on screen; when that id changes it
     // drops the old transcript instead of holding it hostage until a restart.
     if (typeof panel.setVideo === "function") panel.setVideo(onWatch ? currentVideoId() : "");
+
+    // Clear stale resource timings (old video's timedtext URLs) so
+    // findPlayerCaptionUrl() doesn't pick up the previous lecture's caption URL.
+    try { performance.clearResourceTimings(); } catch (e) { /* ignore */ }
   }
 
   GM_registerMenuCommand("✦ Turn this lecture into notes", () => panel.open());
