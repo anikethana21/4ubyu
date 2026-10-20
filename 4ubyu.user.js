@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.1.6
+// @version      2.1.8
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -1740,7 +1740,7 @@ ${items}
   // Section rendering — GeeksforGeeks style
   // ---------------------------------------------------------------------------
 
-  function renderSection(view, section) {
+  function renderSection(view, section, chapterTitle = "") {
     const seconds = Number(section.timestamp_seconds || 0);
     const theory = section.theory_block || {};
 
@@ -1825,17 +1825,30 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
     const explanationHtml = renderMarkdown(stripInlineMath(explainedDiagram.text || ""));
     const explanationCards = explainedDiagram.blocks.map(mermaidCard).join("\n");
 
+    // A chapter with one section says its name twice: once as the chapter
+    // heading and again above the prose. That reads as a mistake, so when the
+    // two are the same words the section's own header is dropped.
+    const sameTitle =
+      chapterTitle &&
+      String(section.section_title || "").trim().toLowerCase() ===
+        String(chapterTitle).trim().toLowerCase();
+    const showHeader = !sameTitle || section.degraded;
+
     return `          <section class="section-block glass-card" data-chapter-title="${escapeHtml(
       section.section_title
     )}" data-timestamp-seconds="${seconds}" id="${escapeHtml(section.section_id)}">
-            <div class="section-header">
+            ${
+              showHeader
+                ? `<div class="section-header">
               <h3 class="section-heading">${text(section.section_title)}${
-      section.degraded ? `<span class="degraded-badge">Not written up</span>` : ""
-    }</h3>
+                    section.degraded ? `<span class="degraded-badge">Not written up</span>` : ""
+                  }</h3>
               <div class="section-tools">
                 ${renderTimestamp(view, seconds, section.time_reference, "ts-pill-sm")}
               </div>
-            </div>
+            </div>`
+                : ""
+            }
             <div class="theory-block">
               <div class="theory-content">${explanationHtml}${explanationCards}</div>
 ${analogies}
@@ -1853,7 +1866,11 @@ ${supplement}
     return (document.chapters || [])
       .map((chapter) => {
         const seconds = Number(chapter.timestamp_seconds || 0);
-        const sections = (chapter.sections || []).map((section) => renderSection(view, section)).join("\n");
+        const sections = (chapter.sections || [])
+          .map((section) =>
+            renderSection(view, section, chapter.display_title || chapter.chapter_title)
+          )
+          .join("\n");
         const overview = chapter.overview
           ? `<div class="chapter-overview">${renderMarkdown(chapter.overview)}</div>`
           : "";
@@ -5354,6 +5371,76 @@ ${chaptersHtml}
     return candidates.find((c) => c && c.videoDetails) || null;
   }
 
+  // -------------------------------------------------------------------------
+  // Reaching the page's own world
+  //
+  // A userscript is handed the page's window (`@grant unsafeWindow`), so the
+  // calls above work directly. An extension's content script is isolated from
+  // that window by design: `unsafeWindow` does not exist, the bootstrap object
+  // is invisible, and after YouTube's single-page navigation the copy in the
+  // HTML is the previous video's. So the extension ships `page-bridge.js`, which
+  // runs inside the page and answers this question over the DOM.
+  // -------------------------------------------------------------------------
+
+  const hasPageWorld = typeof unsafeWindow !== "undefined";
+
+  /** What the page last told us about itself, for the InnerTube fallback. */
+  let pageConfig = null;
+
+  /**
+   * Asks the page's world for the live player response.
+   *
+   * Only strings cross that boundary, so the reply is parsed here. It is asked
+   * with a deadline and it is allowed to come back empty: on the first page load
+   * the HTML already has everything, and the bridge is for the navigation after
+   * that.
+   */
+  function askPageWorld(videoId) {
+    return new Promise((resolve) => {
+      const id = "ubyu-" + Math.random().toString(36).slice(2);
+      let settled = false;
+
+      const finish = (message) => {
+        if (settled) return;
+        settled = true;
+        document.removeEventListener("ubyu:player-response", onReply);
+        resolve(message || null);
+      };
+
+      const onReply = (event) => {
+        let message = null;
+        try {
+          message = JSON.parse((event && event.detail) || "");
+        } catch (err) {
+          return;
+        }
+        if (message && message.id === id) finish(message);
+      };
+
+      document.addEventListener("ubyu:player-response", onReply);
+      try {
+        document.dispatchEvent(new CustomEvent("ubyu:want-player", { detail: id }));
+      } catch (err) {
+        finish(null);
+        return;
+      }
+      setTimeout(() => finish(null), 1500);
+    });
+  }
+
+  /** The live player response, whichever world it has to be fetched from. */
+  async function livePlayerResponse(videoId) {
+    if (hasPageWorld) return getPlayerResponse(videoId);
+
+    const message = await askPageWorld(videoId);
+    if (message && message.config) pageConfig = message.config;
+    if (message && message.player && message.player.videoDetails) return message.player;
+
+    // No bridge (an older package, or a page that never answered): the HTML copy
+    // still covers the first video someone opens.
+    return getPlayerResponse(videoId);
+  }
+
   const isEnglish = (track) => (track.languageCode || "").toLowerCase().startsWith("en");
   const isManual = (track) => !track.kind || track.kind !== "asr";
 
@@ -5526,6 +5613,14 @@ ${chaptersHtml}
         context = unsafeWindow.ytcfg.get("INNERTUBE_CONTEXT") || null;
       }
     } catch (err) { /* the page may not have exposed ytcfg yet */ }
+
+    // The extension's content script cannot see `ytcfg` at all; the bridge hands
+    // over the same four values, and they are the real ones rather than a guess.
+    if (!context && pageConfig && pageConfig.context) {
+      key = key || pageConfig.key || "";
+      version = version || pageConfig.version || "";
+      context = pageConfig.context;
+    }
 
     if (!key) {
       const match = html.match(/"INNERTUBE_API_KEY":"([^"]+)"/);
@@ -6173,7 +6268,7 @@ ${chaptersHtml}
     const videoId = currentVideoId();
     if (!videoId) throw new Error("Open a YouTube video first.");
 
-    const playerResponse = getPlayerResponse(videoId);
+    const playerResponse = await livePlayerResponse(videoId);
     if (!playerResponse) {
       throw new Error("Could not read this page's video data. Reload the page and try again.");
     }

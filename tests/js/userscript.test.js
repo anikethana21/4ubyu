@@ -258,13 +258,123 @@ test("the store package is a manifest and one content script, with no remote cod
   const loaded = loadStorePackage();
   const manifest = loaded.manifest;
   assert.equal(manifest.manifest_version, 3);
-  assert.match(manifest.content_scripts[0].matches[0], /youtube\.com/);
+  assert.equal(manifest.content_scripts.length, 2);
+  // The page's own world first: the isolated script has to ask it for the player
+  // data, because an extension cannot read the page's window the way a userscript's
+  // `unsafeWindow` can.
+  const [bridge, isolated] = manifest.content_scripts;
+  assert.deepEqual(bridge.js, ["page-bridge.js"]);
+  assert.equal(bridge.world, "MAIN");
+  assert.equal(bridge.run_at, "document_start");
+  assert.equal(isolated.run_at, "document_idle");
+  assert.match(isolated.matches[0], /youtube\.com/);
+  assert.ok(!/https?:/.test(isolated.js.join(" ")), "no remote script is loaded");
   assert.equal(manifest.background.service_worker, "background.js");
   // The permission that reaches outside the browser is named, and it is the
   // provider's address and nothing else.
   assert.deepEqual(manifest.host_permissions, ["https://www.youtube.com/*", "https://api.groq.com/*"]);
   assert.deepEqual(manifest.permissions, ["storage"]);
-  assert.ok(!/https?:/.test(manifest.content_scripts[0].js.join(" ")), "no remote script is loaded");
+});
+
+test("the page bridge answers in the page's world, and asks for nothing", () => {
+  const source = fs.readFileSync(path.join(STORE, "page-bridge.js"), "utf8");
+  // It runs as page script: it has no access to the extension's APIs, and it must
+  // not pretend otherwise.
+  assert.doesNotMatch(source, /\bchrome\./);
+  assert.doesNotMatch(source, /https?:\/\//, "the bridge speaks to the page, not the network");
+
+  // And it works: load it the way the page would, with a bootstrap response for
+  // the video in the address bar, then ask it the way the content script does.
+  const listeners = {};
+  const replied = [];
+  const page = {
+    ytInitialPlayerResponse: { videoDetails: { videoId: "0Q4yhrkwn7c", title: "A lecture" } },
+    ytcfg: { get: (key) => ({ INNERTUBE_API_KEY: "k", INNERTUBE_CLIENT_VERSION: "2.0" })[key] },
+    location: { search: "?v=0Q4yhrkwn7c" },
+    document: {
+      getElementById: () => null,
+      addEventListener: (name, handler) => {
+        listeners[name] = handler;
+      },
+      dispatchEvent: (event) => {
+        replied.push(event);
+      },
+    },
+  };
+  page.window = page;
+  const context = vm.createContext(page);
+  context.URLSearchParams = URLSearchParams;
+  context.CustomEvent = class {
+    constructor(type, init) {
+      this.type = type;
+      this.detail = init && init.detail;
+    }
+  };
+  vm.runInContext(source, context);
+
+  // A stale response for another video must not be handed over.
+  page.ytInitialPlayerResponse = { videoDetails: { videoId: "other" } };
+  listeners["ubyu:want-player"]({ detail: "ask-1" });
+  assert.equal(JSON.parse(replied[0].detail).player, null);
+
+  page.ytInitialPlayerResponse = { videoDetails: { videoId: "0Q4yhrkwn7c", title: "A lecture" } };
+  listeners["ubyu:want-player"]({ detail: "ask-2" });
+  const answer = JSON.parse(replied[1].detail);
+  assert.equal(answer.id, "ask-2");
+  assert.equal(answer.player.videoDetails.videoId, "0Q4yhrkwn7c");
+  assert.equal(answer.config.key, "k");
+});
+
+test("the store package carries the icon at every size Chrome and the store ask for", () => {
+  const { manifest } = loadStorePackage();
+  const icons = manifest.icons || {};
+  assert.deepEqual(Object.keys(icons).sort(), ["128", "16", "32", "48"]);
+  for (const [size, relative] of Object.entries(icons)) {
+    const file = path.join(STORE, relative);
+    assert.ok(fs.existsSync(file), `${relative} is named in the manifest but not in the package`);
+    const png = fs.readFileSync(file);
+    assert.equal(png.toString("ascii", 1, 4), "PNG", `${relative} is not a PNG`);
+    assert.equal(png.readUInt32BE(16), Number(size), `${relative} is not ${size} px wide`);
+    assert.equal(png.readUInt32BE(20), Number(size), `${relative} is not ${size} px tall`);
+  }
+  // A store listing without an address for the curious is a review question.
+  assert.match(manifest.homepage_url, /^https:\/\/anikethana21\.github\.io\/4ubyu\/$/);
+});
+
+test("the store zip keeps the paths the store expects, in one root", () => {
+  execFileSync(process.execPath, [path.join(ROOT, "extension", "tools", "package.js")], { encoding: "utf8" });
+  const zip = fs.readFileSync(path.join(ROOT, "extension", "dist", "4ubyu-extension.zip"));
+
+  // Read the central directory's names the way a zip reader does: find the end
+  // record, then walk the entries it points at.
+  const end = zip.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  assert.ok(end > 0, "the zip has no end-of-central-directory record");
+  const count = zip.readUInt16LE(end + 10);
+  let at = zip.readUInt32LE(end + 16);
+  const names = [];
+  for (let index = 0; index < count; index += 1) {
+    assert.equal(zip.readUInt32LE(at), 0x02014b50, "a central directory record is not where it claims");
+    const nameLength = zip.readUInt16LE(at + 28);
+    const extraLength = zip.readUInt16LE(at + 30);
+    const commentLength = zip.readUInt16LE(at + 32);
+    names.push(zip.toString("utf8", at + 46, at + 46 + nameLength));
+    at += 46 + nameLength + extraLength + commentLength;
+  }
+
+  assert.deepEqual(names.sort(), [
+    "background.js",
+    "content.js",
+    "icons/icon128.png",
+    "icons/icon16.png",
+    "icons/icon32.png",
+    "icons/icon48.png",
+    "manifest.json",
+    "page-bridge.js",
+  ]);
+  // A Windows separator is not a path to a zip reader: the icon and the bridge
+  // would both be filed under a name no manifest can point at, and nothing would
+  // say so.
+  assert.ok(!names.some((name) => name.includes("\\")), "the zip must not use Windows separators");
 });
 
 test("the content script installs the same panel the userscript does", () => {

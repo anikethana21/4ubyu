@@ -1,8 +1,15 @@
 {
   "manifest_version": 3,
   "name": "4 U By U — Lecture to Study Notes",
-  "version": "2.1.6",
-  "description": "Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, wri",
+  "version": "2.1.8",
+  "description": "Turn the YouTube lecture you are watching into topic-wise study notes. Your own API key, one HTML file. No account, no server.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "homepage_url": "https://anikethana21.github.io/4ubyu/",
   "permissions": [
     "storage"
   ],
@@ -10,11 +17,21 @@
     "https://www.youtube.com/*",
     "https://api.groq.com/*"
   ],
-  "minimum_chrome_version": "110",
+  "minimum_chrome_version": "111",
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "page-bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": [
         "https://www.youtube.com/*"

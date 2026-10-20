@@ -14,6 +14,8 @@
     "package": "node extension/tools/package.js",
     "assets": "node extension/tools/extract-assets.js",
     "assets:check": "node extension/tools/extract-assets.js --check",
+    "icons": "node extension/tools/icons.js",
+    "shots": "node extension/dev/shots.js",
     "render": "node extension/dev/render.js",
     "serve": "node extension/dev/serve.js",
     "harness": "node extension/dev/serve.js",

@@ -362,7 +362,7 @@ ${items}
   // Section rendering — GeeksforGeeks style
   // ---------------------------------------------------------------------------
 
-  function renderSection(view, section) {
+  function renderSection(view, section, chapterTitle = "") {
     const seconds = Number(section.timestamp_seconds || 0);
     const theory = section.theory_block || {};
 
@@ -447,17 +447,30 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
     const explanationHtml = renderMarkdown(stripInlineMath(explainedDiagram.text || ""));
     const explanationCards = explainedDiagram.blocks.map(mermaidCard).join("\n");
 
+    // A chapter with one section says its name twice: once as the chapter
+    // heading and again above the prose. That reads as a mistake, so when the
+    // two are the same words the section's own header is dropped.
+    const sameTitle =
+      chapterTitle &&
+      String(section.section_title || "").trim().toLowerCase() ===
+        String(chapterTitle).trim().toLowerCase();
+    const showHeader = !sameTitle || section.degraded;
+
     return `          <section class="section-block glass-card" data-chapter-title="${escapeHtml(
       section.section_title
     )}" data-timestamp-seconds="${seconds}" id="${escapeHtml(section.section_id)}">
-            <div class="section-header">
+            ${
+              showHeader
+                ? `<div class="section-header">
               <h3 class="section-heading">${text(section.section_title)}${
-      section.degraded ? `<span class="degraded-badge">Not written up</span>` : ""
-    }</h3>
+                    section.degraded ? `<span class="degraded-badge">Not written up</span>` : ""
+                  }</h3>
               <div class="section-tools">
                 ${renderTimestamp(view, seconds, section.time_reference, "ts-pill-sm")}
               </div>
-            </div>
+            </div>`
+                : ""
+            }
             <div class="theory-block">
               <div class="theory-content">${explanationHtml}${explanationCards}</div>
 ${analogies}
@@ -475,7 +488,11 @@ ${supplement}
     return (document.chapters || [])
       .map((chapter) => {
         const seconds = Number(chapter.timestamp_seconds || 0);
-        const sections = (chapter.sections || []).map((section) => renderSection(view, section)).join("\n");
+        const sections = (chapter.sections || [])
+          .map((section) =>
+            renderSection(view, section, chapter.display_title || chapter.chapter_title)
+          )
+          .join("\n");
         const overview = chapter.overview
           ? `<div class="chapter-overview">${renderMarkdown(chapter.overview)}</div>`
           : "";

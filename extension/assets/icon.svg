@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="4 U By U">
+  <!--
+    The extension's mark: the same gold tile the panel's corner button wears,
+    with the 4 on it. This file is the single source; `node extension/tools/icons.js`
+    rasterises it at 16, 32, 48 and 128 px.
+
+    Drawn as vector rather than as four hand-made PNGs so the sizes cannot drift
+    apart, and so the mark stays sharp if a bigger one is ever needed for the
+    store's promo tile.
+  -->
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0" stop-color="#fde68a" />
+      <stop offset="1" stop-color="#f0b012" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="33" fill="url(#gold)" />
+  <!-- The lit top edge the CSS version had: without it the tile reads flat. -->
+  <path d="M8 33 A33 33 0 0 1 41 8 H87 A33 33 0 0 1 120 33"
+        fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="3"
+        stroke-linecap="round" />
+  <text x="64" y="93" text-anchor="middle" font-family="system-ui, 'Segoe UI', Roboto, sans-serif"
+        font-weight="900" font-size="92" letter-spacing="-3" fill="#1d1503">4</text>
+</svg>

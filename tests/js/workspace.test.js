@@ -88,6 +88,17 @@ test("the document never carries the transcript, which is the expensive part", (
   assert.ok(json.length < 4000, `a one-chapter document stays small: ${json.length} chars`);
 });
 
+test("a chapter with one section does not say its name twice", () => {
+  const document = sampleDocument();
+  const chapter = document.chapters[0];
+  chapter.sections[0].section_title = chapter.display_title || chapter.chapter_title;
+
+  const html = renderWithoutStylesheet(document);
+  // Only the second section still needs a heading of its own.
+  assert.equal((html.match(/class="section-heading"/g) || []).length, 1);
+  assert.match(html, /<h3 class="section-heading">Backpropagation Through Time/);
+});
+
 test("a redundant chapter label is not shown twice", () => {
   assert.equal(workspace.displayTitle("Chapter 2: Gating the Hidden State", 2), "Gating the Hidden State");
   assert.equal(workspace.displayTitle("Chapter 7 - Long Short-Term Memory", 7), "Long Short-Term Memory");

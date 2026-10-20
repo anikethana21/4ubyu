@@ -36,6 +36,17 @@ const ROOT = path.join(EXTENSION, "..");
 const SHELL = path.join(EXTENSION, "userscript.js");
 const USERSCRIPT_OUT = path.join(ROOT, "4ubyu.user.js");
 const STORE_DIR = path.join(EXTENSION, "dist", "store");
+const ICON_DIR = path.join(EXTENSION, "assets", "icons");
+const ICONS = ["icon16.png", "icon32.png", "icon48.png", "icon128.png"];
+
+// The store's summary field and the manifest's description are the same 132
+// characters, so this is a whole sentence on purpose: the userscript's own
+// description is longer, and slicing it mid-word read like a typo in the one
+// place a person decides whether to install.
+const STORE_SUMMARY =
+  "Turn the YouTube lecture you are watching into topic-wise study notes. " +
+  "Your own API key, one HTML file. No account, no server.";
+
 const MARKER = "  // <<<UBYU_MODULES>>>";
 
 /** In dependency order: each of these reads the ones above it. */
@@ -204,15 +215,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     manifest_version: 3,
     name,
     version,
-    description: description.slice(0, 132),
+    // The store's summary field and the manifest's description are the same
+    // 132 characters, and they are a whole sentence: the userscript's own
+    // description is longer, and slicing it mid-word looked like a typo in the
+    // one place a person decides whether to install.
+    description: STORE_SUMMARY.slice(0, 132),
+    // The store draws the mark at 128, the extensions page at 48, the toolbar at
+    // 32 and 16. All four are rasterised from assets/icon.svg by tools/icons.js.
+    icons: {
+      16: "icons/icon16.png",
+      32: "icons/icon32.png",
+      48: "icons/icon48.png",
+      128: "icons/icon128.png",
+    },
+    // Where a reviewer, or anyone who wonders what this is, can read about it.
+    homepage_url: "https://anikethana21.github.io/4ubyu/",
     // No remote code, no analytics, no account: the only permission that reaches
     // out of the browser is the one that lets the service worker ask the provider
     // the user chose for the notes the user asked for.
     permissions: ["storage"],
     host_permissions: ["https://www.youtube.com/*", "https://api.groq.com/*"],
-    minimum_chrome_version: "110",
+    minimum_chrome_version: "111",
     background: { service_worker: "background.js" },
     content_scripts: [
+      // The page's own world first, and as early as it can run: it is the only
+      // place YouTube's player objects exist, and the isolated script asks it for
+      // them by name. `page-bridge.js` is the file in extension/ of that name.
+      {
+        matches: ["https://www.youtube.com/*"],
+        js: ["page-bridge.js"],
+        run_at: "document_start",
+        world: "MAIN",
+      },
       {
         matches: ["https://www.youtube.com/*"],
         js: ["content.js"],
@@ -223,6 +257,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return {
     "content.js": content,
+    "page-bridge.js": read(path.join(EXTENSION, "page-bridge.js")),
     "background.js": background,
     "manifest.json": JSON.stringify(manifest, null, 2) + "\n",
   };
@@ -243,12 +278,24 @@ function main() {
       text: body,
       note: `${Math.round(Buffer.byteLength(body, "utf8") / 1024)} KB`,
     })),
+    // The icons are binary, so they are copied rather than written as text, and
+    // compared byte for byte in --check.
+    ...ICONS.map((name) => {
+      const data = fs.readFileSync(path.join(ICON_DIR, name));
+      return {
+        file: path.join("extension", "dist", "store", "icons", name),
+        data,
+        note: `${Math.round(data.length / 1024)} KB`,
+      };
+    }),
   ];
 
   if (check) {
     const stale = outputs.filter((output) => {
       const file = path.join(ROOT, output.file);
-      return !fs.existsSync(file) || read(file) !== output.text;
+      if (!fs.existsSync(file)) return true;
+      const actual = fs.readFileSync(file);
+      return output.data ? !actual.equals(output.data) : actual.toString("utf8") !== output.text;
     });
     if (stale.length) {
       console.error(`stale build output — run \`npm run build\`: ${stale.map((s) => s.file).join(", ")}`);
@@ -261,7 +308,7 @@ function main() {
   for (const output of outputs) {
     const file = path.join(ROOT, output.file);
     fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, output.text, "utf8");
+    fs.writeFileSync(file, output.data || output.text);
     console.log(`wrote ${output.file} — ${output.note}`);
   }
 }
