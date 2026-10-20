@@ -544,3 +544,45 @@ test("stopping a run keeps the sections it had already written", async () => {
   assert.deepEqual(workspace.validateNotesDocument(result.document), []);
   assert.match(result.stats.stopped, /stopped/);
 });
+
+test("a run that stops making progress is reported instead of hanging forever", async () => {
+  const segments = lecture(15);
+  // A provider that accepts the request and never answers: the shape of hang that
+  // used to leave the panel spinning with nothing said.
+  const call = () => new Promise(() => {});
+  const began = Date.now();
+  await assert.rejects(
+    () =>
+      pipeline.runLecture({
+        segments,
+        video: { video_id: "v9", title: "Lecture", duration: 900 },
+        call,
+        options: { stallTimeoutMs: 300 },
+      }),
+    /no progress for/
+  );
+  assert.ok(Date.now() - began < 5000, "and it gives up quickly once nothing is coming back");
+});
+
+test("a run that keeps making progress is not cut off by a fixed wall-clock cap", async () => {
+  // The watchdog is reset by progress, so a slow run survives well past the
+  // window that would trip it in one go. That is what a long lecture needs: the
+  // eight-thousand-tokens-a-minute pacing makes an hour of lecture take far
+  // longer than any flat five-minute limit would allow.
+  const segments = lecture(30);
+  const provider = fakeProvider();
+  const slowCall = async (request) => {
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    return provider(request);
+  };
+  const began = Date.now();
+  const result = await pipeline.runLecture({
+    segments,
+    video: { video_id: "v10", title: "Lecture", duration: 1800 },
+    call: slowCall,
+    options: { stallTimeoutMs: 150 },
+  });
+  assert.ok(result.document, "the run finished rather than being killed at the limit");
+  assert.ok(Date.now() - began > 150, "and it really did outlast the stall window");
+});
+

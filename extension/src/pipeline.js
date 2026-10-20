@@ -562,32 +562,54 @@
     const began = Date.now();
     const videoId = String(video.video_id || video.id || "");
     const events = [];
+    let lastActivity = Date.now();
     const emit = (event) => {
+      // Any progress at all means the run is alive, and the watchdog resets.
+      lastActivity = Date.now();
       events.push(event);
       onEvent(event);
     };
 
-    // Global run timeout: if anything hangs, we fail fast instead of
-    // leaving the user staring at a blank panel forever. The timer is cleared
-    // when the run finishes, so a finished run leaves nothing pending behind.
-    const runTimeoutMs = options.timeoutMs || 300000; // 5 minutes default
+    // A run is not cut off at a fixed wall clock. A four-hour lecture genuinely
+    // takes over an hour at eight thousand tokens a minute, so a flat "five
+    // minutes and stop" would kill work that was going perfectly well. What is
+    // caught here is a run that has *stopped making progress* — the failure that
+    // really does leave a panel sitting there forever.
+    const stallTimeoutMs = Number(options.stallTimeoutMs) || 180000;
     const runController = typeof AbortController === "function" ? new AbortController() : null;
-    let runTimer = null;
-    const runTimeoutPromise = new Promise((_, reject) => {
-      runTimer = setTimeout(() => {
+    let stallTimer = null;
+    const stalled = new Promise((_, reject) => {
+      const tick = Math.max(250, Math.min(15000, Math.floor(stallTimeoutMs / 4)));
+      stallTimer = setInterval(() => {
+        const idle = Date.now() - lastActivity;
+        if (idle < stallTimeoutMs) return;
+        if (stallTimer) {
+          clearInterval(stallTimer);
+          stallTimer = null;
+        }
         if (runController) runController.abort();
-        reject(new Error(`the run took longer than ${Math.round(runTimeoutMs / 1000)} seconds`));
-      }, runTimeoutMs);
+        reject(new Error(`no progress for ${Math.max(1, Math.round(idle / 1000))} seconds`));
+      }, tick);
     });
     const runPromise = (async () => {
       try {
         return await _runLecture();
       } finally {
-        if (runTimer) clearTimeout(runTimer);
+        if (stallTimer) {
+          clearInterval(stallTimer);
+          stallTimer = null;
+        }
       }
     })();
-    const result = await Promise.race([runPromise, runTimeoutPromise]);
-    return result;
+    try {
+      return await Promise.race([runPromise, stalled]);
+    } finally {
+      // Whichever way the race ended, nothing may be left ticking behind it.
+      if (stallTimer) {
+        clearInterval(stallTimer);
+        stallTimer = null;
+      }
+    }
 
     async function _runLecture() {
 
