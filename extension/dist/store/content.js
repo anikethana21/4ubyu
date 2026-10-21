@@ -6396,22 +6396,22 @@ ${chaptersHtml}
 
   async function fetchTranscript(track, videoId) {
     const attempts = [];
+    const MIN_SEGMENTS = 5; // need at least this many to trust a source
 
     // Aggressively nudge captions BEFORE trying to read - this forces YouTube
     // to fetch the signed URL we can then reuse.
     await nudgePlayerCaptions();
 
+    // Strategy 1: player's own signed URL (best quality, includes auto-translate)
     try {
       const segments = await fetchViaPlayerUrl(videoId, track);
-      if (segments.length) return segments;
-      attempts.push("player's own URL -> empty");
+      if (segments.length >= MIN_SEGMENTS) return segments;
+      attempts.push("player's own URL -> only " + segments.length + " segments");
     } catch (err) {
       attempts.push("player's own URL -> " + (err.message || err));
     }
 
-    // Strategy 2: the signed timedtext URL from the player response. Skipped
-    // outright when exp=xpe announces that a PO token is required, because
-    // YouTube would only answer with an empty 200 and waste a round trip.
+    // Strategy 2: the signed timedtext URL from the player response
     const trackUrl = (track && track.url) || "";
     if (!trackUrl) {
       attempts.push("no caption track in the player response");
@@ -6428,8 +6428,7 @@ ${chaptersHtml}
             continue;
           }
           const segments = parseCaptionBody(result.text);
-          if (segments.length) return segments;
-
+          if (segments.length >= MIN_SEGMENTS) return segments;
           const preview = result.text.slice(0, 70).replace(/\s+/g, " ").trim();
           attempts.push(
             result.via + " " + result.type + " -> HTTP " + result.status + ", " +
@@ -6439,25 +6438,30 @@ ${chaptersHtml}
       }
     }
 
-    // Strategy 3: the transcript panel's own InnerTube endpoint. Called from
-    // the real page with the real session, which may satisfy the newer
-    // integrity checks that reject a plain server-side request.
+    // Strategy 3: the transcript panel's own InnerTube endpoint
     try {
       const segments = await fetchViaTranscriptPanel(videoId);
-      if (segments.length) return segments;
-      attempts.push("get_transcript -> empty");
+      if (segments.length >= MIN_SEGMENTS) return segments;
+      attempts.push("get_transcript -> only " + segments.length + " segments");
     } catch (err) {
       attempts.push("get_transcript -> " + (err.message || err));
     }
 
-    // Strategy 4: read YouTube's own rendered transcript panel.
+    // Strategy 4: read YouTube's own rendered transcript panel (most reliable when panel is open)
     try {
       const segments = await fetchViaRenderedPanel();
-      if (segments.length) return segments;
-      attempts.push("rendered panel -> empty");
+      if (segments.length >= MIN_SEGMENTS) return segments;
+      attempts.push("rendered panel -> only " + segments.length + " segments");
     } catch (err) {
       attempts.push("rendered panel -> " + (err.message || err));
     }
+
+    // If we got here, no source had enough segments. Try returning the best we have
+    // (the rendered panel usually has the most complete transcript).
+    try {
+      const segments = await fetchViaRenderedPanel();
+      if (segments.length) return segments;
+    } catch (err) { /* ignore */ }
 
     throw new Error("Could not read this video's captions. " + attempts.join(" ; "));
   }
