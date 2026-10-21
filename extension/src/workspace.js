@@ -568,10 +568,7 @@ ${videoId
                 <button type="button" class="tab-btn" id="tab-btn-video" role="tab" aria-selected="false" onclick="setMobileView('video')" title="Video">Video</button>
                 <button type="button" class="tab-btn" id="tab-btn-chat" role="tab" aria-selected="false" onclick="setMobileView('chat')" title="Chat">Chat</button>
               </div>` : ''}
-              <button type="button" class="btn-tool-sm" id="btn-print" onclick="handlePrint()" title="Print this page, or save it as a PDF">
-                <svg class="print-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                <span id="btn-print-text">Save as PDF</span>
-              </button>
+              
             </div>
           </div>
         </div>
@@ -1085,20 +1082,6 @@ ${videoId
     border-color: rgb(255 255 255 / 0.26) !important;
   }
 
-  /* Print button loading state */
-  #app-workspace.notes-only .handbook-header .btn-tool-sm.printing {
-    opacity: 0.7;
-    cursor: wait;
-    pointer-events: none;
-  }
-  #app-workspace.notes-only .handbook-header .btn-tool-sm.printing .print-icon {
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
   /* --- the reading column ------------------------------------------------ */
   #app-workspace.notes-only .provenance,
   #app-workspace.notes-only .notes-provenance {
@@ -1510,25 +1493,6 @@ ${chaptersHtml}
       searchInput.value = '';
       handleSearchInput('');
       searchInput.focus();
-    }
-
-    function handlePrint() {
-      const btn = document.getElementById('btn-print');
-      const text = document.getElementById('btn-print-text');
-      if (!btn || !text) { window.print(); return; }
-      btn.disabled = true;
-      btn.classList.add('printing');
-      text.textContent = 'Preparing PDF…';
-      // Give the browser a moment to show the state, then trigger print
-      setTimeout(function () {
-        window.print();
-        // Reset after print dialog closes (or after timeout)
-        setTimeout(function () {
-          btn.disabled = false;
-          btn.classList.remove('printing');
-          text.textContent = 'Save as PDF';
-        }, 1500);
-      }, 50);
     }
 
     function handleSearchFocus() {
