@@ -206,7 +206,7 @@ test("the built userscript registers the whole pipeline, not part of it", () => 
   for (const name of ["UBYU", "UBYU_MARKDOWN", "UBYU_WORKSPACE", "UBYU_PIPELINE", "UBYU_PANEL"]) {
     assert.ok(loaded.sandbox[name], `${name} was not registered by the built file`);
   }
-  assert.equal(loaded.sandbox.UBYU_PANEL.VERSION, "2.2.9");
+  assert.equal(loaded.sandbox.UBYU_PANEL.VERSION, "2.9.5");
   // The panel is installed and listening: it has to have been handed both halves
   // of the split the build rejoins.
   assert.ok(typeof loaded.sandbox.UBYU_PIPELINE.runLecture === "function");
