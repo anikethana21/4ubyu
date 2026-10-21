@@ -255,7 +255,7 @@ test("the page is set in the panel's Latin face, so a 4 has no gap before the U"
 
 test("printing, and saving a PDF, is the browser's job rather than a library's", () => {
   const html = renderWithoutStylesheet(sampleDocument());
-  assert.match(html, /onclick="window\.print\(\)"/, "the page offers the button");
+  assert.match(html, /onclick="handlePrint\(\)"/, "the page offers the button with handler");
   assert.match(html, /Save as PDF/);
   assert.doesNotMatch(html, /jspdf|pdf-lib|html2pdf/i, "with no PDF library to load");
 });
