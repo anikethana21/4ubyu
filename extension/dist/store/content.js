@@ -4153,7 +4153,7 @@ ${chaptersHtml}
 })(typeof globalThis !== "undefined" ? globalThis : this, function (core, pipeline, workspace) {
   "use strict";
 
-  const VERSION = "2.9.5";
+  const VERSION = "2.9.7";
 
   /** Everything the panel remembers between visits lives under one prefix. */
   const KEY_API = "apiKey";
