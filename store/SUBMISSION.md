@@ -14,6 +14,7 @@ Assets in this folder:
 | `screenshots/05-notes-sections.png` | screenshot 5 | 1280 × 800 |
 | `screenshots/shots.json` | what each shot is, for future regeneration | — |
 | `promo/promo-440x280.png` | Small promo tile (optional in the listing) | 440 × 280 |
+| `promo/promo-1400x560.png` | Marquee promo tile (optional; featured placements only) | 1400 × 560 |
 | `../extension/assets/icons/icon128.png` | Store icon | 128 × 128 |
 | `../extension/dist/4ubyu-extension.zip` | The upload itself | — |
 
@@ -172,9 +173,8 @@ notes page (the provider was the dev harness, which is why the screenshots can e
 without spending a key).
 
 **Small promo tile (440 × 280):** `store/promo/promo-440x280.png` — optional, and only
-shown in some placements. It is drawn from `store/promo/promo.html` by the same script
-that takes the screenshots. Skip the marquee (1400 × 560) unless Google offers to feature
-the item.
+shown in some placements. It is drawn from `store/promo/promo.html` by
+`node extension/dev/promo.js`, which also writes the marquee.
 
 **Homepage URL:** `https://anikethana21.github.io/4ubyu/`
 **Support URL:** `https://github.com/anikethana21/4ubyu/issues`

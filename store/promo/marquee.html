@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<!--
+  The 1400 x 560 marquee promo tile, drawn at exactly that size so it can be
+  screenshotted without scaling: `node extension/dev/promo.js` writes
+  `store/promo/promo-1400x560.png` from this file.
+
+  The card on the right is the real notes page (store/screenshots/04-notes-page.png)
+  cropped to its first chapter, not a mock-up. Every mark is inline or local;
+  nothing here loads from the network.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; padding: 0; width: 1400px; height: 560px; overflow: hidden;
+        background: #0b0f15;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .tile {
+        position: relative; width: 1400px; height: 560px; overflow: hidden;
+        display: flex; align-items: center; gap: 40px;
+        padding: 0 64px 0 56px;
+        background:
+          radial-gradient(760px 520px at 86% 2%, rgba(250, 204, 21, 0.16), transparent 66%),
+          radial-gradient(900px 620px at 4% 112%, rgba(56, 132, 255, 0.14), transparent 70%),
+          linear-gradient(158deg, #10161f 0%, #0a0d12 62%);
+      }
+      /* A quiet grid, so the tile does not read as an empty rectangle. */
+      .grid {
+        position: absolute; inset: 0; opacity: 0.55;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 40px 40px;
+        mask-image: radial-gradient(900px 560px at 72% 40%, #000 0%, transparent 82%);
+      }
+
+      .left { position: relative; width: 600px; flex: 0 0 600px; }
+
+      .mark { display: flex; align-items: center; gap: 15px; }
+      .mark svg {
+        width: 56px; height: 56px; border-radius: 16px;
+        box-shadow: 0 12px 34px rgba(240, 176, 18, 0.28);
+      }
+      .wordmark { font-weight: 800; font-size: 21px; letter-spacing: 0.16em; color: #facc15; }
+      .wordmark small {
+        display: block; margin-top: 4px; font-size: 9px; font-weight: 600;
+        letter-spacing: 0.32em; color: #93a1b3;
+      }
+
+      h1 {
+        margin: 34px 0 0; font-size: 54px; line-height: 1.16; letter-spacing: -0.025em;
+        font-weight: 700; color: #eef3f9; max-width: 590px;
+      }
+      h1 em {
+        font-style: normal; background: linear-gradient(135deg, #fde68a, #f0b012);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .sub {
+        margin: 18px 0 0; font-size: 19px; line-height: 1.5; color: #9fb0c4; max-width: 540px;
+      }
+
+      .chips { display: flex; gap: 10px; margin-top: 30px; }
+      .chip {
+        font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: #dbe5f0;
+        border: 1px solid rgba(219, 229, 240, 0.16); border-radius: 999px;
+        padding: 8px 14px; background: rgba(219, 229, 240, 0.05);
+      }
+
+      /* The product itself: the real notes page, scaled to 0.8 so the whole
+         text column fits the card without a cut through a sentence. */
+      .right {
+        position: absolute; right: 56px; top: 50%;
+        width: 640px; height: 360px;
+        transform: translateY(-50%) rotate(-1.2deg);
+      }
+      .glow {
+        position: absolute; left: -90px; top: -60px; width: 820px; height: 520px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(240, 176, 18, 0.26), transparent 72%);
+        filter: blur(14px);
+      }
+      .card {
+        position: relative;
+        width: 640px; height: 340px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: #eef2f7 url("../screenshots/04-notes-page.png") -235px -149px / 910px 569px no-repeat;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.66), 0 0 0 1px rgba(240, 176, 18, 0.20);
+        overflow: hidden;
+      }
+      /* The page keeps going; fading its foot reads as a crop, not a mistake. */
+      .card::after {
+        content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 48px;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff 92%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tile">
+      <div class="grid"></div>
+
+      <div class="left">
+        <div class="mark">
+          <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="gold" x1="0" y1="0" x2="0.55" y2="1">
+                <stop offset="0" stop-color="#fde68a" />
+                <stop offset="1" stop-color="#f0b012" />
+              </linearGradient>
+            </defs>
+            <rect width="128" height="128" rx="33" fill="url(#gold)" />
+            <path d="M8 33 A33 33 0 0 1 41 8 H87 A33 33 0 0 1 120 33"
+                  fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="3" stroke-linecap="round" />
+            <text x="64" y="93" text-anchor="middle" font-family="system-ui, 'Segoe UI', Roboto, sans-serif"
+                  font-weight="900" font-size="92" letter-spacing="-3" fill="#1d1503">4</text>
+          </svg>
+          <div class="wordmark">4 U BY U<small>FOR YOU BY YOU</small></div>
+        </div>
+
+        <h1>A lecture becomes <em>notes you can keep</em>.</h1>
+
+        <p class="sub">
+          Chapters by topic, not by the clock — with timestamps that open the
+          lecture at the right minute.
+        </p>
+
+        <div class="chips">
+          <span class="chip">Your own API key</span>
+          <span class="chip">No account</span>
+          <span class="chip">One HTML file</span>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="glow"></div>
+        <div class="card"></div>
+      </div>
+    </div>
+  </body>
+</html>
