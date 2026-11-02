@@ -19,9 +19,25 @@ Assets in this folder:
 | `../extension/dist/4ubyu-extension.zip` | The upload itself | — |
 
 Regenerate the screenshots with `node extension/dev/serve.js` in one terminal and
-`node extension/dev/shots.js` in another. The icons come from
-`node extension/tools/icons.js`. Neither is needed to publish — both are how the files
-here were made.
+`npm run shots` in another. `npm run promo` redraws both promo tiles without the server
+or the pipeline. The icons come from `node extension/tools/icons.js`. None of this is
+needed to publish — it is how the files here were made.
+
+**Upload formats.** The dashboard wants "JPEG or 24-bit PNG (no alpha)". The screenshots
+and both tiles are captured as PNG with an alpha channel, so flatten them to 24-bit RGB
+before uploading — every paint program does it, and on Windows:
+
+```powershell
+Add-Type -AssemblyName System.Drawing
+$img = [System.Drawing.Image]::FromFile("store\screenshots\01-estimate.png")
+$bmp = [System.Drawing.Bitmap]::new($img.Width, $img.Height, [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
+$g = [System.Drawing.Graphics]::FromImage($bmp); $g.Clear([System.Drawing.Color]::White)
+$g.DrawImage($img, 0, 0, $img.Width, $img.Height)
+$bmp.Save("01-estimate-24bit.png", [System.Drawing.Imaging.ImageFormat]::Png)
+$g.Dispose(); $bmp.Dispose(); $img.Dispose()
+```
+
+The store icon needs the same treatment if it has transparent corners.
 
 ---
 
@@ -175,6 +191,10 @@ without spending a key).
 **Small promo tile (440 × 280):** `store/promo/promo-440x280.png` — optional, and only
 shown in some placements. It is drawn from `store/promo/promo.html` by
 `node extension/dev/promo.js`, which also writes the marquee.
+
+**Marquee promo tile (1400 × 560):** `store/promo/promo-1400x560.png` — optional, and
+only shown in featured placements. Drawn from `store/promo/marquee.html` at its exact
+size; the card on it is the real notes page, cropped to one complete chapter.
 
 **Homepage URL:** `https://anikethana21.github.io/4ubyu/`
 **Support URL:** `https://github.com/anikethana21/4ubyu/issues`

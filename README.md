@@ -4,28 +4,45 @@
 > In your own browser. With your own API key. Saved as one HTML page.
 > No server, no account, no upload, no database — and nothing to sign up for.
 
-**Install it:** [anikethana21.github.io/4ubyu](https://anikethana21.github.io/4ubyu/) — one click, and it updates itself from that page afterwards.
+**Install it:** [anikethana21.github.io/4ubyu](https://anikethana21.github.io/4ubyu/) — one click, and it
+updates itself from that page afterwards.
 
-Open a lecture on YouTube, press **✦ Make notes** in the corner, paste a free API key once, and the lecture comes back as a handbook: chapters divided **by topic** (not by equal slices of the clock), a summary of what each part is about, the points worth keeping, the mistakes to avoid, and timestamps that jump to the exact minute in the video. The result is a single self-contained HTML file you can keep, search, or print.
+Open a lecture on YouTube, press **✦ Make notes** in the corner, paste a free API key once, and the lecture
+comes back as a handbook: chapters divided **by topic** (not by equal slices of the clock), a summary of what
+each part is about, the points worth keeping, the mistakes to avoid, and timestamps that jump to the exact
+minute in the video. The result is a single self-contained HTML file you can keep, search, or print.
 
-It runs entirely in your browser. The captions are read from the page you are already on, the notes are written by a model you choose and pay for with your own key, and the page opens from your own disk. There is no backend of ours to go down, no ingest token to leak, and no service that can stop the product working.
+It runs entirely in your browser. The captions are read from the page you are already on, the notes are
+written by a model you choose and pay for with your own key, and the page opens from your own disk. There is
+no backend of ours to go down, no ingest token to leak, and no service that can stop the product working.
 
 ---
 
-## What's New in v2.9.7
+## Status
 
-| Feature | Status |
-|---------|--------|
-| **Userscript distribution** | ✅ Primary — install from [GitHub Pages](https://anikethana21.github.io/4ubyu/) |
-| **Auto-refresh on video change** | ✅ No manual reload needed when navigating YouTube |
-| **Caption fetch works without manual transcript open** | ✅ Reads rendered panel as ultimate fallback |
-| **Duplicate chapter/section titles suppressed** | ✅ Single-section chapters don't repeat titles |
-| **Notes compressed ~50%** | ✅ Aggressive prompt + smaller transcript excerpts |
-| **Clean font, correct plurals** | ✅ No Gagalin decorative font; "1 Chapter" / "N Chapters" |
-| **Minimize ≠ Close, separate search bar** | ✅ Polished panel UX |
-| **Mermaid diagrams labelled** | ✅ "Paste into mermaid.live" blocks |
-| **Video length constraints documented** | ✅ Exact token/call/day limits per model |
-| **133/133 tests pass** | ✅ All JS + Python tests pass |
+| | |
+|---|---|
+| **Version** | 2.9.7 |
+| **Userscript** | live at [anikethana21.github.io/4ubyu](https://anikethana21.github.io/4ubyu/), self-updating |
+| **Chrome extension** | packaged and ready to upload — `extension/dist/4ubyu-extension.zip` |
+| **Store listing kit** | [`store/SUBMISSION.md`](store/SUBMISSION.md) — every field, in the order the dashboard asks |
+| **Tests** | 133 JavaScript · 98 Python (the frozen reference pipeline) |
+
+---
+
+## What is in this release
+
+| Change | Why it matters |
+|--------|----------------|
+| **No in-page PDF button** | It was a browser-print shortcut wearing a product feature's clothes. The `@media print` stylesheet is still there, so printing is still one keystroke — but the app no longer promises a format it does not own. |
+| **Auto-refresh on video change** | YouTube is a single-page app. The panel now resets and re-reads the lecture on navigation instead of going stale. |
+| **Captions read without opening the transcript** | Five separate sources, each requiring at least five segments before it is trusted, and a rendered-panel fallback as the last resort. |
+| **Duplicate titles suppressed** | A chapter with one section no longer prints the same heading twice. |
+| **Notes ~50% shorter** | A ruthlessly economical composer prompt and smaller transcript excerpts; nothing important was dropped to get there. |
+| **Cleaner headings** | The decorative Gagalin face was removed — it cost 126 KB per page and read as noise on a long title. |
+| **Correct plurals** | "1 Chapter" / "N Chapters", everywhere. |
+| **Minimise ≠ close** | The dash collapses the panel to a progress chip; × removes it for that lecture. Two gestures, two meanings. |
+| **Mermaid as labelled source** | A diagram block says what it is and where to paste it. No renderer is shipped, so nothing new can fail. |
 
 ---
 
@@ -35,8 +52,8 @@ It runs entirely in your browser. The captions are read from the page you are al
 |---------|-------------|
 | **Chapters by topic** | A two-hour lecture is read in twelve-minute stretches; each stretch is asked *what is this about, and where does each topic begin*. Chapters are the topics the lecturer actually taught, with their own titles in the lecturer's own terms. |
 | **Notes, not a transcript** | Each topic gets one written explanation, an analogy, key points, pitfalls, and an example. LaTeX in the explanation is rendered to readable text rather than left as noise. |
-| **Timestamps that work** | Every chapter and section timestamp is a real link to `youtube.com/watch?v=…&t=…`, opening in a new tab. When you render the page with the player, they scroll the video instead. |
-| **One file you own** | The notes are a plain document; the page is a rendering of it. The page carries its own stylesheet, font and scripts — **zero external requests** — so it still works in ten years, offline, on a laptop with no network. |
+| **Timestamps that work** | Every chapter and section timestamp is a real link to `youtube.com/watch?v=…&t=…`, opening in a new tab at that second. |
+| **One file you own** | The notes are a plain document; the page is a rendering of it. The page carries its own stylesheet and scripts, uses only fonts already on your machine, and makes **zero external requests** — so it still works in ten years, offline, on a laptop with no network. |
 | **A page that prints properly** | A `@media print` stylesheet strips the glass, the shadows and the fixed sidebar, so your browser's own print dialog produces clean pages — no PDF library, no file-size inflation, no second program. |
 | **A floating index, a reading column** | The contents are a glass panel pinned to the left of the page — one floating column, not a strip above the text. It tracks where you are as you scroll, and the notes read in their own column beside it. On a narrow screen the index moves above the notes and the page becomes one column. |
 | **A library that costs nothing to reopen** | Every finished lecture is kept in your script manager's storage. Drawing the page again — next week, on another machine, in a different shape — costs **zero** model calls. |
@@ -137,10 +154,10 @@ The model list is ordered **best first** — the models that reliably write a lo
 2. **A timestamp the model invented is dropped, never clamped.** Sending a reader to the wrong minute of a two-hour video is worse than leaving a heading out. Topics closer together than thirty seconds are merged into the one before them; a topic that begins a window is pinned to that window's start.
 3. **Nothing is ever fabricated.** When a part cannot be written up, the page says so in words — with the provider's own reason, and with the class of the failure kept apart, because *"there are no captions here"*, *"the model's answer could not be read"* and *"the day's allowance is spent"* are not the same thing to the person who asked.
 4. **Resumable by default.** Every planned window and every written section is stored under its own key. A rate limit, a closed tab or a flat battery costs the wait, not the work. Stopping a run keeps what was written and drops the rest, rather than filling the page with apologies for itself.
-5. **The artifact is HTML, and printing is the browser's job.** A PDF library would inflate a 300 KB page and duplicate the browser's own good printer. The page is the artifact; anything you make from it is a rendering of it.
-5. **The model list is asked of the provider, never written down.** A hardcoded list is a guess about someone else's service: stale the week a model retires, blind to what your key is entitled to, and happy to offer models that answer 404. One request with your key returns exactly your models — and doubles as the test that the key works, before any notes are paid for.
-6. **Nothing external may block the product.** No font CDN, no CSS `@import`, no external script, no embed, no store review, no server. The extractor that lifts the page's stylesheet *fails the build* if any `http(s)://` survives in it, so a remote dependency cannot creep back in unnoticed.
-6. **The interesting logic is testable without a browser.** Everything that decides what the notes say is a plain function. The parts that could only be tested on YouTube are kept as thin and as few as possible.
+5. **The artifact is HTML, and printing is the browser's job.** A PDF library would inflate a 300 KB page and duplicate the browser's own good printer. The page is the artifact; anything you make from it is a rendering of it, not a second product to maintain.
+6. **The model list is asked of the provider, never written down.** A hardcoded list is a guess about someone else's service: stale the week a model retires, blind to what your key is entitled to, and happy to offer models that answer 404. One request with your key returns exactly your models — and doubles as the test that the key works, before any notes are paid for.
+7. **Nothing external may block the product.** No font CDN, no CSS `@import`, no external script, no embed, no server. The extractor that lifts the page's stylesheet *fails the build* if any `http(s)://` survives in it, so a remote dependency cannot creep back in unnoticed. The Chrome Web Store is a distribution channel, not a dependency: the userscript installs and updates without it.
+8. **The interesting logic is testable without a browser.** Everything that decides what the notes say is a plain function. The parts that could only be tested on YouTube are kept as thin and as few as possible.
 
 ---
 
@@ -156,7 +173,31 @@ The model list is ordered **best first** — the models that reliably write a lo
 
 **Userscript (recommended).** Install [Tampermonkey](https://www.tampermonkey.net/) or [Violentmonkey](https://violentmonkey.github.io/), then open [anikethana21.github.io/4ubyu](https://anikethana21.github.io/4ubyu/) and press *Install*. The script carries an `@updateURL`, so it keeps itself current from that page.
 
-**Chrome extension.** `npm run build` writes `extension/dist/store/` (a Manifest V3 package: one content script, one service worker, four icon sizes, `storage` and the provider's address as its only permissions). `npm run package` zips it. The submission kit — every field the Chrome Web Store asks for, the screenshots at the size it asks for, and the privacy-practices answers — is in [`store/SUBMISSION.md`](store/SUBMISSION.md); the listing itself is pending review.
+**Chrome extension.** `npm run build` writes `extension/dist/store/` (a Manifest V3 package: two content scripts — one in the page's own world, one isolated — one service worker, four icon sizes, `storage` and the provider's address as its only permissions). `npm run package` zips it to `extension/dist/4ubyu-extension.zip`.
+
+---
+
+## Publishing to the Chrome Web Store
+
+Everything the upload needs is in the repository, at the size the dashboard asks for.
+
+| What | Where | Format |
+|---|---|---|
+| The package | `extension/dist/4ubyu-extension.zip` | 127 KB, `manifest.json` at the root |
+| Store icon | `extension/assets/icons/icon128.png` | 128 × 128 |
+| Screenshots (5) | `store/screenshots/01-…` … `05-…` | 1280 × 800, 24-bit PNG |
+| Small promo tile | `store/promo/promo-440x280.png` | 440 × 280 |
+| Marquee promo tile | `store/promo/promo-1400x560.png` | 1400 × 560 |
+| Listing text, privacy answers, reviewer notes | [`store/SUBMISSION.md`](store/SUBMISSION.md) | copy-paste blocks |
+
+The dashboard reads the **name, summary and version from the manifest**, so those three fields are not typed
+by hand — uploading the zip sets them. The screenshots are captured from the real panel and a real notes page
+produced by this build, and both promo tiles are drawn from HTML at their exact pixel size
+(`npm run shots`, `npm run promo`), so nothing is a scaled crop.
+
+The extension asks for `storage` and two hosts: `youtube.com` (there is no interface anywhere else) and
+`api.groq.com` (the provider whose key the user supplied). No remote code, no analytics, no account. The
+privacy policy the listing points at is [`privacy.html`](privacy.html).
 
 ---
 
@@ -169,11 +210,14 @@ npm run assets              # regenerate src/assets.js from templates/base_works
 npm run assets:check        # fail if the page's stylesheet has drifted (or gained a remote URL)
 npm run build               # write 4ubyu.user.js and extension/dist/store/
 npm run build:check         # fail if either build is out of date
+npm run package             # zip extension/dist/store/ for the store
 
 npm run try                 # a whole lecture through the pipeline with a stand-in model, no key, no cost
 npm run run -- --key gsk_…  # the same, for real, with your key
 npm run render -- extension/dev/out/notes-*.json   # draw a saved document, zero model calls
 npm run serve               # http://127.0.0.1:8787/ — the generated pages, and the harness at /dev/panel-harness.html
+npm run shots               # recapture the five store screenshots (needs npm run serve in another terminal)
+npm run promo               # redraw both promo tiles; no server and no pipeline
 ```
 
 `extension/dev/panel-harness.html` is the demo without the cost: it loads the same `src/*.js` the userscript is built from, hands the panel a made-up 45-minute lecture and a stand-in provider that answers in Groq's shape, and lets you drive the whole thing — key, model list, estimate, run, progress, download, library — with no key and no network.
@@ -194,7 +238,7 @@ The JavaScript suite includes tests that load the **built** userscript and the *
 ## Security and privacy
 
 - **No server, no account, no database.** Nothing about you or your lectures is sent anywhere except the provider you chose, with the key you pasted, for the notes you asked for.
-- **Your key is stored by your script manager** in your browser, like any other userscript setting. It is never sent to us, because there is no "us" on the network to send it to.
+- **Your key is stored by your script manager** (or by the extension's own `storage`) in your browser. It is never sent to us, because there is no "us" on the network to send it to.
 - **No third-party code, fonts, analytics or CDNs** — in the app or in the pages it produces. `npm run assets:check` fails the build if a remote URL appears in the page's stylesheet.
 - **No claims of being unhackable.** No software is. What is true here is narrower and checkable: the program is one readable file, it asks for the smallest permission set that works, and every note on the page can be traced back to the words it came from.
 - **The policy is a page, not a promise.** [`privacy.html`](privacy.html) lists the two things that leave the browser — the lecture's caption text and your key, both to the provider you configured — and everything that is kept locally.
@@ -207,7 +251,10 @@ The JavaScript suite includes tests that load the **built** userscript and the *
 4ubyu.user.js              the built userscript — what gets installed (generated; do not edit)
 index.html                 the install page served by GitHub Pages
 privacy.html               the privacy policy the store listing points at
-store/                     the submission kit: listing copy, screenshots, promo tile
+store/
+  SUBMISSION.md            every field the Chrome Web Store dashboard asks for, in order
+  screenshots/             five 1280×800 captures of the real panel and a real notes page
+  promo/                   promo.html, marquee.html, and the two rendered tiles
 extension/
   userscript.js            the userscript's shell: header, storage, YouTube capture, bootstrap
   page-bridge.js           the extension's window into YouTube's own world (MAIN-world content script)
@@ -215,7 +262,7 @@ extension/
   src/                     core.js · pipeline.js · workspace.js · markdown.js · panel.js · assets.js
   assets/                  icon.svg and the four PNGs rasterised from it
   tools/                   package.js · icons.js · extract-assets.js
-  dev/                     run.js · render.js · serve.js · shots.js · panel-harness.html
+  dev/                     run.js · render.js · serve.js · shots.js · promo.js · panel-harness.html
   dist/store/              the built Manifest V3 extension package (generated)
 tests/js/                  the JavaScript suite, including tests of the built artifacts
 core/, api/, scripts/, …   the original server-side prototype: FastAPI, LangGraph, pgvector
@@ -231,15 +278,15 @@ The server-side prototype is **frozen**: it still runs, its 98 tests still pass,
 
 | Version | Date | Key changes |
 |---|---|---|
-| **2.9.7** | 2026-10-25 | Removed the in-page PDF button entirely; userscript-only distribution |
-| **2.9.6** | 2026-10-21 | Print button loading spinner + "Preparing…" text |
-| **2.9.5** | 2026-10-21 | Version bump; all fixes consolidated |
-| **2.9.4** | 2026-10-21 | Aggressive caption fetch: MIN_SEGMENTS=5, rendered panel fallback |
-| **2.9.3** | 2026-10-21 | Duplicate chapter/section title suppression |
-| **2.9.2** | 2026-10-21 | Print stylesheet fix: pages paginate in 2–6s (shadows/filters stripped) |
-| **2.9.1** | 2026-10-21 | Auto-refresh on SPA navigation; clear resource timings |
-| **2.9.0** | 2026-10-21 | Notes compression: aggressive prompt + EXCERPT_STEPS [3000,1500,750] |
-| **2.2.x** | 2026-10-20 | Player mode removed; Gagalin font dropped; plural fix; panel resilience |
+| **2.9.7** | 2026-11-03 | In-page PDF button removed and every reference to it scrubbed; Chrome Web Store package, screenshots and both promo tiles brought up to date |
+| 2.9.6 | 2026-10-25 | Print button loading state ("Preparing…"); userscript version bumped to match the panel |
+| 2.9.5 | 2026-10-21 | Version bump; all fixes consolidated |
+| 2.9.4 | 2026-10-21 | Caption fetch: five sources, `MIN_SEGMENTS = 5`, rendered-panel fallback |
+| 2.9.3 | 2026-10-21 | Duplicate chapter/section title suppression |
+| 2.9.2 | 2026-10-21 | Print stylesheet fix: pages paginate in 2–6 s (shadows and filters stripped) |
+| 2.9.1 | 2026-10-21 | Auto-refresh on SPA navigation; resource timings cleared per navigation |
+| 2.9.0 | 2026-10-21 | Notes compression: economical composer prompt, `EXCERPT_STEPS = [3000, 1500, 750]` |
+| 2.2.x | 2026-10-20 | Player mode removed; Gagalin font dropped; plural fix; panel resilience |
 
 ---
 

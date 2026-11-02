@@ -1,5 +1,9 @@
 # 🚀 4 U By U — Deployment Guide & Runbook
 
+> **Frozen prototype.** This guide covers deploying the server-side prototype in `core/`,
+> `api/` and `scripts/`, kept for the record. The shipping product has no server at all —
+> see [README.md](README.md).
+
 This guide covers deployment options for the **4 U By U** Interactive Educational Workspace.
 
 ---

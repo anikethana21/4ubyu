@@ -1,5 +1,9 @@
 # DEMO — one lecture, one click, real chapters
 
+> **Frozen prototype.** This walkthrough describes the server-side prototype in `core/`,
+> `api/` and `scripts/`, kept for the record. The shipping product is the browser-only
+> userscript and Chrome extension — see [README.md](README.md).
+
 This walks you through the **hybrid ingestion path** end to end on your own
 machine: the transcript is captured in *your* browser (your residential IP,
 where YouTube does not bot-gate), and the server never touches YouTube.

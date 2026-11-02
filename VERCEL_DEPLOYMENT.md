@@ -1,5 +1,9 @@
 # 🚀 Vercel Deployment Guide for 4 U By U
 
+> **Frozen prototype.** This guide covers deploying the server-side prototype, kept for the
+> record. The shipping product is the browser-only userscript and Chrome extension and needs
+> no hosting — see [README.md](README.md).
+
 This project is pre-configured for deployment on **Vercel** with the project and domain name set to **`4ubyu`**.
 
 ---
