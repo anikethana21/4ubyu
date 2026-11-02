@@ -37,7 +37,7 @@ these are worth ten minutes:
    *✦ Make notes* button should appear bottom-right within a second.
 4. **The whole path once:** paste a real Groq key → *Check the key* → the model list
    fills from your key → the estimate appears → *Generate* → progress, the quote, the
-   log → *Download the page* → open the file from disk → *Save as PDF* (browser print).
+   log → *Download the page* → open the file from disk.
 5. **Resume:** start a second run, close the tab halfway, reopen the same lecture. The
    panel should offer the finished parts rather than starting over.
 6. **SPA navigation:** click through to another video without reloading. The panel must
@@ -47,7 +47,7 @@ these are worth ten minutes:
 8. **Minimise and close:** the dash collapses to a bar that keeps the progress visible;
    × removes the panel for that lecture.
 
-If any of those misbehave, fix it before submitting. The version in the zip is 2.2.3.
+If any of those misbehave, fix it before submitting. The version in the zip is 2.9.7.
 
 ---
 
@@ -76,7 +76,7 @@ The fee is the only cost. There is no review fee and no annual charge.
 2. Upload `extension/dist/4ubyu-extension.zip`. Its root holds `manifest.json`, which is
    what the store expects — do not zip the folder.
 3. The dashboard reads the name, version and summary from the manifest:
-   **4 U By U — Lecture to Study Notes**, v2.2.3.
+   **4 U By U — Lecture to Study Notes**, v2.9.7.
 4. If it complains about the zip, rebuild both:
    `node extension/build.js && node extension/tools/package.js` (in PowerShell, `;`
    instead of `&&`).
@@ -110,8 +110,7 @@ keep.
 Press the gold button on any YouTube lecture, press Generate, and a few minutes later
 you have one HTML page: chapters by topic, timestamps that open the lecture at the right
 minute, plain-English explanations, analogies, worked examples, code and diagrams where
-the lecture had them, and a short check-yourself list after each section. Keep it, print
-it, or turn it into a PDF with your browser's own printer.
+the lecture had them, and a short check-yourself list after each section. Keep it, search it, or print it.
 
 WHAT MAKES IT DIFFERENT
 

@@ -6,7 +6,7 @@
 
 **Install it:** [anikethana21.github.io/4ubyu](https://anikethana21.github.io/4ubyu/) — one click, and it updates itself from that page afterwards.
 
-Open a lecture on YouTube, press **✦ Make notes** in the corner, paste a free API key once, and the lecture comes back as a handbook: chapters divided **by topic** (not by equal slices of the clock), a summary of what each part is about, the points worth keeping, the mistakes to avoid, and timestamps that jump to the exact minute in the video. The result is a single self-contained HTML file you can keep, search, or print to PDF.
+Open a lecture on YouTube, press **✦ Make notes** in the corner, paste a free API key once, and the lecture comes back as a handbook: chapters divided **by topic** (not by equal slices of the clock), a summary of what each part is about, the points worth keeping, the mistakes to avoid, and timestamps that jump to the exact minute in the video. The result is a single self-contained HTML file you can keep, search, or print.
 
 It runs entirely in your browser. The captions are read from the page you are already on, the notes are written by a model you choose and pay for with your own key, and the page opens from your own disk. There is no backend of ours to go down, no ingest token to leak, and no service that can stop the product working.
 
@@ -37,7 +37,7 @@ It runs entirely in your browser. The captions are read from the page you are al
 | **Notes, not a transcript** | Each topic gets one written explanation, an analogy, key points, pitfalls, and an example. LaTeX in the explanation is rendered to readable text rather than left as noise. |
 | **Timestamps that work** | Every chapter and section timestamp is a real link to `youtube.com/watch?v=…&t=…`, opening in a new tab. When you render the page with the player, they scroll the video instead. |
 | **One file you own** | The notes are a plain document; the page is a rendering of it. The page carries its own stylesheet, font and scripts — **zero external requests** — so it still works in ten years, offline, on a laptop with no network. |
-| **Print to PDF in one click** | *Save as PDF* in the page uses the browser's own printer with a `@media print` stylesheet. No PDF library, no file-size inflation, no second program. |
+| **A page that prints properly** | A `@media print` stylesheet strips the glass, the shadows and the fixed sidebar, so your browser's own print dialog produces clean pages — no PDF library, no file-size inflation, no second program. |
 | **A floating index, a reading column** | The contents are a glass panel pinned to the left of the page — one floating column, not a strip above the text. It tracks where you are as you scroll, and the notes read in their own column beside it. On a narrow screen the index moves above the notes and the page becomes one column. |
 | **A library that costs nothing to reopen** | Every finished lecture is kept in your script manager's storage. Drawing the page again — next week, on another machine, in a different shape — costs **zero** model calls. |
 | **Free-tier honest** | More than 8,000 tokens a minute cannot be sent to a free tier, so a run is paced rather than refused, and the panel tells you how many lectures of this size the model's day holds *before* you spend anything. |
@@ -59,7 +59,7 @@ It runs entirely in your browser. The captions are read from the page you are al
   notes document  { video metadata, chapters[], sections[] }─┘
         │   the document is the data; the page is a rendering of it
         ▼
-  one self-contained HTML page  ──►  your disk  ──►  print to PDF
+  one self-contained HTML page  ──►  your disk
 ```
 
 The split in the source follows the split in the risk:
@@ -137,7 +137,7 @@ The model list is ordered **best first** — the models that reliably write a lo
 2. **A timestamp the model invented is dropped, never clamped.** Sending a reader to the wrong minute of a two-hour video is worse than leaving a heading out. Topics closer together than thirty seconds are merged into the one before them; a topic that begins a window is pinned to that window's start.
 3. **Nothing is ever fabricated.** When a part cannot be written up, the page says so in words — with the provider's own reason, and with the class of the failure kept apart, because *"there are no captions here"*, *"the model's answer could not be read"* and *"the day's allowance is spent"* are not the same thing to the person who asked.
 4. **Resumable by default.** Every planned window and every written section is stored under its own key. A rate limit, a closed tab or a flat battery costs the wait, not the work. Stopping a run keeps what was written and drops the rest, rather than filling the page with apologies for itself.
-5. **The artifact is HTML, and PDF is one click.** A PDF library would inflate a 300 KB page and duplicate the browser's own good printer. The page is the artifact; the PDF is a rendering of it.
+5. **The artifact is HTML, and printing is the browser's job.** A PDF library would inflate a 300 KB page and duplicate the browser's own good printer. The page is the artifact; anything you make from it is a rendering of it.
 5. **The model list is asked of the provider, never written down.** A hardcoded list is a guess about someone else's service: stale the week a model retires, blind to what your key is entitled to, and happy to offer models that answer 404. One request with your key returns exactly your models — and doubles as the test that the key works, before any notes are paid for.
 6. **Nothing external may block the product.** No font CDN, no CSS `@import`, no external script, no embed, no store review, no server. The extractor that lifts the page's stylesheet *fails the build* if any `http(s)://` survives in it, so a remote dependency cannot creep back in unnoticed.
 6. **The interesting logic is testable without a browser.** Everything that decides what the notes say is a plain function. The parts that could only be tested on YouTube are kept as thin and as few as possible.
@@ -231,12 +231,12 @@ The server-side prototype is **frozen**: it still runs, its 98 tests still pass,
 
 | Version | Date | Key changes |
 |---|---|---|
-| **2.9.7** | 2026-10-25 | Removed Save as PDF button entirely; userscript-only distribution |
-| **2.9.6** | 2026-10-21 | Print button loading spinner + "Preparing PDF…" text |
+| **2.9.7** | 2026-10-25 | Removed the in-page PDF button entirely; userscript-only distribution |
+| **2.9.6** | 2026-10-21 | Print button loading spinner + "Preparing…" text |
 | **2.9.5** | 2026-10-21 | Version bump; all fixes consolidated |
 | **2.9.4** | 2026-10-21 | Aggressive caption fetch: MIN_SEGMENTS=5, rendered panel fallback |
 | **2.9.3** | 2026-10-21 | Duplicate chapter/section title suppression |
-| **2.9.2** | 2026-10-21 | Print CSS fix: PDF renders in 2–6s (shadows/filters stripped) |
+| **2.9.2** | 2026-10-21 | Print stylesheet fix: pages paginate in 2–6s (shadows/filters stripped) |
 | **2.9.1** | 2026-10-21 | Auto-refresh on SPA navigation; clear resource timings |
 | **2.9.0** | 2026-10-21 | Notes compression: aggressive prompt + EXCERPT_STEPS [3000,1500,750] |
 | **2.2.x** | 2026-10-20 | Player mode removed; Gagalin font dropped; plural fix; panel resilience |

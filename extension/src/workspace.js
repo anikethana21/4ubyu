@@ -1220,8 +1220,8 @@ ${videoId
     #app-workspace.notes-only .handbook-main,
     #app-workspace.notes-only .handbook-pane { background: #fff !important; }
 
-    /* The button that opened the dialog has no place on the paper it produced. */
-    #btn-print, .toolbar-actions { display: none !important; }
+    /* No page furniture on paper. */
+    .toolbar-actions { display: none !important; }
 
     /* Keep small blocks whole and headings with their text; let long chapters
        break wherever they need to, so a chapter never lands alone on a page.

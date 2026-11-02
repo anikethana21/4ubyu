@@ -2592,8 +2592,8 @@ ${videoId
     #app-workspace.notes-only .handbook-main,
     #app-workspace.notes-only .handbook-pane { background: #fff !important; }
 
-    /* The button that opened the dialog has no place on the paper it produced. */
-    #btn-print, .toolbar-actions { display: none !important; }
+    /* No page furniture on paper. */
+    .toolbar-actions { display: none !important; }
 
     /* Keep small blocks whole and headings with their text; let long chapters
        break wherever they need to, so a chapter never lands alone on a page.
@@ -5193,8 +5193,8 @@ ${chaptersHtml}
         } left as a notice rather than invented. Each one says why, and shows what was said in
           that part of the lecture.</div>` : ""}
         ${state.stopped ? `<div class="ubyu-note warn">${escapeHtml(state.stopped)}</div>` : ""}
-        <p class="ubyu-muted">The page opens from your own disk with no server anywhere. To keep it as a
-        PDF, open it and use the “Save as PDF” button — that is your browser's own printer.</p>
+        <p class="ubyu-muted">The page opens from your own disk with no server anywhere, and keeps
+        working offline for as long as you keep the file.</p>
         <div class="ubyu-actions">
           <button type="button" class="ubyu-btn primary" data-act="open-page">Open the page</button>
           <button type="button" class="ubyu-btn" data-act="save-page">Download the page</button>
