@@ -105,14 +105,18 @@ Numbers are never invented: they come from the same function the panel displays 
 
 There is no cap on video length in the app. The real limit is the model's **daily token allowance**. Measured with the shipped estimator (`estimateRun`) against captions at ~150 words per minute:
 
-| Lecture | Parts | Calls | Tokens | Wall clock at 8k/min | Fits in one day |
+| Lecture | Parts | Calls | Tokens | ~Time at 8k/min | Fits in one day |
 |---|---|---|---|---|---|
-| 15 min | 2 | 8 | 13k | ~7 min | 15 |
-| 30 min | 3 | 12 | 23k | ~11 min | 8 |
-| 1 hour | 5 | 20 | 42k | ~18 min | 4 |
-| 2 hours | 10 | 40 | 85k | ~35 min | 2 |
-| 4 hours | 20 | 80 | 170k | ~70 min | 1, with little headroom |
-| 6 hours | 30 | 90 | 255k | ~104 min | 0 — over 200k/day |
+| 15 min | 2 | 6 | 10k | ~5 min | 20 |
+| 30 min | 3 | 9 | 18k | ~8 min | 11 |
+| 1 hour | 5 | 15 | 33k | ~14 min | 5 |
+| 2 hours | 10 | 30 | 67k | ~27 min | 2 |
+| 4 hours | 20 | 60 | 134k | ~53 min | 1 |
+| 6 hours | 30 | 90 | 202k | ~80 min | 0 — over 200k/day |
+
+Those figures are the shipped estimator's own output (`estimateRun` + `fitsInDay`) on a
+transcript at ~150 words per minute, with the current defaults: twelve-minute windows and
+two sections per window.
 
 On Groq's free tier, per model: **8,000 tokens/minute**, **1,000 requests/day**, **200,000 tokens/day** (`gpt-oss` models and `openai/gpt-oss-safeguard-20b`) — except `llama-3.1-8b-instant` and `qwen/qwen3-32b`, which allow **500,000 tokens/day** at 6,000/minute. So a six-hour lecture fits on one of those, not on the default model.
 
