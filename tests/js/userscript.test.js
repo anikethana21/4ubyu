@@ -397,3 +397,16 @@ test("the content script has the stored key before it draws anything", () => {
   const body = seeded.panelNode.querySelector("[data-body]");
   assert.match(String(body.innerHTML), /gsk_stored_earlier/, "the saved key was not read back from storage");
 });
+
+test("the shipped build carries the Deep mode toggle and the verifier prompt", () => {
+  // Both live in source files that the build rejoins; a bundle that dropped one
+  // would still pass every unit test, so the built bytes are checked directly.
+  const built = fs.readFileSync(BUILT, "utf8");
+  assert.ok(built.includes('data-act="depth"'), "the Quick/Deep control is in the built panel");
+  assert.ok(built.includes('data-depth="deep"'), "the Deep choice is addressable");
+  assert.ok(
+    built.includes("You are checking study notes against the transcript"),
+    "the verifier's own prompt is in the shipped file"
+  );
+  assert.ok(built.includes("Check against the lecture"), "the flag card's heading is in the renderer");
+});
