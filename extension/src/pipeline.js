@@ -72,6 +72,12 @@
     minWindowChars: 200,
     sectionsPerWindow: 2,
     concurrency: 2,
+    // "quick" is one writer call per section. "deep" adds a verifier call per
+    // section and reads the sections in order, so each brief can carry the
+    // previous section's summary. The default stays quick: a stranger's first
+    // lecture must fit comfortably inside a free day.
+    depth: "quick",
+    maxFlags: 3,
   };
 
   // ---------------------------------------------------------------------------
@@ -426,6 +432,50 @@
   }
 
   // ---------------------------------------------------------------------------
+  // What each agent is told
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The bounded context a section's agents receive.
+   *
+   * This is the whole reason a long lecture stays affordable: an agent is never
+   * handed the sections before it, only a summary of the one before and the terms
+   * already introduced. The caps are deliberate and small — 120 characters of
+   * title, eight terms, 520 characters of summary — so section forty costs the
+   * same as section four.
+   */
+  function briefFor({ lectureTitle = "", chapterTitle = "", section = {}, context = {} } = {}) {
+    const terms = (context.terms || []).slice(0, 8).map((term) => String(term).slice(0, 32));
+    return {
+      v: 1,
+      lecture: { title: String(lectureTitle || "").slice(0, 120) },
+      chapter: { title: String(chapterTitle || "").slice(0, 120) },
+      section: {
+        id: `s${Number(section.start) || 0}`,
+        title: String(section.title || "").slice(0, 120),
+        startSec: Number(section.start) || 0,
+        endSec: Number(section.end) || 0,
+        terms,
+      },
+      context: { prevSummary: String(context.prevSummary || "").slice(0, 520) },
+    };
+  }
+
+  /** The brief as the few lines a prompt actually needs. */
+  function briefText(brief) {
+    if (!brief) return "";
+    const lines = [];
+    if (brief.chapter && brief.chapter.title) lines.push(`Chapter: ${brief.chapter.title}`);
+    if (brief.section && brief.section.terms && brief.section.terms.length) {
+      lines.push(`Terms already introduced: ${brief.section.terms.join(", ")}`);
+    }
+    if (brief.context && brief.context.prevSummary) {
+      lines.push(`The section just before this one: ${brief.context.prevSummary}`);
+    }
+    return lines.join("\n");
+  }
+
+  // ---------------------------------------------------------------------------
   // Pacing, so the allowance is respected rather than tripped
   // ---------------------------------------------------------------------------
 
@@ -546,6 +596,7 @@
    */
   function estimateRun({ segments, options = {} } = {}) {
     const settings = { ...DEFAULT_OPTIONS, ...options };
+    const deep = settings.depth === "deep";
     const duration = transcriptEnd(segments) || 0;
     const windows = windowsFor(duration, settings);
     let outlineChars = 0;
@@ -558,16 +609,21 @@
     const sections = Math.max(windows.length, Math.round(windows.length * settings.sectionsPerWindow));
     const planningTokens = Math.ceil(outlineChars / 4) + windows.length * 250;
     const writingTokens = Math.ceil(speechChars / Math.max(1, sections) / 4) * sections + sections * 900;
-    const calls = windows.length + sections;
+    // The verifier re-reads the section's excerpt and the notes written from it,
+    // and answers with at most a few short lines. Measured, not guessed: about
+    // 1,450 tokens in and 120 out per section.
+    const verifierTokens = deep ? sections * 1570 : 0;
+    const calls = windows.length + sections + (deep ? sections : 0);
     return {
       duration,
       windows: windows.length,
       sections,
       calls,
+      depth: deep ? "deep" : "quick",
       // Both directions, as a provider bills them.
-      tokens: planningTokens + writingTokens,
-      tokensIn: Math.ceil((outlineChars + speechChars) / 4),
-      tokensOut: windows.length * 250 + sections * 900,
+      tokens: planningTokens + writingTokens + verifierTokens,
+      tokensIn: Math.ceil((outlineChars + speechChars) / 4) + (deep ? sections * 1450 : 0),
+      tokensOut: windows.length * 250 + sections * 900 + (deep ? sections * 120 : 0),
     };
   }
 
@@ -809,6 +865,9 @@
       written: 0,
       abandoned: 0,
       degraded: [],
+      verified: 0,
+      flags: 0,
+      depth: settings.depth === "deep" ? "deep" : "quick",
       fromCache: 0,
       calls: 0,
       stopped: "",
@@ -982,7 +1041,13 @@
     }
 
     let done = 0;
-    const written = await core.mapWithLimit(flat, Math.max(1, settings.concurrency), async ({ chapter, section }) => {
+    const deep = settings.depth === "deep";
+    // Only Deep mode reads in order. The summary is what the next brief carries,
+    // so it has to exist before the next section starts; Quick mode keeps the
+    // two-at-a-time concurrency that makes it fast.
+    const context = { prevSummary: "", terms: [] };
+
+    const writeOne = async ({ chapter, section }) => {
       // A stop is a person changing their mind, not a failure: the section is
       // dropped from the notes rather than written up as a notice about itself.
       if (shouldStop()) {
@@ -994,10 +1059,23 @@
       if (cached && cached.notes) {
         done += 1;
         stats.fromCache += 1;
+        if (Array.isArray(cached.verification)) stats.flags += cached.verification.length;
+        // A resumed run still needs its continuity: the summary of a section that
+        // was written in an earlier session is the brief the next section gets.
+        if (deep && !cached.notes.degraded) {
+          const summary = core.summariseSection(cached.notes);
+          context.prevSummary = summary.prevSummary;
+          context.terms = summary.terms;
+        }
         emit({ type: "section-done", index: done, total: flat.length, section, cached: true });
-        return { ...section, ...cached.notes };
+        return { ...section, ...cached.notes, verification: cached.verification || [] };
       }
       emit({ type: "section", index: done + 1, total: flat.length, section, chapter: chapter.title });
+
+      const brief = deep
+        ? briefFor({ lectureTitle: video.title || title || "", chapterTitle: chapter.title, section, context })
+        : null;
+
       stats.calls += 1;
       const notes = await core.composeSection(
         {
@@ -1005,19 +1083,56 @@
           chapterTitle: chapter.title,
           transcript: section.transcript,
           domain: settings.domain,
+          brief: brief ? briefText(brief) : "",
         },
         { call, steps: settings.steps }
       );
+
+      // The check runs only in Deep mode, and only over notes that exist. A
+      // failed check leaves the section exactly as it was: it can add a warning,
+      // never delete a paragraph.
+      let verification = [];
+      if (deep && !notes.degraded) {
+        emit({ type: "verify", index: done + 1, total: flat.length, section });
+        stats.calls += 1;
+        const verdict = await core.verifySection(
+          { title: section.title, notes, transcript: section.transcript },
+          { call, steps: settings.steps, maxFlags: settings.maxFlags }
+        );
+        verification = verdict.flags || [];
+        stats.verified += 1;
+        stats.flags += verification.length;
+        if (verdict.failure) {
+          emit({ type: "verify-failed", section, reason: verdict.failure });
+          if (core.isDailyLimit(verdict.failure)) {
+            stopped = stopped || "the model's daily allowance was spent while the sections were being checked";
+          }
+        }
+      }
+
       done += 1;
       if (notes.degraded) {
         stats.degraded.push(`${chapter.title} › ${section.title}`);
         if (core.isDailyLimit(notes.explanation)) stopped = stopped || "the model's daily allowance was spent during the writing";
       } else {
-        store.set(key, { notes });
+        store.set(key, { notes, verification });
+        if (deep) {
+          const summary = core.summariseSection(notes);
+          context.prevSummary = summary.prevSummary;
+          context.terms = summary.terms;
+        }
       }
-      emit({ type: "section-done", index: done, total: flat.length, section, notes, cached: false });
-      return { ...section, ...notes };
-    });
+      emit({ type: "section-done", index: done, total: flat.length, section, notes, cached: false, verification });
+      return { ...section, ...notes, verification };
+    };
+
+    let written;
+    if (deep) {
+      written = [];
+      for (const item of flat) written.push(await writeOne(item));
+    } else {
+      written = await core.mapWithLimit(flat, Math.max(1, settings.concurrency), writeOne);
+    }
 
     // Put the written sections back where they came from, keeping only the ones
     // that were written: a stopped run's notes are the part of the lecture that was
@@ -1061,6 +1176,7 @@
               examples: section.examples || [],
               diagram_hint: section.diagram || section.diagram_hint || "",
               degraded: Boolean(section.degraded),
+              verification: section.verification || [],
             }));
         return {
           title: chapter.title || `Part ${chapter.chapter_order || 1}`,
@@ -1084,6 +1200,7 @@
         provider: video.provider,
         model: video.model,
         calls: stats.calls,
+        depth: stats.depth,
         generated_at: new Date().toISOString(),
       },
     });
@@ -1110,6 +1227,8 @@
     chaptersFromPlans,
     attachTranscripts,
     closeSections,
+    briefFor,
+    briefText,
     createPacer,
     estimateRun,
     fitsInDay,

@@ -151,8 +151,8 @@ browser. The notes are written with your key and your quota — there is no acco
 us, no subscription and no server of ours in the middle.
 
 The estimate is shown before the first call, and the free tier is enough for real work:
-on the default model, a one-hour lecture is roughly 33,000 tokens, about five lectures a
-day.
+on the default model, a one-hour lecture is roughly 35,000 tokens on Quick — about five
+lectures a day — or 51,000 on Deep, about three a day.
 
 PRIVACY
 

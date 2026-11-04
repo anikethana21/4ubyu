@@ -1,0 +1,224 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1080" width="1100" height="1080" style="--bg:#18181B;--fg:#F4F4F5;--line:#71717A;--muted:#A1A1AA;--surface:#27272A;--border:#3F3F46;--accent:#34D399;--warn:#F87171;background:var(--bg)">
+<style>
+  text { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  .title { font-size: 19px; font-weight: 700; fill: var(--fg); letter-spacing: 0.2px; }
+  .sub   { font-size: 12px; fill: var(--muted); }
+  .grp   { font-size: 11.5px; font-weight: 600; fill: var(--muted); letter-spacing: 0.5px; }
+  .note  { font-size: 10px; fill: var(--muted); fill-opacity: 0.75; letter-spacing: 0.3px; }
+  .n     { font-size: 12.5px; font-weight: 600; fill: var(--fg); }
+  .ns    { font-size: 10.5px; fill: var(--muted); }
+  .edge  { stroke: var(--line); stroke-width: 1.2; fill: none; }
+  .chip  { fill: none; stroke: var(--warn); stroke-opacity: 0.4; stroke-width: 1; stroke-dasharray: 4 4; }
+  .rt    { font-size: 11.5px; font-weight: 600; fill: var(--fg); fill-opacity: 0.5; }
+  .rs    { font-size: 10px; fill: var(--muted); fill-opacity: 0.8; }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--line)" stroke="var(--line)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+
+<!-- ── header ─────────────────────────────────────────────────────────── -->
+<text class="title" x="40" y="40">4 U BY U — BROWSER-ONLY MULTI-AGENT ARCHITECTURE</text>
+<text class="sub" x="40" y="60">v3.0 · no server · no database · BYOK · one self-contained HTML artifact</text>
+
+<!-- ── 1 · CAPTURE ────────────────────────────────────────────────────── -->
+<g>
+  <rect x="40" y="84" width="1020" height="108" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
+  <rect x="40" y="84" width="1020" height="26" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+  <text class="grp" x="52" y="101">1 · CAPTURE — the user's own browser</text>
+  <text class="note" x="1048" y="101" text-anchor="end">residential IP · no datacenter, no bot gate</text>
+
+  <g>
+    <rect x="60" y="122" width="250" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="185" y="144" text-anchor="middle">YouTube lecture page</text>
+    <text class="ns" x="185" y="161" text-anchor="middle">captions already loaded</text>
+  </g>
+  <g>
+    <rect x="380" y="122" width="280" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="520" y="144" text-anchor="middle">Caption Ladder</text>
+    <text class="ns" x="520" y="161" text-anchor="middle">5 sources · needs ≥ 5 segments</text>
+  </g>
+  <g>
+    <rect x="730" y="122" width="280" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="870" y="144" text-anchor="middle">English Gate</text>
+    <text class="ns" x="870" y="161" text-anchor="middle">refuses before any API call</text>
+  </g>
+
+  <polyline class="edge" points="310,149 380,149" marker-end="url(#arrowhead)"/>
+  <polyline class="edge" points="660,149 730,149" marker-end="url(#arrowhead)"/>
+</g>
+
+<!-- ── 2 · PRE-FLIGHT ─────────────────────────────────────────────────── -->
+<g>
+  <rect x="40" y="212" width="1020" height="108" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
+  <rect x="40" y="212" width="1020" height="26" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+  <text class="grp" x="52" y="229">2 · PRE-FLIGHT — refuse, never fail halfway</text>
+  <text class="note" x="1048" y="229" text-anchor="end">shown before the first token is spent</text>
+
+  <g>
+    <rect x="250" y="250" width="280" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="390" y="272" text-anchor="middle">Estimate · Quick / Deep</text>
+    <text class="ns" x="390" y="289" text-anchor="middle">calls · tokens · runs left today</text>
+  </g>
+  <g>
+    <rect x="620" y="250" width="280" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="760" y="272" text-anchor="middle">Budget Guard</text>
+    <text class="ns" x="760" y="289" text-anchor="middle">usage-v1 ledger + 20% retry reserve</text>
+  </g>
+
+  <polyline class="edge" points="530,277 620,277" marker-end="url(#arrowhead)"/>
+</g>
+
+<!-- ── 3 · PLANNING ───────────────────────────────────────────────────── -->
+<g>
+  <rect x="40" y="340" width="1020" height="108" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
+  <rect x="40" y="340" width="1020" height="26" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+  <text class="grp" x="52" y="357">3 · PLANNING — one call per 12-minute window</text>
+  <text class="note" x="1048" y="357" text-anchor="end">topics come from the lecture, not the clock</text>
+
+  <g>
+    <rect x="250" y="378" width="280" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="390" y="400" text-anchor="middle">Planner</text>
+    <text class="ns" x="390" y="417" text-anchor="middle">timestamped outline → topic boundaries</text>
+  </g>
+  <g>
+    <rect x="620" y="378" width="280" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="760" y="400" text-anchor="middle">Plan Merge</text>
+    <text class="ns" x="760" y="417" text-anchor="middle">deterministic · native chapters as hints</text>
+  </g>
+
+  <polyline class="edge" points="530,405 620,405" marker-end="url(#arrowhead)"/>
+</g>
+
+<!-- ── 4 · AGENT SWARM ────────────────────────────────────────────────── -->
+<g>
+  <rect x="40" y="468" width="1020" height="196" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
+  <rect x="40" y="468" width="1020" height="26" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+  <text class="grp" x="52" y="485">4 · AGENT SWARM — Deep mode · text in, text out</text>
+  <text class="note" x="1048" y="485" text-anchor="end">pacer · 8k TPM · in order</text>
+
+  <g>
+    <rect x="50" y="512" width="220" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="160" y="535" text-anchor="middle">Explainer</text>
+    <text class="ns" x="160" y="552" text-anchor="middle">explanation · analogy · pitfalls</text>
+  </g>
+  <g>
+    <rect x="300" y="512" width="220" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="410" y="535" text-anchor="middle">Code Explainer</text>
+    <text class="ns" x="410" y="552" text-anchor="middle">a labelled block in the writing call</text>
+  </g>
+  <g>
+    <rect x="550" y="512" width="220" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="660" y="535" text-anchor="middle">Diagram Architect</text>
+    <text class="ns" x="660" y="552" text-anchor="middle">a labelled block in the writing call</text>
+  </g>
+  <g>
+    <rect x="800" y="512" width="220" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="910" y="535" text-anchor="middle">Summariser</text>
+    <text class="ns" x="910" y="552" text-anchor="middle">computed · no call · ≤ 120 w</text>
+  </g>
+
+  <g>
+    <rect x="430" y="598" width="260" height="54" fill="var(--surface)" stroke="var(--accent)" stroke-width="1"/>
+    <text class="n" x="560" y="620" text-anchor="middle">Verifier</text>
+    <text class="ns" x="560" y="637" text-anchor="middle">≤ 3 flags · each must quote its sentence</text>
+  </g>
+
+  <!-- plan → swarm bus -->
+  <polyline class="edge" points="160,502 910,502"/>
+  <polyline class="edge" points="760,432 760,502"/>
+  <polyline class="edge" points="160,502 160,512" marker-end="url(#arrowhead)"/>
+  <polyline class="edge" points="410,502 410,512" marker-end="url(#arrowhead)"/>
+  <polyline class="edge" points="660,502 660,512" marker-end="url(#arrowhead)"/>
+  <polyline class="edge" points="910,502 910,512" marker-end="url(#arrowhead)"/>
+
+  <!-- agents → verifier rail -->
+  <polyline class="edge" points="160,568 160,582 910,582 910,568"/>
+  <polyline class="edge" points="410,568 410,582"/>
+  <polyline class="edge" points="660,568 660,582"/>
+  <polyline class="edge" points="560,582 560,598" marker-end="url(#arrowhead)"/>
+</g>
+
+<!-- ── 5 · ASSEMBLY ───────────────────────────────────────────────────── -->
+<g>
+  <rect x="40" y="692" width="1020" height="108" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
+  <rect x="40" y="692" width="1020" height="26" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+  <text class="grp" x="52" y="709">5 · ASSEMBLY</text>
+  <text class="note" x="1048" y="709" text-anchor="end">deterministic · zero network requests once the file is written</text>
+
+  <g>
+    <rect x="90" y="730" width="260" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="220" y="752" text-anchor="middle">Compile</text>
+    <text class="ns" x="220" y="769" text-anchor="middle">dedupe titles · timestamps · flags</text>
+  </g>
+  <g>
+    <rect x="420" y="730" width="260" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="550" y="752" text-anchor="middle">Notes-only HTML</text>
+    <text class="ns" x="550" y="769" text-anchor="middle">self-contained · prints in seconds</text>
+  </g>
+  <g>
+    <rect x="750" y="730" width="260" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="0.75"/>
+    <text class="n" x="880" y="752" text-anchor="middle">BM25 Chat</text>
+    <text class="ns" x="880" y="769" text-anchor="middle">top 3 sections · one call</text>
+  </g>
+
+  <polyline class="edge" points="560,652 560,680 220,680 220,730" marker-end="url(#arrowhead)"/>
+  <polyline class="edge" points="350,757 420,757" marker-end="url(#arrowhead)"/>
+  <polyline class="edge" points="680,757 750,757" marker-end="url(#arrowhead)"/>
+</g>
+
+<!-- ── retired ────────────────────────────────────────────────────────── -->
+<g>
+  <rect x="40" y="824" width="1020" height="196" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
+  <rect x="40" y="824" width="1020" height="26" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+  <text class="grp" x="52" y="841">RETIRED — what the pivot removed, and why</text>
+  <text class="note" x="1048" y="841" text-anchor="end">none of these are load-bearing any more</text>
+
+  <g>
+    <rect class="chip" x="60" y="864" width="230" height="54" rx="2"/>
+    <text class="rt" x="72" y="885">Supabase Postgres</text>
+    <text class="rs" x="72" y="902">no accounts → nothing to own</text>
+  </g>
+  <g>
+    <rect class="chip" x="305" y="864" width="230" height="54" rx="2"/>
+    <text class="rt" x="317" y="885">ChromaDB + MiniLM</text>
+    <text class="rs" x="317" y="902">sections, not vectors</text>
+  </g>
+  <g>
+    <rect class="chip" x="550" y="864" width="230" height="54" rx="2"/>
+    <text class="rt" x="562" y="885">LangGraph server</text>
+    <text class="rs" x="562" y="902">graph is plain code now</text>
+  </g>
+  <g>
+    <rect class="chip" x="795" y="864" width="230" height="54" rx="2"/>
+    <text class="rt" x="807" y="885">Vercel / Render</text>
+    <text class="rs" x="807" y="902">datacenter IP = bot gate</text>
+  </g>
+  <g>
+    <rect class="chip" x="60" y="930" width="230" height="54" rx="2"/>
+    <text class="rt" x="72" y="951">OpenCV keyframes</text>
+    <text class="rs" x="72" y="968">needs video decode</text>
+  </g>
+  <g>
+    <rect class="chip" x="305" y="930" width="230" height="54" rx="2"/>
+    <text class="rt" x="317" y="951">ffmpeg.wasm</text>
+    <text class="rs" x="317" y="968">50–100 MB, minutes of CPU</text>
+  </g>
+  <g>
+    <rect class="chip" x="550" y="930" width="230" height="54" rx="2"/>
+    <text class="rt" x="562" y="951">Ingest token</text>
+    <text class="rs" x="562" y="968">nothing to authenticate</text>
+  </g>
+  <g>
+    <rect class="chip" x="795" y="930" width="230" height="54" rx="2"/>
+    <text class="rt" x="807" y="951">PDF button</text>
+    <text class="rs" x="807" y="968">the browser owns printing</text>
+  </g>
+</g>
+
+<!-- ── footer ─────────────────────────────────────────────────────────── -->
+<text class="sub" x="40" y="1050">Quick = Planner + Explainer · 15 calls · ~35k tokens · 5 lectures a day</text>
+<text class="sub" x="560" y="1050">Deep = + Verifier check · 25 calls · ~51k tokens · 3 lectures a day</text>
+<text class="note" x="40" y="1068">Every agent output is cached by section id — a closed tab resumes without re-spending a token.</text>
+</svg>

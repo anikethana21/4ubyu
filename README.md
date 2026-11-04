@@ -34,6 +34,8 @@ no backend of ours to go down, no ingest token to leak, and no service that can 
 
 | Change | Why it matters |
 |--------|----------------|
+| **Deep mode** | A second, separate call checks each section against the lecture and flags sentences it cannot match. Quick stays the default; Deep is priced before it runs. |
+| **Bounded context** | Each section's brief carries two sentences about the one before it and a handful of terms — never the earlier sections. Section forty costs what section four costs. |
 | **No in-page PDF button** | It was a browser-print shortcut wearing a product feature's clothes. The `@media print` stylesheet is still there, so printing is still one keystroke — but the app no longer promises a format it does not own. |
 | **Auto-refresh on video change** | YouTube is a single-page app. The panel now resets and re-reads the lecture on navigation instead of going stale. |
 | **Captions read without opening the transcript** | Five separate sources, each requiring at least five segments before it is trusted, and a rendered-panel fallback as the last resort. |
@@ -72,12 +74,22 @@ no backend of ours to go down, no ingest token to leak, and no service that can 
         │  (a window with chapters of its own in the        │
         │   description uses those as its chapter)          ▼
         │                                    one writing call per topic
+        │                                     (Deep: + one check per topic)
         ▼                                                   │
   notes document  { video metadata, chapters[], sections[] }─┘
         │   the document is the data; the page is a rendering of it
         ▼
   one self-contained HTML page  ──►  your disk
 ```
+
+![Architecture](docs/architecture-v3.svg)
+
+**Quick** writes each topic once. **Deep** adds a verifier call per topic — a second pass
+that reads the notes back against that stretch of the lecture and flags any sentence it
+cannot match. A flag never deletes a paragraph: the page shows the sentence it doubts and
+why. Deep also reads the sections in order, because each brief carries a computed summary
+of the one before it — the summary is code, not a model call, so it costs nothing and cannot
+invent anything.
 
 The split in the source follows the split in the risk:
 
@@ -105,18 +117,29 @@ Numbers are never invented: they come from the same function the panel displays 
 
 There is no cap on video length in the app. The real limit is the model's **daily token allowance**. Measured with the shipped estimator (`estimateRun`) against captions at ~150 words per minute:
 
-| Lecture | Parts | Calls | Tokens | ~Time at 8k/min | Fits in one day |
-|---|---|---|---|---|---|
-| 15 min | 2 | 6 | 10k | ~5 min | 20 |
-| 30 min | 3 | 9 | 18k | ~8 min | 11 |
-| 1 hour | 5 | 15 | 33k | ~14 min | 5 |
-| 2 hours | 10 | 30 | 67k | ~27 min | 2 |
-| 4 hours | 20 | 60 | 134k | ~53 min | 1 |
-| 6 hours | 30 | 90 | 202k | ~80 min | 0 — over 200k/day |
+| Lecture | Mode | Parts | Calls | Tokens | ~Time at 8k/min | Fits in one day |
+|---|---|---|---|---|---|---|
+| 15 min | Quick | 2 | 6 | 10k | ~5 min | 19 |
+| 15 min | Deep | 2 | 10 | 17k | ~9 min | 12 |
+| 30 min | Quick | 3 | 9 | 19k | ~8 min | 10 |
+| 30 min | Deep | 3 | 15 | 28k | ~13 min | 7 |
+| 1 hour | Quick | 5 | 15 | 35k | ~14 min | 5 |
+| 1 hour | Deep | 5 | 25 | 51k | ~22 min | 3 |
+| 2 hours | Quick | 10 | 30 | 71k | ~27 min | 2 |
+| 2 hours | Deep | 10 | 50 | 102k | ~43 min | 1 |
+| 4 hours | Quick | 20 | 60 | 142k | ~54 min | 1 |
+| 4 hours | Deep | 20 | 100 | 205k | ~86 min | 0 - over 200k/day |
 
 Those figures are the shipped estimator's own output (`estimateRun` + `fitsInDay`) on a
 transcript at ~150 words per minute, with the current defaults: twelve-minute windows and
 two sections per window.
+
+**Quick** writes each section once. **Deep** adds one check per section — a second call that
+reads the notes back against that stretch of the lecture and flags any sentence it cannot
+match. The check never deletes a paragraph; a flag is shown on the page with the sentence it
+doubts. Deep also reads the sections in order, because each one receives a summary of the
+one before it instead of the sections themselves — that is what keeps section forty the same
+size as section four.
 
 On Groq's free tier, per model: **8,000 tokens/minute**, **1,000 requests/day**, **200,000 tokens/day** (`gpt-oss` models and `openai/gpt-oss-safeguard-20b`) — except `llama-3.1-8b-instant` and `qwen/qwen3-32b`, which allow **500,000 tokens/day** at 6,000/minute. So a six-hour lecture fits on one of those, not on the default model.
 
@@ -282,6 +305,7 @@ The server-side prototype is **frozen**: it still runs, its 98 tests still pass,
 
 | Version | Date | Key changes |
 |---|---|---|
+| **3.0.0** | 2026-11-04 | Deep mode: a separate verifier call per section, bounded Section Brief, deterministic running summary, per-agent resume; Quick remains the default |
 | **2.9.7** | 2026-11-03 | In-page PDF button removed and every reference to it scrubbed; Chrome Web Store package, screenshots and both promo tiles brought up to date |
 | 2.9.6 | 2026-10-25 | Print button loading state ("Preparing…"); userscript version bumped to match the panel |
 | 2.9.5 | 2026-10-21 | Version bump; all fixes consolidated |

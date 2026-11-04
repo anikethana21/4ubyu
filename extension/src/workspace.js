@@ -194,6 +194,7 @@
           explanation: theoryBlock.explanation,
           analogy: theoryBlock.analogies?.[0],
           degraded: Boolean(section.degraded),
+          verification: Array.isArray(section.verification) ? section.verification : [],
         };
       });
 
@@ -441,6 +442,19 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
           </div>`
       : "";
 
+    // What the check found. It never edits the section — it names the sentence it
+    // doubts and why, which is the only kind of doubt a reader can act on.
+    const flags = Array.isArray(section.verification) ? section.verification.slice(0, 3) : [];
+    const verification = flags.length
+      ? `          <div class="verify-card" style="background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #d97706;border-radius:10px;padding:1rem 1.25rem;margin:1.2rem 0;color:#78350f">
+            <h4 style="margin:0 0 0.5rem 0;color:#92400e;font-size:0.98rem;font-weight:700">Check against the lecture</h4>
+            <ul style="margin:0 0 0.5rem 1.1rem;padding:0">
+${flags.map((flag) => `              <li style="margin-bottom:0.35rem"><q>${text(flag.quote || "")}</q> — ${text(flag.reason || "")}</li>`).join("\n")}
+            </ul>
+            <p style="margin:0;font-size:0.85rem;color:#92400e">A second pass could not match this to the transcript. Read it against the lecture before you rely on it.</p>
+          </div>`
+      : "";
+
     // Explanation, with any diagram fences lifted out of the prose and shown as
     // labelled source underneath it.
     const explainedDiagram = mermaidBlocks(theory.explanation || "");
@@ -480,6 +494,7 @@ ${diagram}
 ${keyPoints}
 ${mistakes}
 ${concreteExamples}
+${verification}
 ${supplement}
           </section>`;
   }

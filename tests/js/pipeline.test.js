@@ -725,3 +725,168 @@ test("an unknown model is not gated on a guessed limit", () => {
 });
 
 
+
+// ---------------------------------------------------------------------------
+// Deep mode: a separate check over written notes, and a brief that stays small
+// ---------------------------------------------------------------------------
+
+/**
+ * A provider that answers all three prompts, and counts how often each is asked.
+ *
+ * The verifier is recognised by its own opening sentence, not by position, so a
+ * bug that sends the wrong prompt to the wrong step shows up as a wrong count.
+ */
+function deepProvider({ verdict = "NONE" } = {}) {
+  const seen = { planning: 0, composing: 0, verifying: 0, prompts: [] };
+  const call = async ({ messages }) => {
+    const prompt = messages[0].content;
+    seen.prompts.push(prompt);
+    if (/You are checking study notes against the transcript/.test(prompt)) {
+      seen.verifying += 1;
+      return verdict;
+    }
+    if (/SECTIONS\n/.test(prompt) && /TITLE/.test(prompt)) {
+      seen.planning += 1;
+      const from = prompt.match(/Stretch: ([\d:]+) to /);
+      const start = pipeline.parseClock(from ? from[1] : "0:00") || 0;
+      const end = pipeline.parseClock((prompt.match(/ to ([\d:]+)\n/) || [])[1] || "24:00") || start + 720;
+      const first = core.clock(start);
+      const second = core.clock(start + 360);
+      return (
+        "TITLE\nThe gates and the cell state\n\n" +
+        "SECTIONS\n" +
+        `${first} | Forget gate behaviour | What the forget gate does to the cell state.\n` +
+        (start + 360 < end
+          ? `${second} | Input and output gates | How writing and reading are decided.\n`
+          : "")
+      );
+    }
+    seen.composing += 1;
+    return (
+      "EXPLANATION\nThe forget gate decides what leaves the cell state, and the other gates " +
+      "decide what is written into it and what is read back out. The cell state is the part " +
+      "that carries information from the beginning of the sentence to its end.\n\n" +
+      "ANALOGY\nA conveyor belt that keeps the parts that matter.\n\n" +
+      "KEY POINTS\n- the cell state carries long-term memory\n- each gate has its own weights\n\n" +
+      "PITFALLS\n- mixing up h_t and c_t -> keep the two names apart\n\n" +
+      "EXAMPLE\n- the sentence Riya is a doctor\n"
+    );
+  };
+  call.seen = seen;
+  return call;
+}
+
+function deepStore() {
+  const values = new Map();
+  return {
+    get(key, fallback = null) {
+      return values.has(key) ? values.get(key) : fallback;
+    },
+    set(key, value) {
+      values.set(key, value);
+    },
+    clear() {
+      values.clear();
+    },
+  };
+}
+
+test("Deep mode prices the check it will run, and only in Deep mode", () => {
+  const segments = lecture(60);
+  const quick = pipeline.estimateRun({ segments });
+  const deep = pipeline.estimateRun({ segments, options: { depth: "deep" } });
+
+  assert.equal(quick.depth, "quick");
+  assert.equal(deep.depth, "deep");
+  assert.equal(deep.calls, quick.calls + quick.sections, "one check per section");
+  assert.ok(deep.tokens > quick.tokens);
+  assert.ok(deep.tokens < quick.tokens * 2, "the check is a fraction of the writing, not a second lecture");
+});
+
+test("a brief is bounded, so section forty costs what section four costs", () => {
+  const brief = pipeline.briefFor({
+    lectureTitle: "x".repeat(500),
+    chapterTitle: "y".repeat(500),
+    section: { title: "t".repeat(500), start: 10, end: 20 },
+    context: {
+      prevSummary: "s".repeat(5000),
+      terms: Array.from({ length: 30 }, (_, index) => `term${index}`),
+    },
+  });
+  assert.equal(brief.lecture.title.length, 120);
+  assert.equal(brief.section.title.length, 120);
+  assert.equal(brief.context.prevSummary.length, 520);
+  assert.equal(brief.section.terms.length, 8);
+  assert.ok(pipeline.briefText(brief).length < 1200, "the whole brief stays under one page");
+  assert.equal(pipeline.briefText(null), "");
+});
+
+test("Deep mode checks every section and keeps the flags on the page", async () => {
+  const call = deepProvider({
+    verdict:
+      "FLAG | The cell state carries long-term memory. | The transcript never says long-term memory.",
+  });
+  const result = await pipeline.runLecture({
+    segments: lecture(15),
+    video: { video_id: "deep1", title: "Gates", duration: 900 },
+    call,
+    store: deepStore(),
+    options: { depth: "deep" },
+  });
+
+  assert.ok(result.document, "the run still produces notes");
+  assert.equal(result.stats.depth, "deep");
+  assert.equal(call.seen.verifying, result.stats.sections, "one check per written section");
+  assert.equal(result.stats.calls, result.stats.windows + result.stats.sections * 2);
+  assert.equal(result.stats.flags, result.stats.sections);
+
+  const sections = result.document.chapters.flatMap((chapter) => chapter.sections);
+  for (const section of sections) {
+    assert.equal(section.verification.length, 1, "the flag is carried into the document");
+    assert.ok(section.verification[0].quote.startsWith("The cell state"));
+  }
+});
+
+test("Quick mode is unchanged: one writing call per section and no check", async () => {
+  const call = deepProvider();
+  const result = await pipeline.runLecture({
+    segments: lecture(15),
+    video: { video_id: "quick1", title: "Gates", duration: 900 },
+    call,
+    store: deepStore(),
+    options: { depth: "quick" },
+  });
+
+  assert.ok(result.document);
+  assert.equal(result.stats.depth, "quick");
+  assert.equal(call.seen.verifying, 0, "nothing checks the notes in Quick mode");
+  assert.equal(result.stats.calls, result.stats.windows + result.stats.sections);
+  const sections = result.document.chapters.flatMap((chapter) => chapter.sections);
+  assert.ok(sections.every((section) => section.verification.length === 0));
+});
+
+test("a closed tab resumes a Deep run without paying for a section twice", async () => {
+  const store = deepStore();
+  const first = await pipeline.runLecture({
+    segments: lecture(15),
+    video: { video_id: "resume1", title: "Gates", duration: 900 },
+    call: deepProvider({ verdict: "NONE" }),
+    store,
+    options: { depth: "deep" },
+  });
+  assert.ok(first.stats.calls > 0);
+
+  const secondCall = deepProvider({ verdict: "NONE" });
+  const second = await pipeline.runLecture({
+    segments: lecture(15),
+    video: { video_id: "resume1", title: "Gates", duration: 900 },
+    call: secondCall,
+    store,
+    options: { depth: "deep" },
+  });
+
+  assert.ok(second.document, "the notes are rebuilt from the cache");
+  assert.equal(second.stats.calls, 0, "not one call is repeated");
+  assert.equal(secondCall.seen.planning + secondCall.seen.composing + secondCall.seen.verifying, 0);
+  assert.ok(second.stats.fromCache >= second.stats.sections);
+});

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         4 U By U — Lecture to Study Notes
 // @namespace    https://github.com/anikethana21/4ubyu
-// @version      2.9.7
+// @version      3.0.0
 // @description  Turns the YouTube lecture you are already watching into a chapterised study handbook. Captures the captions in your own browser, writes the notes with your own API key, and downloads one self-contained HTML page. No server, no account, no upload.
 // @author       Anikethana
 // @license      MIT
@@ -466,6 +466,8 @@
     'Section: "{title}"\n' +
     'Chapter: "{chapter_title}"\n' +
     "Subject: {domain}\n\n" +
+    "This is part of a longer lecture. Earlier context, for continuity only — never repeat " +
+    "it, and never treat it as something to summarise:\n{brief}\n\n" +
     "Transcript of this part of the lecture:\n---\n{transcript}\n---\n\n" +
     "Answer in exactly this shape. Write each heading on its own line, with nothing else on " +
     "that line:\n\n" +
@@ -516,6 +518,35 @@
     "or after it — the reader pastes exactly what you write into mermaid.live. " +
     "Write NONE if no diagram adds value. " +
     "Do not force diagrams everywhere — only where they clarify something text cannot.";
+
+  /**
+   * The check, not the rewrite.
+   *
+   * A writer that is asked to grade its own work grades it generously. So the
+   * verifier is a separate call with one job: find sentences the transcript does
+   * not support. It is not allowed to improve anything, and a flag it cannot
+   * quote is not a flag — that rule is what keeps it from turning into a second
+   * opinion about style.
+   */
+  const VERIFIER_PROMPT =
+    "You are checking study notes against the transcript they were written from. " +
+    "Your only job is to find sentences in the notes that the transcript does not support. " +
+    "You do not rewrite, you do not improve, you do not comment on style.\n\n" +
+    "Rules:\n" +
+    "- Report at most {max_flags} claims.\n" +
+    "- A claim may only be reported if you can quote, word for word, the sentence in the notes " +
+    "that makes it.\n" +
+    "- Report a sentence when the transcript does not support it and it is not marked " +
+    "[OUTSIDE SYLLABUS].\n" +
+    "- If you cannot quote the notes' sentence exactly, do not report it.\n" +
+    "- If everything is supported, answer NONE.\n\n" +
+    'Section: "{title}"\n\n' +
+    "Notes:\n---\n{notes}\n---\n\n" +
+    "Transcript:\n---\n{transcript}\n---\n\n" +
+    "Answer with one line per claim, in exactly this shape, and nothing else:\n" +
+    "FLAG | <the exact sentence from the notes> | <why the transcript does not support it>\n" +
+    "If there is nothing to report, answer only: NONE";
+
 
   /** Fill a prompt's `{placeholders}` from a values object, leaving others alone. */
   function fillTemplate(template, values) {
@@ -592,7 +623,7 @@
    * used instead of notes, so a run can report itself honestly.
    */
   async function composeSection(
-    { title, chapterTitle, transcript, domain = "machine_learning" },
+    { title, chapterTitle, transcript, domain = "machine_learning", brief = "" },
     { call, steps = EXCERPT_STEPS, onAttempt } = {}
   ) {
     if (!call) return degradedSection("no model was available, so no attempt was made", transcript);
@@ -600,7 +631,12 @@
     const { answer, failure } = await invokeReadingTranscript({
       call,
       promptTemplate: COMPOSER_PROMPT,
-      variables: { title, chapter_title: chapterTitle || title, domain },
+      variables: {
+        title,
+        chapter_title: chapterTitle || title,
+        domain,
+        brief: brief || "(this is the first section of the lecture)",
+      },
       transcript,
       steps,
       onAttempt,
@@ -613,6 +649,99 @@
     }
     parsed.degraded = false;
     return parsed;
+  }
+
+  // -------------------------------------------------------------------------
+  // Checking the notes against the lecture
+  // -------------------------------------------------------------------------
+
+  /**
+   * Read a verifier's answer into at most `maxFlags` claims.
+   *
+   * Anything that is not a `FLAG | quote | reason` line is dropped rather than
+   * guessed at: a flag whose quote cannot be found in the notes would accuse the
+   * writer of something it did not say.
+   */
+  function parseVerdict(text, { maxFlags = 3 } = {}) {
+    const raw = String(text || "").trim();
+    if (!raw || /^none\b/i.test(raw)) return [];
+    const flags = [];
+    for (const line of raw.split(/\r\n|\r|\n/)) {
+      const parts = line.split("|");
+      if (parts.length < 3) continue;
+      if (!/^\s*\[?\s*flag\s*\]?\s*$/i.test(parts[0])) continue;
+      const quote = parts[1].trim().replace(/^["'“”]+|["'“”]+$/g, "").trim();
+      const reason = parts.slice(2).join("|").trim();
+      if (!quote || !reason) continue;
+      if (flags.length >= Math.max(1, maxFlags)) break;
+      flags.push({ quote, reason });
+    }
+    return flags;
+  }
+
+  /** The part of a section the verifier reads, kept short enough to quote from. */
+  function notesText(notes = {}) {
+    const parts = [String(notes.explanation || "")];
+    if ((notes.key_points || []).length) parts.push("Key points: " + notes.key_points.join("; "));
+    if ((notes.pitfalls || []).length) parts.push("Pitfalls: " + notes.pitfalls.join("; "));
+    return parts.join("\n").slice(0, 4000);
+  }
+
+  /**
+   * Ask a separate call what the notes claim that the lecture did not say.
+   *
+   * Never throws and never blocks the run: a check that fails leaves the section
+   * exactly as it was, and says so in the event stream. A verifier that cannot
+   * answer must not be able to delete a section.
+   */
+  async function verifySection({ title, notes, transcript }, { call, steps = EXCERPT_STEPS, maxFlags = 3 } = {}) {
+    if (!call) return { flags: [], failure: "no model was available to check this section" };
+    const { answer, failure } = await invokeReadingTranscript({
+      call,
+      promptTemplate: VERIFIER_PROMPT,
+      variables: {
+        title: title || "this section",
+        notes: notesText(notes),
+        max_flags: Math.max(1, maxFlags),
+      },
+      transcript,
+      steps,
+    });
+    if (!answer) return { flags: [], failure };
+    return { flags: parseVerdict(answer, { maxFlags }), failure: "" };
+  }
+
+  /**
+   * The running context for the next section — computed, not asked for.
+   *
+   * This is what keeps a long lecture from growing the prompt: the next section
+   * sees a two-sentence summary and a handful of terms, never the sections before
+   * it. It costs no tokens, so it cannot fail, and it cannot invent anything.
+   */
+  const STOPWORDS = new Set(
+    ("the a an and or but if then than that this these those with from into over under about " +
+      "above below after before while during for nor so yet you your we our they their it its " +
+      "is are was were be been being do does did have has had can could will would should may " +
+      "might must not no of to in on at by as").split(/\s+/)
+  );
+
+  function summariseSection(section = {}) {
+    const prose = String(section.explanation || "").replace(/\s+/g, " ").trim();
+    const sentences = prose.split(/(?<=[.!?])\s+/).filter(Boolean);
+    let prevSummary = sentences.slice(0, 2).join(" ");
+    if (prevSummary.length > 520) prevSummary = prevSummary.slice(0, 517).trimEnd() + "…";
+
+    const counts = new Map();
+    for (const word of prose.toLowerCase().match(/[a-z][a-z0-9_-]{4,}/g) || []) {
+      if (STOPWORDS.has(word)) continue;
+      counts.set(word, (counts.get(word) || 0) + 1);
+    }
+    const terms = [...counts.entries()]
+      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+      .slice(0, 6)
+      .map(([word]) => word);
+
+    return { prevSummary, terms };
   }
 
   // -------------------------------------------------------------------------
@@ -1017,6 +1146,7 @@
     MIN_EXPLANATION_CHARS,
     LABELS,
     COMPOSER_PROMPT,
+    VERIFIER_PROMPT,
     MAX_COMPLETION_TOKENS,
     latinShare,
     isEnglishTranscript,
@@ -1037,6 +1167,10 @@
     fillTemplate,
     invokeReadingTranscript,
     composeSection,
+    verifySection,
+    parseVerdict,
+    notesText,
+    summariseSection,
     createCaller,
     answerFromResponse,
     listModels,
@@ -1566,6 +1700,7 @@
           explanation: theoryBlock.explanation,
           analogy: theoryBlock.analogies?.[0],
           degraded: Boolean(section.degraded),
+          verification: Array.isArray(section.verification) ? section.verification : [],
         };
       });
 
@@ -1813,6 +1948,19 @@ ${(theory.pitfalls || theory.common_mistakes || []).map((point) => `            
           </div>`
       : "";
 
+    // What the check found. It never edits the section — it names the sentence it
+    // doubts and why, which is the only kind of doubt a reader can act on.
+    const flags = Array.isArray(section.verification) ? section.verification.slice(0, 3) : [];
+    const verification = flags.length
+      ? `          <div class="verify-card" style="background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #d97706;border-radius:10px;padding:1rem 1.25rem;margin:1.2rem 0;color:#78350f">
+            <h4 style="margin:0 0 0.5rem 0;color:#92400e;font-size:0.98rem;font-weight:700">Check against the lecture</h4>
+            <ul style="margin:0 0 0.5rem 1.1rem;padding:0">
+${flags.map((flag) => `              <li style="margin-bottom:0.35rem"><q>${text(flag.quote || "")}</q> — ${text(flag.reason || "")}</li>`).join("\n")}
+            </ul>
+            <p style="margin:0;font-size:0.85rem;color:#92400e">A second pass could not match this to the transcript. Read it against the lecture before you rely on it.</p>
+          </div>`
+      : "";
+
     // Explanation, with any diagram fences lifted out of the prose and shown as
     // labelled source underneath it.
     const explainedDiagram = mermaidBlocks(theory.explanation || "");
@@ -1852,6 +2000,7 @@ ${diagram}
 ${keyPoints}
 ${mistakes}
 ${concreteExamples}
+${verification}
 ${supplement}
           </section>`;
   }
@@ -3046,6 +3195,12 @@ ${chaptersHtml}
     minWindowChars: 200,
     sectionsPerWindow: 2,
     concurrency: 2,
+    // "quick" is one writer call per section. "deep" adds a verifier call per
+    // section and reads the sections in order, so each brief can carry the
+    // previous section's summary. The default stays quick: a stranger's first
+    // lecture must fit comfortably inside a free day.
+    depth: "quick",
+    maxFlags: 3,
   };
 
   // ---------------------------------------------------------------------------
@@ -3400,6 +3555,50 @@ ${chaptersHtml}
   }
 
   // ---------------------------------------------------------------------------
+  // What each agent is told
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The bounded context a section's agents receive.
+   *
+   * This is the whole reason a long lecture stays affordable: an agent is never
+   * handed the sections before it, only a summary of the one before and the terms
+   * already introduced. The caps are deliberate and small — 120 characters of
+   * title, eight terms, 520 characters of summary — so section forty costs the
+   * same as section four.
+   */
+  function briefFor({ lectureTitle = "", chapterTitle = "", section = {}, context = {} } = {}) {
+    const terms = (context.terms || []).slice(0, 8).map((term) => String(term).slice(0, 32));
+    return {
+      v: 1,
+      lecture: { title: String(lectureTitle || "").slice(0, 120) },
+      chapter: { title: String(chapterTitle || "").slice(0, 120) },
+      section: {
+        id: `s${Number(section.start) || 0}`,
+        title: String(section.title || "").slice(0, 120),
+        startSec: Number(section.start) || 0,
+        endSec: Number(section.end) || 0,
+        terms,
+      },
+      context: { prevSummary: String(context.prevSummary || "").slice(0, 520) },
+    };
+  }
+
+  /** The brief as the few lines a prompt actually needs. */
+  function briefText(brief) {
+    if (!brief) return "";
+    const lines = [];
+    if (brief.chapter && brief.chapter.title) lines.push(`Chapter: ${brief.chapter.title}`);
+    if (brief.section && brief.section.terms && brief.section.terms.length) {
+      lines.push(`Terms already introduced: ${brief.section.terms.join(", ")}`);
+    }
+    if (brief.context && brief.context.prevSummary) {
+      lines.push(`The section just before this one: ${brief.context.prevSummary}`);
+    }
+    return lines.join("\n");
+  }
+
+  // ---------------------------------------------------------------------------
   // Pacing, so the allowance is respected rather than tripped
   // ---------------------------------------------------------------------------
 
@@ -3520,6 +3719,7 @@ ${chaptersHtml}
    */
   function estimateRun({ segments, options = {} } = {}) {
     const settings = { ...DEFAULT_OPTIONS, ...options };
+    const deep = settings.depth === "deep";
     const duration = transcriptEnd(segments) || 0;
     const windows = windowsFor(duration, settings);
     let outlineChars = 0;
@@ -3532,16 +3732,21 @@ ${chaptersHtml}
     const sections = Math.max(windows.length, Math.round(windows.length * settings.sectionsPerWindow));
     const planningTokens = Math.ceil(outlineChars / 4) + windows.length * 250;
     const writingTokens = Math.ceil(speechChars / Math.max(1, sections) / 4) * sections + sections * 900;
-    const calls = windows.length + sections;
+    // The verifier re-reads the section's excerpt and the notes written from it,
+    // and answers with at most a few short lines. Measured, not guessed: about
+    // 1,450 tokens in and 120 out per section.
+    const verifierTokens = deep ? sections * 1570 : 0;
+    const calls = windows.length + sections + (deep ? sections : 0);
     return {
       duration,
       windows: windows.length,
       sections,
       calls,
+      depth: deep ? "deep" : "quick",
       // Both directions, as a provider bills them.
-      tokens: planningTokens + writingTokens,
-      tokensIn: Math.ceil((outlineChars + speechChars) / 4),
-      tokensOut: windows.length * 250 + sections * 900,
+      tokens: planningTokens + writingTokens + verifierTokens,
+      tokensIn: Math.ceil((outlineChars + speechChars) / 4) + (deep ? sections * 1450 : 0),
+      tokensOut: windows.length * 250 + sections * 900 + (deep ? sections * 120 : 0),
     };
   }
 
@@ -3783,6 +3988,9 @@ ${chaptersHtml}
       written: 0,
       abandoned: 0,
       degraded: [],
+      verified: 0,
+      flags: 0,
+      depth: settings.depth === "deep" ? "deep" : "quick",
       fromCache: 0,
       calls: 0,
       stopped: "",
@@ -3956,7 +4164,13 @@ ${chaptersHtml}
     }
 
     let done = 0;
-    const written = await core.mapWithLimit(flat, Math.max(1, settings.concurrency), async ({ chapter, section }) => {
+    const deep = settings.depth === "deep";
+    // Only Deep mode reads in order. The summary is what the next brief carries,
+    // so it has to exist before the next section starts; Quick mode keeps the
+    // two-at-a-time concurrency that makes it fast.
+    const context = { prevSummary: "", terms: [] };
+
+    const writeOne = async ({ chapter, section }) => {
       // A stop is a person changing their mind, not a failure: the section is
       // dropped from the notes rather than written up as a notice about itself.
       if (shouldStop()) {
@@ -3968,10 +4182,23 @@ ${chaptersHtml}
       if (cached && cached.notes) {
         done += 1;
         stats.fromCache += 1;
+        if (Array.isArray(cached.verification)) stats.flags += cached.verification.length;
+        // A resumed run still needs its continuity: the summary of a section that
+        // was written in an earlier session is the brief the next section gets.
+        if (deep && !cached.notes.degraded) {
+          const summary = core.summariseSection(cached.notes);
+          context.prevSummary = summary.prevSummary;
+          context.terms = summary.terms;
+        }
         emit({ type: "section-done", index: done, total: flat.length, section, cached: true });
-        return { ...section, ...cached.notes };
+        return { ...section, ...cached.notes, verification: cached.verification || [] };
       }
       emit({ type: "section", index: done + 1, total: flat.length, section, chapter: chapter.title });
+
+      const brief = deep
+        ? briefFor({ lectureTitle: video.title || title || "", chapterTitle: chapter.title, section, context })
+        : null;
+
       stats.calls += 1;
       const notes = await core.composeSection(
         {
@@ -3979,19 +4206,56 @@ ${chaptersHtml}
           chapterTitle: chapter.title,
           transcript: section.transcript,
           domain: settings.domain,
+          brief: brief ? briefText(brief) : "",
         },
         { call, steps: settings.steps }
       );
+
+      // The check runs only in Deep mode, and only over notes that exist. A
+      // failed check leaves the section exactly as it was: it can add a warning,
+      // never delete a paragraph.
+      let verification = [];
+      if (deep && !notes.degraded) {
+        emit({ type: "verify", index: done + 1, total: flat.length, section });
+        stats.calls += 1;
+        const verdict = await core.verifySection(
+          { title: section.title, notes, transcript: section.transcript },
+          { call, steps: settings.steps, maxFlags: settings.maxFlags }
+        );
+        verification = verdict.flags || [];
+        stats.verified += 1;
+        stats.flags += verification.length;
+        if (verdict.failure) {
+          emit({ type: "verify-failed", section, reason: verdict.failure });
+          if (core.isDailyLimit(verdict.failure)) {
+            stopped = stopped || "the model's daily allowance was spent while the sections were being checked";
+          }
+        }
+      }
+
       done += 1;
       if (notes.degraded) {
         stats.degraded.push(`${chapter.title} › ${section.title}`);
         if (core.isDailyLimit(notes.explanation)) stopped = stopped || "the model's daily allowance was spent during the writing";
       } else {
-        store.set(key, { notes });
+        store.set(key, { notes, verification });
+        if (deep) {
+          const summary = core.summariseSection(notes);
+          context.prevSummary = summary.prevSummary;
+          context.terms = summary.terms;
+        }
       }
-      emit({ type: "section-done", index: done, total: flat.length, section, notes, cached: false });
-      return { ...section, ...notes };
-    });
+      emit({ type: "section-done", index: done, total: flat.length, section, notes, cached: false, verification });
+      return { ...section, ...notes, verification };
+    };
+
+    let written;
+    if (deep) {
+      written = [];
+      for (const item of flat) written.push(await writeOne(item));
+    } else {
+      written = await core.mapWithLimit(flat, Math.max(1, settings.concurrency), writeOne);
+    }
 
     // Put the written sections back where they came from, keeping only the ones
     // that were written: a stopped run's notes are the part of the lecture that was
@@ -4035,6 +4299,7 @@ ${chaptersHtml}
               examples: section.examples || [],
               diagram_hint: section.diagram || section.diagram_hint || "",
               degraded: Boolean(section.degraded),
+              verification: section.verification || [],
             }));
         return {
           title: chapter.title || `Part ${chapter.chapter_order || 1}`,
@@ -4058,6 +4323,7 @@ ${chaptersHtml}
         provider: video.provider,
         model: video.model,
         calls: stats.calls,
+        depth: stats.depth,
         generated_at: new Date().toISOString(),
       },
     });
@@ -4084,6 +4350,8 @@ ${chaptersHtml}
     chaptersFromPlans,
     attachTranscripts,
     closeSections,
+    briefFor,
+    briefText,
     createPacer,
     estimateRun,
     fitsInDay,
@@ -4129,11 +4397,12 @@ ${chaptersHtml}
 })(typeof globalThis !== "undefined" ? globalThis : this, function (core, pipeline, workspace) {
   "use strict";
 
-  const VERSION = "2.9.7";
+  const VERSION = "3.0.0";
 
   /** Everything the panel remembers between visits lives under one prefix. */
   const KEY_API = "apiKey";
   const KEY_MODEL = "model";
+  const KEY_DEPTH = "depth";
   const KEY_LIBRARY = "library";
   const noteKey = (id) => `note:${id}`;
 
@@ -4564,6 +4833,7 @@ ${chaptersHtml}
       apiKey: String(store.get(KEY_API, "") || ""),
       provider: "groq",
       model: String(store.get(KEY_MODEL, "") || ""),
+      depth: String(store.get(KEY_DEPTH, "quick") || "quick") === "deep" ? "deep" : "quick",
       models: [],
       modelsError: "",
       lecture: null,
@@ -4770,7 +5040,10 @@ ${chaptersHtml}
         state.elsewhere = [];
         return;
       }
-      state.estimate = pipeline.estimateRun({ segments: state.lecture.segments });
+      state.estimate = pipeline.estimateRun({
+        segments: state.lecture.segments,
+        options: { depth: state.depth },
+      });
       state.fit = state.model ? pipeline.fitsInDay(state.estimate, state.model) : null;
       state.allowance = state.model
         ? pipeline.allowanceFor({ estimate: state.estimate, model: state.model, store })
@@ -4907,6 +5180,7 @@ ${chaptersHtml}
           },
           call,
           store,
+          options: { depth: state.depth },
           shouldStop: () => state.cancel,
           onEvent: (event) => {
             if (event.type === "plan") {
@@ -4930,7 +5204,19 @@ ${chaptersHtml}
             if (event.type === "section") {
               line(`Writing “${event.section.title}”…`);
             }
+            if (event.type === "verify") {
+              advance();
+              line(`Checking “${event.section.title}” against the lecture…`);
+            }
+            if (event.type === "verify-failed") {
+              line(`The check could not run for “${event.section.title}”`);
+            }
             if (event.type === "section-done") {
+              if (!event.cached && event.verification && event.verification.length) {
+                line(
+                  `${event.verification.length} claim${event.verification.length === 1 ? "" : "s"} flagged in “${event.section.title}”`
+                );
+              }
               advance();
             }
             if (event.type === "done") {
@@ -5054,12 +5340,32 @@ ${chaptersHtml}
         </div>`;
       }
 
-      return `<div class="ubyu-note">
+      return `${depthToggle()}<div class="ubyu-note">
         <b>${minutes} min of lecture</b> · ${estimate.windows} part${estimate.windows === 1 ? "" : "s"} ·
         about ${estimate.calls} calls · roughly ${Math.round(estimate.tokens / 1000)}k tokens<br/>
         ${fitLine}${left ? `<br/>${left}` : ""}
       </div>
       ${blocked}`;
+    }
+
+    /**
+     * Quick or Deep, chosen before anything is spent.
+     *
+     * Quick is the default because a stranger's first lecture has to fit inside a
+     * free day with room to spare. Deep costs a second call per section — the check
+     * that reads the notes back against the lecture — and is priced before it runs.
+     */
+    function depthToggle() {
+      const deep = state.depth === "deep";
+      return `<div class="ubyu-actions" style="margin-bottom:8px">
+        <button type="button" class="ubyu-btn${deep ? "" : " primary"}" data-act="depth" data-depth="quick">Quick</button>
+        <button type="button" class="ubyu-btn${deep ? " primary" : ""}" data-act="depth" data-depth="deep">Deep</button>
+      </div>
+      <p class="ubyu-muted" style="margin:0 0 8px 0">${
+        deep
+          ? "Deep reads the lecture in order and checks every section against it. A claim the check cannot match is flagged, never deleted."
+          : "Quick writes each section once. Fastest and cheapest; no second pass checks the notes."
+      }</p>`;
     }
 
     function libraryBlock() {
@@ -5186,7 +5492,7 @@ ${chaptersHtml}
             stats.sections === 1 ? "" : "s"
           } · ${stats.calls || 0} model call${stats.calls === 1 ? "" : "s"} · ${stats.seconds || 0}s${
             stats.fromCache ? ` · ${stats.fromCache} reused from earlier` : ""
-          }
+          }${stats.flags ? ` · ${stats.flags} claim${stats.flags === 1 ? "" : "s"} flagged` : ""}
         </div>
         ${degraded ? `<div class="ubyu-note warn">${degraded} section${
           degraded === 1 ? " was" : "s were"
@@ -5332,6 +5638,15 @@ ${chaptersHtml}
       if (act === "use-model") {
         state.model = id;
         store.set(KEY_MODEL, state.model);
+        state.log = [];
+        price();
+        return render();
+      }
+      if (act === "depth") {
+        const next = button.getAttribute("data-depth") === "deep" ? "deep" : "quick";
+        if (next === state.depth || state.running) return undefined;
+        state.depth = next;
+        store.set(KEY_DEPTH, next);
         state.log = [];
         price();
         return render();

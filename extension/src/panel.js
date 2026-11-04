@@ -30,11 +30,12 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (core, pipeline, workspace) {
   "use strict";
 
-  const VERSION = "2.9.7";
+  const VERSION = "3.0.0";
 
   /** Everything the panel remembers between visits lives under one prefix. */
   const KEY_API = "apiKey";
   const KEY_MODEL = "model";
+  const KEY_DEPTH = "depth";
   const KEY_LIBRARY = "library";
   const noteKey = (id) => `note:${id}`;
 
@@ -465,6 +466,7 @@
       apiKey: String(store.get(KEY_API, "") || ""),
       provider: "groq",
       model: String(store.get(KEY_MODEL, "") || ""),
+      depth: String(store.get(KEY_DEPTH, "quick") || "quick") === "deep" ? "deep" : "quick",
       models: [],
       modelsError: "",
       lecture: null,
@@ -671,7 +673,10 @@
         state.elsewhere = [];
         return;
       }
-      state.estimate = pipeline.estimateRun({ segments: state.lecture.segments });
+      state.estimate = pipeline.estimateRun({
+        segments: state.lecture.segments,
+        options: { depth: state.depth },
+      });
       state.fit = state.model ? pipeline.fitsInDay(state.estimate, state.model) : null;
       state.allowance = state.model
         ? pipeline.allowanceFor({ estimate: state.estimate, model: state.model, store })
@@ -808,6 +813,7 @@
           },
           call,
           store,
+          options: { depth: state.depth },
           shouldStop: () => state.cancel,
           onEvent: (event) => {
             if (event.type === "plan") {
@@ -831,7 +837,19 @@
             if (event.type === "section") {
               line(`Writing “${event.section.title}”…`);
             }
+            if (event.type === "verify") {
+              advance();
+              line(`Checking “${event.section.title}” against the lecture…`);
+            }
+            if (event.type === "verify-failed") {
+              line(`The check could not run for “${event.section.title}”`);
+            }
             if (event.type === "section-done") {
+              if (!event.cached && event.verification && event.verification.length) {
+                line(
+                  `${event.verification.length} claim${event.verification.length === 1 ? "" : "s"} flagged in “${event.section.title}”`
+                );
+              }
               advance();
             }
             if (event.type === "done") {
@@ -955,12 +973,32 @@
         </div>`;
       }
 
-      return `<div class="ubyu-note">
+      return `${depthToggle()}<div class="ubyu-note">
         <b>${minutes} min of lecture</b> · ${estimate.windows} part${estimate.windows === 1 ? "" : "s"} ·
         about ${estimate.calls} calls · roughly ${Math.round(estimate.tokens / 1000)}k tokens<br/>
         ${fitLine}${left ? `<br/>${left}` : ""}
       </div>
       ${blocked}`;
+    }
+
+    /**
+     * Quick or Deep, chosen before anything is spent.
+     *
+     * Quick is the default because a stranger's first lecture has to fit inside a
+     * free day with room to spare. Deep costs a second call per section — the check
+     * that reads the notes back against the lecture — and is priced before it runs.
+     */
+    function depthToggle() {
+      const deep = state.depth === "deep";
+      return `<div class="ubyu-actions" style="margin-bottom:8px">
+        <button type="button" class="ubyu-btn${deep ? "" : " primary"}" data-act="depth" data-depth="quick">Quick</button>
+        <button type="button" class="ubyu-btn${deep ? " primary" : ""}" data-act="depth" data-depth="deep">Deep</button>
+      </div>
+      <p class="ubyu-muted" style="margin:0 0 8px 0">${
+        deep
+          ? "Deep reads the lecture in order and checks every section against it. A claim the check cannot match is flagged, never deleted."
+          : "Quick writes each section once. Fastest and cheapest; no second pass checks the notes."
+      }</p>`;
     }
 
     function libraryBlock() {
@@ -1087,7 +1125,7 @@
             stats.sections === 1 ? "" : "s"
           } · ${stats.calls || 0} model call${stats.calls === 1 ? "" : "s"} · ${stats.seconds || 0}s${
             stats.fromCache ? ` · ${stats.fromCache} reused from earlier` : ""
-          }
+          }${stats.flags ? ` · ${stats.flags} claim${stats.flags === 1 ? "" : "s"} flagged` : ""}
         </div>
         ${degraded ? `<div class="ubyu-note warn">${degraded} section${
           degraded === 1 ? " was" : "s were"
@@ -1233,6 +1271,15 @@
       if (act === "use-model") {
         state.model = id;
         store.set(KEY_MODEL, state.model);
+        state.log = [];
+        price();
+        return render();
+      }
+      if (act === "depth") {
+        const next = button.getAttribute("data-depth") === "deep" ? "deep" : "quick";
+        if (next === state.depth || state.running) return undefined;
+        state.depth = next;
+        store.set(KEY_DEPTH, next);
         state.log = [];
         price();
         return render();

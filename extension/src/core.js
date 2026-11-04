@@ -384,6 +384,8 @@
     'Section: "{title}"\n' +
     'Chapter: "{chapter_title}"\n' +
     "Subject: {domain}\n\n" +
+    "This is part of a longer lecture. Earlier context, for continuity only — never repeat " +
+    "it, and never treat it as something to summarise:\n{brief}\n\n" +
     "Transcript of this part of the lecture:\n---\n{transcript}\n---\n\n" +
     "Answer in exactly this shape. Write each heading on its own line, with nothing else on " +
     "that line:\n\n" +
@@ -434,6 +436,35 @@
     "or after it — the reader pastes exactly what you write into mermaid.live. " +
     "Write NONE if no diagram adds value. " +
     "Do not force diagrams everywhere — only where they clarify something text cannot.";
+
+  /**
+   * The check, not the rewrite.
+   *
+   * A writer that is asked to grade its own work grades it generously. So the
+   * verifier is a separate call with one job: find sentences the transcript does
+   * not support. It is not allowed to improve anything, and a flag it cannot
+   * quote is not a flag — that rule is what keeps it from turning into a second
+   * opinion about style.
+   */
+  const VERIFIER_PROMPT =
+    "You are checking study notes against the transcript they were written from. " +
+    "Your only job is to find sentences in the notes that the transcript does not support. " +
+    "You do not rewrite, you do not improve, you do not comment on style.\n\n" +
+    "Rules:\n" +
+    "- Report at most {max_flags} claims.\n" +
+    "- A claim may only be reported if you can quote, word for word, the sentence in the notes " +
+    "that makes it.\n" +
+    "- Report a sentence when the transcript does not support it and it is not marked " +
+    "[OUTSIDE SYLLABUS].\n" +
+    "- If you cannot quote the notes' sentence exactly, do not report it.\n" +
+    "- If everything is supported, answer NONE.\n\n" +
+    'Section: "{title}"\n\n' +
+    "Notes:\n---\n{notes}\n---\n\n" +
+    "Transcript:\n---\n{transcript}\n---\n\n" +
+    "Answer with one line per claim, in exactly this shape, and nothing else:\n" +
+    "FLAG | <the exact sentence from the notes> | <why the transcript does not support it>\n" +
+    "If there is nothing to report, answer only: NONE";
+
 
   /** Fill a prompt's `{placeholders}` from a values object, leaving others alone. */
   function fillTemplate(template, values) {
@@ -510,7 +541,7 @@
    * used instead of notes, so a run can report itself honestly.
    */
   async function composeSection(
-    { title, chapterTitle, transcript, domain = "machine_learning" },
+    { title, chapterTitle, transcript, domain = "machine_learning", brief = "" },
     { call, steps = EXCERPT_STEPS, onAttempt } = {}
   ) {
     if (!call) return degradedSection("no model was available, so no attempt was made", transcript);
@@ -518,7 +549,12 @@
     const { answer, failure } = await invokeReadingTranscript({
       call,
       promptTemplate: COMPOSER_PROMPT,
-      variables: { title, chapter_title: chapterTitle || title, domain },
+      variables: {
+        title,
+        chapter_title: chapterTitle || title,
+        domain,
+        brief: brief || "(this is the first section of the lecture)",
+      },
       transcript,
       steps,
       onAttempt,
@@ -531,6 +567,99 @@
     }
     parsed.degraded = false;
     return parsed;
+  }
+
+  // -------------------------------------------------------------------------
+  // Checking the notes against the lecture
+  // -------------------------------------------------------------------------
+
+  /**
+   * Read a verifier's answer into at most `maxFlags` claims.
+   *
+   * Anything that is not a `FLAG | quote | reason` line is dropped rather than
+   * guessed at: a flag whose quote cannot be found in the notes would accuse the
+   * writer of something it did not say.
+   */
+  function parseVerdict(text, { maxFlags = 3 } = {}) {
+    const raw = String(text || "").trim();
+    if (!raw || /^none\b/i.test(raw)) return [];
+    const flags = [];
+    for (const line of raw.split(/\r\n|\r|\n/)) {
+      const parts = line.split("|");
+      if (parts.length < 3) continue;
+      if (!/^\s*\[?\s*flag\s*\]?\s*$/i.test(parts[0])) continue;
+      const quote = parts[1].trim().replace(/^["'“”]+|["'“”]+$/g, "").trim();
+      const reason = parts.slice(2).join("|").trim();
+      if (!quote || !reason) continue;
+      if (flags.length >= Math.max(1, maxFlags)) break;
+      flags.push({ quote, reason });
+    }
+    return flags;
+  }
+
+  /** The part of a section the verifier reads, kept short enough to quote from. */
+  function notesText(notes = {}) {
+    const parts = [String(notes.explanation || "")];
+    if ((notes.key_points || []).length) parts.push("Key points: " + notes.key_points.join("; "));
+    if ((notes.pitfalls || []).length) parts.push("Pitfalls: " + notes.pitfalls.join("; "));
+    return parts.join("\n").slice(0, 4000);
+  }
+
+  /**
+   * Ask a separate call what the notes claim that the lecture did not say.
+   *
+   * Never throws and never blocks the run: a check that fails leaves the section
+   * exactly as it was, and says so in the event stream. A verifier that cannot
+   * answer must not be able to delete a section.
+   */
+  async function verifySection({ title, notes, transcript }, { call, steps = EXCERPT_STEPS, maxFlags = 3 } = {}) {
+    if (!call) return { flags: [], failure: "no model was available to check this section" };
+    const { answer, failure } = await invokeReadingTranscript({
+      call,
+      promptTemplate: VERIFIER_PROMPT,
+      variables: {
+        title: title || "this section",
+        notes: notesText(notes),
+        max_flags: Math.max(1, maxFlags),
+      },
+      transcript,
+      steps,
+    });
+    if (!answer) return { flags: [], failure };
+    return { flags: parseVerdict(answer, { maxFlags }), failure: "" };
+  }
+
+  /**
+   * The running context for the next section — computed, not asked for.
+   *
+   * This is what keeps a long lecture from growing the prompt: the next section
+   * sees a two-sentence summary and a handful of terms, never the sections before
+   * it. It costs no tokens, so it cannot fail, and it cannot invent anything.
+   */
+  const STOPWORDS = new Set(
+    ("the a an and or but if then than that this these those with from into over under about " +
+      "above below after before while during for nor so yet you your we our they their it its " +
+      "is are was were be been being do does did have has had can could will would should may " +
+      "might must not no of to in on at by as").split(/\s+/)
+  );
+
+  function summariseSection(section = {}) {
+    const prose = String(section.explanation || "").replace(/\s+/g, " ").trim();
+    const sentences = prose.split(/(?<=[.!?])\s+/).filter(Boolean);
+    let prevSummary = sentences.slice(0, 2).join(" ");
+    if (prevSummary.length > 520) prevSummary = prevSummary.slice(0, 517).trimEnd() + "…";
+
+    const counts = new Map();
+    for (const word of prose.toLowerCase().match(/[a-z][a-z0-9_-]{4,}/g) || []) {
+      if (STOPWORDS.has(word)) continue;
+      counts.set(word, (counts.get(word) || 0) + 1);
+    }
+    const terms = [...counts.entries()]
+      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+      .slice(0, 6)
+      .map(([word]) => word);
+
+    return { prevSummary, terms };
   }
 
   // -------------------------------------------------------------------------
@@ -935,6 +1064,7 @@
     MIN_EXPLANATION_CHARS,
     LABELS,
     COMPOSER_PROMPT,
+    VERIFIER_PROMPT,
     MAX_COMPLETION_TOKENS,
     latinShare,
     isEnglishTranscript,
@@ -955,6 +1085,10 @@
     fillTemplate,
     invokeReadingTranscript,
     composeSection,
+    verifySection,
+    parseVerdict,
+    notesText,
+    summariseSection,
     createCaller,
     answerFromResponse,
     listModels,

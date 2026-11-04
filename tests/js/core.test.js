@@ -649,3 +649,62 @@ test("too little text to judge is not a rejection", () => {
   assert.equal(ubyu.isEnglishTranscript("").english, true);
   assert.equal(ubyu.isEnglishTranscript("ok").english, true);
 });
+
+// ---------------------------------------------------------------------------
+// The check, and the context that keeps a long lecture affordable
+// ---------------------------------------------------------------------------
+
+test("a verifier's flags are read only from its own line shape, and capped", () => {
+  const answer =
+    "FLAG | The cell state carries long-term memory. | The transcript never mentions long-term memory.\n" +
+    "FLAG | Each gate has its own weights. | The transcript says they share one projection.\n" +
+    "FLAG | A third claim. | Not in the transcript.\n" +
+    "FLAG | A fourth claim. | Not in the transcript.\n" +
+    "That last line is commentary, not a flag.";
+
+  const flags = ubyu.parseVerdict(answer, { maxFlags: 3 });
+  assert.equal(flags.length, 3, "the cap is honoured");
+  assert.equal(flags[0].quote, "The cell state carries long-term memory.");
+  assert.ok(flags[0].reason.includes("never mentions"), "the reason is kept verbatim");
+
+  assert.equal(ubyu.parseVerdict("NONE").length, 0, "a clean check is not a flag");
+  assert.equal(ubyu.parseVerdict("Everything looks fine to me.").length, 0, "prose is not a flag");
+  assert.equal(ubyu.parseVerdict("FLAG | only two parts").length, 0, "a flag needs a quote and a reason");
+});
+
+test("a check that fails leaves the section alone and says why", async () => {
+  const failing = async () => {
+    const error = new Error("429 rate limit reached");
+    error.status = 429;
+    throw error;
+  };
+  const verdict = await ubyu.verifySection(
+    { title: "Gates", notes: { explanation: "The forget gate keeps the cell state." }, transcript: "text" },
+    { call: failing }
+  );
+  assert.deepEqual(verdict.flags, [], "a failed check cannot delete a paragraph");
+  assert.ok(verdict.failure, "and it says what happened");
+
+  const clean = await ubyu.verifySection(
+    { title: "Gates", notes: { explanation: "The forget gate keeps the cell state." }, transcript: "text" },
+    { call: async () => "NONE" }
+  );
+  assert.deepEqual(clean.flags, []);
+  assert.equal(clean.failure, "");
+});
+
+test("the running summary is computed and capped, never asked for", () => {
+  const long = (
+    "The forget gate decides what leaves the cell state. " +
+    "It is a sigmoid over the previous hidden state. "
+  ).repeat(30);
+  const summary = ubyu.summariseSection({ explanation: long });
+  assert.ok(summary.prevSummary.length <= 520, "the summary cannot grow with the lecture");
+  assert.ok(summary.terms.length <= 6);
+  assert.ok(
+    summary.terms.includes("forget") || summary.terms.includes("sigmoid"),
+    "the terms are the words the section actually used"
+  );
+  assert.equal(ubyu.summariseSection({}).prevSummary, "");
+  assert.equal(ubyu.summariseSection({}).terms.length, 0);
+});
